@@ -7,7 +7,8 @@
    "image_pipeline"
   ],
   "source": "06_lecture_18_warp_images.pdf p.3, p.6, p.12",
-  "yield": "high"
+  "yield": "high",
+  "guid": "P58Q)vr|~)"
  },
  {
   "text": "After the kernel runs, the program calls {{c1::.numpy()}} on the output Warp array to get a NumPy array. Then {{c2::Image.fromarray}} builds the PIL image that gets saved to disk.",
@@ -17,7 +18,8 @@
    "image_pipeline"
   ],
   "source": "06_lecture_18_warp_images.pdf p.16",
-  "yield": "high"
+  "yield": "high",
+  "guid": "w16(R}{(g;"
  },
  {
   "text": "PIL mode {{c1::L}} is greyscale, with one 8-bit unsigned integer per pixel. Mode RGB has {{c2::3}} per pixel. Mode RGBA has {{c3::4}}, and the fourth one is alpha.",
@@ -27,7 +29,8 @@
    "image_modes"
   ],
   "source": "06_lecture_18_warp_images.pdf p.5, p.9",
-  "yield": "high"
+  "yield": "high",
+  "guid": "eCxz_~*I4}"
  },
  {
   "text": "Pillow's image.size gives width first, as \\((w, h)\\). NumPy's shape gives {{c1::height}} first, as \\((h, w, c)\\) for a colour image and {{c2::\\((h, w)\\)}} for greyscale.",
@@ -37,7 +40,8 @@
    "image_modes"
   ],
   "source": "06_lecture_18_warp_images.pdf p.7, p.8",
-  "yield": "high"
+  "yield": "high",
+  "guid": "IP+RRc<75r"
  },
  {
   "text": "For a greyscale image, the program adds a channel axis of size {{c1::1}}, turning \\((h, w)\\) into \\((h, w, 1)\\). Then one {{c2::3D}} kernel handles greyscale, RGB and RGBA images the same way.",
@@ -47,7 +51,8 @@
    "greyscale_channel_axis"
   ],
   "source": "06_lecture_18_warp_images.pdf p.10, p.18",
-  "yield": "high"
+  "yield": "high",
+  "guid": "DPXC^r)>wT"
  },
  {
   "text": "Before saving a greyscale result, the program must {{c1::remove the size-1 channel axis}} again, because PIL won't build an image from shape \\((h, w, 1)\\).",
@@ -57,7 +62,8 @@
    "greyscale_channel_axis"
   ],
   "source": "06_lecture_18_warp_images.pdf p.11",
-  "yield": "high"
+  "yield": "high",
+  "guid": "cmJ+I:eAx`"
  },
  {
   "text": "For an RGBA image, the kernel filters only the colour channels, \\(k < 3\\). It {{c1::copies alpha through unchanged}} from the input, at channel index {{c2::3}}.",
@@ -67,7 +73,8 @@
    "alpha_channel"
   ],
   "source": "06_lecture_18_warp_images.pdf p.7, p.19",
-  "yield": "high"
+  "yield": "high",
+  "guid": "gwAAi$C((_"
  },
  {
   "text": "If your filter also blurs the alpha channel, nothing fails. A fully opaque image has constant alpha, so the output {{c1::looks correct}} and you won't catch the bug by eye.",
@@ -77,7 +84,8 @@
    "alpha_channel"
   ],
   "source": "06_lecture_18_warp_images.pdf p.19",
-  "yield": "high"
+  "yield": "high",
+  "guid": "d]v8Yy+H--"
  },
  {
   "text": "The output array comes from \\(\\text{wp.zeros\\_like}\\), so alpha starts at {{c1::0}}. If the kernel skips alpha without copying it from the input, the saved image is {{c2::fully transparent}}.",
@@ -87,7 +95,8 @@
    "alpha_channel"
   ],
   "source": "06_lecture_18_warp_images.pdf p.12, p.19",
-  "yield": "high"
+  "yield": "high",
+  "guid": "rd3U6pE(+J"
  },
  {
   "text": "To give a kernel a constant such as k for unsharp masking or \\(\\sigma\\) for a Gaussian, you pass it as an ordinary {{c1::kernel argument}} with a {{c2::type annotation}}, such as float.",
@@ -97,7 +106,8 @@
    "kernel_constants"
   ],
   "source": "06_lecture_18_warp_images.pdf p.13",
-  "yield": "high"
+  "yield": "high",
+  "guid": "H)bgm3a2g("
  },
  {
   "text": "Warp reads a constant kernel argument {{c1::at launch}}, so you can change k between launches without {{c2::recompiling}} the kernel.",
@@ -107,7 +117,8 @@
    "kernel_constants"
   ],
   "source": "06_lecture_18_warp_images.pdf p.13",
-  "yield": "high"
+  "yield": "high",
+  "guid": "hFmN5N{!&<"
  },
  {
   "text": "On a T4, Lecture 18's sharpen filter is about 555x faster than one CPU thread in the kernel alone, but only about 37x faster {{c1::end-to-end}}. The gap is time spent {{c2::copying data between host and device}}.",
@@ -121,7 +132,8 @@
   "figure": {
    "file": "06_lecture_18_warp_images.pdf",
    "page": 24
-  }
+  },
+  "guid": "F~+WnqD?[4"
  },
  {
   "text": "Median filtering reaches about 134x end-to-end speedup, versus 37x for sharpen, while moving the same 144 MB. It does more {{c1::compute per byte moved}}, so the transfer cost is spread over more useful work.",
@@ -131,6 +143,7 @@
    "transfer_cost"
   ],
   "source": "06_lecture_18_warp_images.pdf p.26",
-  "yield": "high"
+  "yield": "high",
+  "guid": "uuAEW+Q=rd"
  }
 ]

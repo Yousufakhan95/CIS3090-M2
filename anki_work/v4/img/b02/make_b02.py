@@ -12,17 +12,17 @@ def card(text, extra, sub, source, figure=None):
 
 cards = [
     card(
-        r"You time the serial program and the parallel program on the same input. Speedup is \(S = {{c1::\frac{T_{\text{serial} } }{T_{\text{parallel} } } }}\).",
+        r"You time the serial program and the parallel program on the same input. Speedup is \(S =\) {{c1::\(\frac{T_{\text{serial} } }{T_{\text{parallel} } }\)}}.",
         r"A speedup of 4 means the parallel version finishes in a quarter of the serial time.",
         "speedup", f"{L14} p.26",
     ),
     card(
-        r"Linear speedup is the best case. With \(p\) cores, \(S = {{c1::p}}\), so \(T_{\text{parallel} } = {{c2::T_{\text{serial} }/p}}\).",
+        r"Linear speedup is the best case. With \(p\) cores, \(S =\) {{c1::\(p\)}}, so \(T_{\text{parallel} } =\) {{c2::\(T_{\text{serial} }/p\)}}.",
         r"Lecture 14 says linear speedup does not normally happen, because real programs pay overheads that grow with \(p\).",
         "linear_speedup", f"{L14} p.27",
     ),
     card(
-        r"Efficiency is the speedup you get per core, \(E = {{c1::\frac{S}{p} }} = {{c2::\frac{T_{\text{serial} } }{p \cdot T_{\text{parallel} } } }}\).",
+        r"Efficiency is the speedup you get per core, \(E =\) {{c1::\(\frac{S}{p}\)}} \(=\) {{c2::\(\frac{T_{\text{serial} } }{p \cdot T_{\text{parallel} } }\)}}.",
         r"Linear speedup gives \(E = 1\). Lecture 14 writes the first fraction as \(S/P\) with a capital P, but P and \(p\) are both the core count.",
         "efficiency", f"{L14} p.35",
     ),
@@ -52,7 +52,7 @@ cards = [
         "overheads", f"{L14} p.29",
     ),
     card(
-        r"Lecture 14 writes parallel run-time as \(T_{\text{parallel} } = {{c1::\frac{T_{\text{serial} } }{p} }} + {{c2::T_{\text{overhead} } }}\).",
+        r"Lecture 14 writes parallel run-time as \(T_{\text{parallel} } =\) {{c1::\(\frac{T_{\text{serial} } }{p}\)}} \(+\) {{c2::\(T_{\text{overhead} }\)}}.",
         r"The first term is the ideal time with the work split evenly. The second is the added time to manage the parallel operations.",
         "overhead_model", f"{L14} p.37",
     ),
@@ -68,12 +68,12 @@ cards = [
         "amdahl_law", f"{L14} p.40",
     ),
     card(
-        r"Lecture 14 writes Amdahl's law as \[S = \frac{1}{ {{c1::\frac{\text{parallelizable portion} }{\text{perfect speedup} } }} + {{c2::\text{inherently serial portion} }} }\]",
+        r"Lecture 14 writes Amdahl's law as \(S = 1 / (\) {{c1::\(\frac{\text{parallelizable portion} }{\text{perfect speedup} }\)}} \(+\) {{c2::\(\text{inherently serial portion}\)}} \()\).",
         r"The two portions add up to 1, and the perfect speedup of the parallelizable part is \(p\).",
         "amdahl_law", f"{L14} p.44",
     ),
     card(
-        r"With serial fraction \(a\) on \(p\) cores, Amdahl's law gives \(S = {{c1::\frac{1}{(1-a)/p + a} }}\).",
+        r"With serial fraction \(a\) on \(p\) cores, Amdahl's law gives \(S =\) {{c1::\(\frac{1}{(1-a)/p + a}\)}}.",
         r"This is the study guide's form. \(1-a\) is the parallelizable portion. The textbook calls the serial fraction \(r\) instead of \(a\).",
         "amdahl_law", f"{L14} p.46",
     ),
@@ -89,17 +89,17 @@ cards = [
         {"file": L14, "page": 47},
     ),
     card(
-        r"A program takes 20 s serially, and 90% of it parallelizes perfectly. On \(p\) cores it takes \(T_{\text{parallel} } = {{c1::18/p + 2}}\) seconds, so it never runs faster than {{c2::2}} seconds.",
+        r"A program takes 20 s serially, and 90% of it parallelizes perfectly. On \(p\) cores it takes \(T_{\text{parallel} } =\) {{c1::\(18/p + 2\)}} seconds, so it never runs faster than {{c2::2}} seconds.",
         r"The parallel part is \(0.9 \times 20 / p\) and the serial part is \(0.1 \times 20\). The 2-second serial part gives the cap \(S \le 20/2 = 10\).",
         "amdahl_example", f"{L14} p.42",
     ),
     card(
-        r"With serial fraction 0.1 on 8 cores, Amdahl's law gives \(S = 1/(0.9/8 + 0.1) \approx {{c1::4.7}}\), so efficiency is only about {{c2::0.59}}.",
+        r"With serial fraction 0.1 on 8 cores, Amdahl's law gives \(S = 1/(0.9/8 + 0.1) \approx\) {{c1::\(4.7\)}}, so efficiency is only about {{c2::0.59}}.",
         r"The same program gets \(S \approx 1.82\) on 2 cores and 6.4 on 16 cores, with efficiency 0.91 and 0.40.",
         "amdahl_example", f"{L14} p.45",
     ),
     card(
-        r"Lecture 14 says Amdahl's law rules out {{c1::super-linear}} speedup, at least as a result of parallelization. With an inherently serial portion of 0, the law gives \(S = {{c2::p}}\).",
+        r"Lecture 14 says Amdahl's law rules out {{c1::super-linear}} speedup, at least as a result of parallelization. With an inherently serial portion of 0, the law gives \(S =\) {{c2::\(p\)}}.",
         r"This follows from the formula. \((1-a)/p + a\) is never smaller than \(1/p\), so \(S\) never exceeds \(p\).",
         "amdahl_law", f"{L14} p.48",
     ),

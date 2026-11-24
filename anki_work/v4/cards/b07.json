@@ -7,7 +7,8 @@
    "memory_model"
   ],
   "source": "07_m2_study_guide.pdf p.3",
-  "yield": "high"
+  "yield": "high",
+  "guid": "F8su2$NO:W"
  },
  {
   "text": "MPI runs {{c1::separate processes}} that share no memory. The processes exchange data only by {{c2::message passing}}, either point-to-point or with collectives.",
@@ -17,7 +18,8 @@
    "memory_model"
   ],
   "source": "07_m2_study_guide.pdf p.3",
-  "yield": "high"
+  "yield": "high",
+  "guid": "wA)-@#h$Gs"
  },
  {
   "text": "Warp keeps {{c1::host and device}} memory separate. Your data is {{c2::copied to the device}} first, and the kernels then operate on GPU device memory.",
@@ -27,7 +29,8 @@
    "memory_model"
   ],
   "source": "07_m2_study_guide.pdf p.3",
-  "yield": "high"
+  "yield": "high",
+  "guid": "w@n$lt-xN_"
  },
  {
   "text": "Of Pthreads, MPI and Warp, the two that need explicit data movement before the work starts are {{c1::MPI}} and {{c1::Warp}}.",
@@ -37,7 +40,8 @@
    "memory_model"
   ],
   "source": "07_m2_study_guide.pdf p.3",
-  "yield": "high"
+  "yield": "high",
+  "guid": "GpsE,3#9NC"
  },
  {
   "text": "Pthreads runs {{c1::threads}} on a single {{c2::shared-memory}} machine.",
@@ -47,7 +51,8 @@
    "execution_target"
   ],
   "source": "07_m2_study_guide.pdf p.3",
-  "yield": "high"
+  "yield": "high",
+  "guid": "m1VYcGWDk%"
  },
  {
   "text": "MPI runs {{c1::processes}} across {{c2::one or more}} nodes.",
@@ -57,7 +62,8 @@
    "execution_target"
   ],
   "source": "07_m2_study_guide.pdf p.3",
-  "yield": "high"
+  "yield": "high",
+  "guid": "oTWY?@q#(E"
  },
  {
   "text": "Warp targets a heterogeneous system with a CPU host and an {{c1::NVIDIA GPU}} device. Without a GPU, Warp can still run the kernel on the {{c2::CPU}} as a fallback.",
@@ -67,7 +73,8 @@
    "execution_target"
   ],
   "source": "07_m2_study_guide.pdf p.3",
-  "yield": "high"
+  "yield": "high",
+  "guid": "d_zDVs_n}e"
  },
  {
   "text": "The built-in Pthreads call that makes each thread wait until all the threads reach the same point is {{c1::\\(\\mathrm{pthread\\_barrier\\_wait}\\)}}.",
@@ -77,7 +84,8 @@
    "built_ins"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "n,,|=K0_>_"
  },
  {
   "text": "Pthreads has {{c1::no collectives}}. To combine values from all the threads, you write the {{c2::reduction}} yourself.",
@@ -87,7 +95,8 @@
    "built_ins"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "Ihzhh[ht>R"
  },
  {
   "text": "Of Pthreads, MPI and Warp, only {{c1::MPI}} has a rich set of built-in collectives such as Bcast, Reduce, Allreduce and Gather.",
@@ -97,7 +106,8 @@
    "built_ins"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "FEA6]Ml/n3"
  },
  {
   "text": "Warp's built-in facility is a {{c1::kernel launch}} over {{c2::N elements}}.",
@@ -107,7 +117,8 @@
    "built_ins"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "Klf%7u).qM"
  },
  {
   "text": "Pthreads is the best fit for {{c1::fine-grained}} updates to {{c2::shared state}}, as long as you synchronize them carefully.",
@@ -117,7 +128,8 @@
    "best_fit"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "k+Ox^LM]VR"
  },
  {
   "text": "MPI is the best fit when the work splits into {{c1::large independent chunks}} with only {{c2::modest communication}} between steps.",
@@ -127,7 +139,8 @@
    "best_fit"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "pj9KcN.`yw"
  },
  {
   "text": "Warp is the best fit for large {{c1::data-parallel maps}} where every element gets {{c2::uniform}} work.",
@@ -137,7 +150,8 @@
    "best_fit"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "H2z&8^*!i1"
  },
  {
   "text": "A Warp job is only worth it when each element has {{c1::enough work}} to pay for the {{c2::copies}} between host and device.",
@@ -147,7 +161,8 @@
    "best_fit"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "sVCK(Hlk;%"
  },
  {
   "text": "The common Pthreads pitfalls are {{c1::data races}}, deadlocks and {{c2::oversubscription}}.",
@@ -157,7 +172,8 @@
    "pitfalls"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "l%AO-aGx.N"
  },
  {
   "text": "The common MPI pitfalls are mismatched {{c1::tags or ranks}}, deadlocks and {{c2::frequent small messages}} between machines.",
@@ -167,7 +183,8 @@
    "pitfalls"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "HI`>kDUuj5"
  },
  {
   "text": "The common Warp pitfalls are excessive {{c1::host-device copies}}, {{c2::non-contiguous}} data, and problems too {{c3::small}} to pay for the copies.",
@@ -177,6 +194,7 @@
    "pitfalls"
   ],
   "source": "07_m2_study_guide.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "Cc1MK?pe*3"
  }
 ]

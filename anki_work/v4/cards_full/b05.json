@@ -124,7 +124,7 @@
   "yield": "high"
  },
  {
-  "text": "Unsharp masking first builds an edge image \\(g(x,y) = {{c1::f(x,y) - S(f(x,y))}}\\), where \\(S(f(x,y))\\) is a {{c2::blurred}} version of the original image \\(f(x,y)\\).",
+  "text": "Unsharp masking first builds an edge image \\(g(x,y) =\\) {{c1::\\(f(x,y) - S(f(x,y))\\)}}, where \\(S(f(x,y))\\) is a {{c2::blurred}} version of the original image \\(f(x,y)\\).",
   "extra": "Subtracting the blurred image removes the low spatial frequencies, so the edges and fine detail remain.",
   "tags": [
    "b05_image",
@@ -134,7 +134,7 @@
   "yield": "high"
  },
  {
-  "text": "Unsharp masking adds the edge image \\(g\\) back to the original \\(f\\), so the sharpened image is \\(f_{\\text{UM} }(x,y) = {{c1::f(x,y) + k\\,g(x,y)}}\\).",
+  "text": "Unsharp masking adds the edge image \\(g\\) back to the original \\(f\\), so the sharpened image is \\(f_{\\text{UM} }(x,y) =\\) {{c1::\\(f(x,y) + k\\,g(x,y)\\)}}.",
   "extra": "Here \\(k\\) is a scaling constant. The study guide writes this as \\(f_{\\text{UM} } = f + kg\\).",
   "tags": [
    "b05_image",

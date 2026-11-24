@@ -7,7 +7,8 @@
    "wp_launch"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.42",
-  "yield": "high"
+  "yield": "high",
+  "guid": "O]t.ry5zna"
  },
  {
   "text": "The \\(\\text{dim}\\) argument of wp.launch is the number of {{c1::threads}} to start. For a simple map over one array, it equals the array's {{c2::length}}.",
@@ -17,7 +18,8 @@
    "wp_launch"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.42",
-  "yield": "high"
+  "yield": "high",
+  "guid": "m~J&`~rbc<"
  },
  {
   "text": "Warp is {{c1::statically}} typed, so every kernel parameter needs a declared type, for example \\(\\text{wp.array(dtype=float)}\\) for an array of floats.",
@@ -31,7 +33,8 @@
   "figure": {
    "file": "04_lecture_15_gpgpu_warp.pdf",
    "page": 38
-  }
+  },
+  "guid": "j8t[40.H}d"
  },
  {
   "text": "A Warp kernel does not {{c1::return}} a value. It writes its results into an {{c2::output array}} that is passed in as one of its arguments.",
@@ -41,7 +44,8 @@
    "wp_kernel"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.36",
-  "yield": "high"
+  "yield": "high",
+  "guid": "r[gZ_CYV:g"
  },
  {
   "text": "You write the body of a Warp kernel for a {{c1::single element}}. Warp then launches one {{c2::thread}} per element.",
@@ -51,7 +55,8 @@
    "wp_kernel"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.35",
-  "yield": "high"
+  "yield": "high",
+  "guid": "G^Y>C-A{,("
  },
  {
   "text": "Inside a Warp kernel, each thread calls {{c1::wp.tid()}} to get its unique thread index, the same role the rank has for an MPI process.",
@@ -61,7 +66,8 @@
    "wp_tid"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.37,38",
-  "yield": "high"
+  "yield": "high",
+  "guid": "jkI_sDb5rQ"
  },
  {
   "text": "A kernel thread may read any element of the input arrays. Its output may not depend on {{c1::another thread's output}}.",
@@ -71,7 +77,8 @@
    "kernel_independence"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.14",
-  "yield": "high"
+  "yield": "high",
+  "guid": "gb7f<3GK7w"
  },
  {
   "text": "Pthreads and MPI are {{c1::homogeneous}} computing, because every execution unit is a compatible CPU core. GPGPU is {{c2::heterogeneous}} computing, because a CPU host and a GPU device run different parts of the program.",
@@ -81,7 +88,8 @@
    "heterogeneous_computing"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.26,27",
-  "yield": "high"
+  "yield": "high",
+  "guid": "fz5{_ZU_7Y"
  },
  {
   "text": "Kernels access GPU memory directly, as threads do in shared-memory programming. GPGPU also borrows from {{c1::distributed-memory}} programming, because the CPU and the GPU usually have {{c2::separate memory spaces}}.",
@@ -91,7 +99,8 @@
    "host_device_copy"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.28",
-  "yield": "high"
+  "yield": "high",
+  "guid": "iE5($]|qy:"
  },
  {
   "text": "Moving data to the GPU is a copy over the bus. On a small problem that copy can be the {{c1::dominant}} cost, so a naive GPU port can run {{c2::slower}} than the original CPU code.",
@@ -101,7 +110,8 @@
    "host_device_copy"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.28",
-  "yield": "high"
+  "yield": "high",
+  "guid": "gnYj63fTgu"
  },
  {
   "text": "With device=\"cpu\", Warp runs the kernel as a {{c1::single-thread serial}} program. With device=\"cuda\", it runs the kernel in {{c2::parallel}} on an Nvidia GPU.",
@@ -111,7 +121,8 @@
    "warp_devices"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.31",
-  "yield": "high"
+  "yield": "high",
+  "guid": "I9o7_Xo*#X"
  },
  {
   "text": "The CPU side of a Warp program converts host data such as a NumPy array with {{c1::wp.array}}, allocates the output with {{c2::wp.zeros}}, launches the kernel, and copies the result back with {{c3::.numpy()}}.",
@@ -121,7 +132,8 @@
    "warp_host_steps"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.34,39-43",
-  "yield": "high"
+  "yield": "high",
+  "guid": "qK8VcX2&%4"
  },
  {
   "text": "Threads in a lockstep group take different branches. The group runs {{c1::both paths}} and masks off the inactive lanes, so the divergent code costs the {{c2::sum}} of both branches.",
@@ -131,7 +143,8 @@
    "gpu_data_design"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.25",
-  "yield": "high"
+  "yield": "high",
+  "guid": "JySuQ5,:eC"
  },
  {
   "text": "A GPU performs best when you load {{c1::one flat data buffer}} and every thread runs the same kernel with {{c2::uniform}} work.",
@@ -141,6 +154,7 @@
    "gpu_data_design"
   ],
   "source": "04_lecture_15_gpgpu_warp.pdf p.25",
-  "yield": "high"
+  "yield": "high",
+  "guid": "Jif=}!^1g-"
  }
 ]

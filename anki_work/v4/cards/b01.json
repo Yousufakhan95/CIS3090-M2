@@ -7,7 +7,8 @@
    "flynn_taxonomy"
   ],
   "source": "01c_lecture_14_performance.pdf p.3",
-  "yield": "high"
+  "yield": "high",
+  "guid": "L}!s6ijsqJ"
  },
  {
   "text": "A traditional single-core von Neumann computer runs one instruction on one piece of data at a time, so Flynn's taxonomy calls it {{c1::SISD}}.",
@@ -17,7 +18,8 @@
    "flynn_taxonomy"
   ],
   "source": "01c_lecture_14_performance.pdf p.4",
-  "yield": "high"
+  "yield": "high",
+  "guid": "j<D9@_+l.K"
  },
  {
   "text": "Very few real systems are {{c1::MISD}}, which would run multiple instructions on a single piece of data.",
@@ -27,7 +29,8 @@
    "flynn_taxonomy"
   ],
   "source": "01c_lecture_14_performance.pdf p.11",
-  "yield": "high"
+  "yield": "high",
+  "guid": "emS.W%o><["
  },
  {
   "text": "A SIMD system has one {{c1::control unit}} that broadcasts each instruction to many {{c2::ALUs}}, and each ALU applies that instruction to its own data item.",
@@ -37,7 +40,8 @@
    "simd"
   ],
   "source": "01c_lecture_14_performance.pdf p.5",
-  "yield": "high"
+  "yield": "high",
+  "guid": "k;9&:;60Wy"
  },
  {
   "text": "SIMD fits {{c1::data parallelism}}, such as a simple loop over a large array, and does poorly on most other kinds of parallel problems.",
@@ -47,7 +51,8 @@
    "simd"
   ],
   "source": "01c_lecture_14_performance.pdf p.6",
-  "yield": "high"
+  "yield": "high",
+  "guid": "g6Yh>]:C2N"
  },
  {
   "text": "A vector processor holds operands in {{c1::vector registers}} and applies the same operation to every element at once, so it is a {{c2::SIMD}} system.",
@@ -57,7 +62,8 @@
    "vector_processors"
   ],
   "source": "01c_lecture_14_performance.pdf p.7",
-  "yield": "high"
+  "yield": "high",
+  "guid": "CE7IO#2]u5"
  },
  {
   "text": "Lecture 14 lists two benefits of vector processors. The compiler finds loops to vectorize and {{c1::reports why}} a loop can't be vectorized, and {{c2::every data item}} the processor loads is used.",
@@ -67,7 +73,8 @@
    "vector_processors"
   ],
   "source": "01c_lecture_14_performance.pdf p.8",
-  "yield": "high"
+  "yield": "high",
+  "guid": "DwJWlIGQ3T"
  },
  {
   "text": "Lecture 14 gives two drawbacks of vector processors. They handle {{c1::irregular data structures}} poorly, and they are hard to {{c2::scale}} because longer vectors aren't very useful.",
@@ -77,7 +84,8 @@
    "vector_processors"
   ],
   "source": "01c_lecture_14_performance.pdf p.8",
-  "yield": "high"
+  "yield": "high",
+  "guid": "k<XZbq|T:i"
  },
  {
   "text": "A MIMD system has independent cores, each with its own {{c1::control unit and ALU}}. The cores run {{c2::asynchronously}}, each at its own pace.",
@@ -87,7 +95,8 @@
    "mimd"
   ],
   "source": "01c_lecture_14_performance.pdf p.9",
-  "yield": "high"
+  "yield": "high",
+  "guid": "mTA$&G$W[K"
  },
  {
   "text": "In a shared-memory MIMD system, cores communicate {{c1::implicitly}} through shared data structures. In a distributed-memory system, each processor has private memory and communicates {{c2::explicitly}} by sending messages over a network.",
@@ -101,7 +110,8 @@
   "figure": {
    "file": "01c_lecture_14_performance.pdf",
    "page": 10
-  }
+  },
+  "guid": "PsAJC)pq5/"
  },
  {
   "text": "In a {{c1::UMA}} system, every core takes the same time to reach every memory location. This makes it {{c2::easier to program}}.",
@@ -111,7 +121,8 @@
    "uma_numa"
   ],
   "source": "01c_lecture_14_performance.pdf p.14",
-  "yield": "high"
+  "yield": "high",
+  "guid": "Nnf=5g/$]u"
  },
  {
   "text": "In a NUMA system, a core reaches memory attached to {{c1::its own chip}} faster than memory attached to another chip. NUMA systems can also hold {{c2::more memory}} than UMA systems.",
@@ -125,7 +136,8 @@
   "figure": {
    "file": "01c_lecture_14_performance.pdf",
    "page": 18
-  }
+  },
+  "guid": "D:&1^QPYvD"
  },
  {
   "text": "A cluster is a collection of commodity computers on a commodity network such as Ethernet. Its nodes are usually shared-memory systems, so a cluster is also called a {{c1::hybrid}} system.",
@@ -135,7 +147,8 @@
    "clusters_grids"
   ],
   "source": "01c_lecture_14_performance.pdf p.19",
-  "yield": "high"
+  "yield": "high",
+  "guid": "P[EY,Li:6}"
  },
  {
   "text": "A grid joins clusters spread over a large geographic area. Its nodes are often {{c1::heterogeneous}}, meaning they use different hardware and operating systems.",
@@ -145,7 +158,8 @@
    "clusters_grids"
   ],
   "source": "01c_lecture_14_performance.pdf p.19",
-  "yield": "high"
+  "yield": "high",
+  "guid": "L$(6xzSd-&"
  },
  {
   "text": "On a bus, all connected devices share the same {{c1::communication wires}}. As you add processors, they {{c2::wait longer}} to access memory, so bus performance drops.",
@@ -155,7 +169,8 @@
    "interconnects"
   ],
   "source": "01c_lecture_14_performance.pdf p.20",
-  "yield": "high"
+  "yield": "high",
+  "guid": "hR5*I11Grq"
  },
  {
   "text": "In a crossbar, switches choose among multiple data paths. Two CPUs conflict only when they access the {{c1::same memory module}}. A crossbar is faster than a bus, but it is {{c2::more expensive}}.",
@@ -169,7 +184,8 @@
   "figure": {
    "file": "01c_lecture_14_performance.pdf",
    "page": 23
-  }
+  },
+  "guid": "bk%tH!z!/q"
  },
  {
   "text": "A program that accesses one memory location will likely access a nearby location soon. The nearby part is {{c1::spatial}} locality, and the soon part is {{c2::temporal}} locality.",
@@ -179,7 +195,8 @@
    "locality"
   ],
   "source": "01_ch02_hardware.pdf p.2",
-  "yield": "high"
+  "yield": "high",
+  "guid": "lDR1d3bBof"
  },
  {
   "text": "Adjacent elements of an array are adjacent in memory, but adjacent elements of a {{c1::linked list}} can be far apart. So a loop over a flat array gets spatial locality for free.",
@@ -189,7 +206,8 @@
    "data_layout"
   ],
   "source": "01b_lecture_07_data_layout.pdf p.1",
-  "yield": "high"
+  "yield": "high",
+  "guid": "J[L~W*S>Yt"
  },
  {
   "text": "Contiguous data is easy to transfer, because you move {{c1::N bytes starting from address M}} in one block.",
@@ -199,7 +217,8 @@
    "data_layout"
   ],
   "source": "01b_lecture_07_data_layout.pdf p.2",
-  "yield": "high"
+  "yield": "high",
+  "guid": "e>(cgF2Aad"
  },
  {
   "text": "Parallel code stores a 2D array as a {{c1::1D array}} with index arithmetic, and it represents a complex object as {{c2::several 1D arrays}}.",
@@ -209,7 +228,8 @@
    "data_layout"
   ],
   "source": "01b_lecture_07_data_layout.pdf p.2",
-  "yield": "high"
+  "yield": "high",
+  "guid": "e.,Gm%|Idc"
  },
  {
   "text": "Shared-memory programs rarely transfer data, but they still need {{c1::cache locality}}. Distributed-memory and CPU/GPU programs must move {{c2::large blocks of data}}, so they use simple flat structures.",
@@ -219,7 +239,8 @@
    "data_layout"
   ],
   "source": "01b_lecture_07_data_layout.pdf p.5",
-  "yield": "high"
+  "yield": "high",
+  "guid": "Jy86Q0F{[~"
  },
  {
   "text": "Lecture 7's tips for contiguous memory are to use {{c1::structs}} instead of objects, put no {{c2::pointers}} in structs, and use {{c3::contiguous arrays}} instead of linked data.",
@@ -229,6 +250,7 @@
    "data_layout"
   ],
   "source": "01b_lecture_07_data_layout.pdf p.6",
-  "yield": "high"
+  "yield": "high",
+  "guid": "jd;m|r;~>G"
  }
 ]

@@ -247,7 +247,7 @@
   "extra": "Sending data over the network takes much longer than sharing data between threads, so long data-parallel computations fit best."
  },
  {
-  "text": "In the parallel trapezoidal rule with \\(h = (b-a)/n\\), each rank gets \\(\\mathrm{local\\_n} = {{c1::n / \\mathrm{comm\\_sz} }}\\) trapezoids. Its interval starts at \\(\\mathrm{local\\_a} = {{c2::a + \\mathrm{my\\_rank} \\cdot \\mathrm{local\\_n} \\cdot h}}\\).",
+  "text": "In the parallel trapezoidal rule with \\(h = (b-a)/n\\), each rank gets \\(\\mathrm{local\\_n} =\\) {{c1::\\(n / \\mathrm{comm\\_sz}\\)}} trapezoids. Its interval starts at \\(\\mathrm{local\\_a} =\\) {{c2::\\(a + \\mathrm{my\\_rank} \\cdot \\mathrm{local\\_n} \\cdot h\\)}}.",
   "tags": [
    "b03_mpi",
    "trapezoid_partition"

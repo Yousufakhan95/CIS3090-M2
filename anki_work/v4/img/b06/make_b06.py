@@ -57,7 +57,7 @@ cards = [
     card(r"Unsharp masking pushes values above 255 and below 0 at strong edges. np.uint8 {{c1::does not clamp}}, so without np.clip you see {{c2::salt-and-pepper}} noise along the edges.",
          r"The slide's full line is Image.fromarray(np.uint8(np.clip(np.rint(npOutData), 0, 255))).",
          "output_clipping", "p.16"),
-    card(r"A 3000 by 4000 RGB image stored as float32 takes \(3000 \times 4000 \times 3 \times {{c1::4}}\) bytes, which is {{c2::144}} MB. That data crosses the bus once to the GPU and once back.",
+    card(r"A 3000 by 4000 RGB image stored as float32 takes \(3000 \times 4000 \times 3 \times\) {{c1::\(4\)}} bytes, which is {{c2::144}} MB. That data crosses the bus once to the GPU and once back.",
          r"A float32 value is 4 bytes. GPU memory is separate from system memory, so the kernel can't start until the upload finishes.",
          "transfer_cost", "p.22"),
     card(r"On a T4, Lecture 18's sharpen filter is about 555x faster than one CPU thread in the kernel alone, but only about 37x faster {{c1::end-to-end}}. The gap is time spent {{c2::copying data between host and device}}.",

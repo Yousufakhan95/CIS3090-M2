@@ -150,7 +150,7 @@
   "yield": "high"
  },
  {
-  "text": "A 3000 by 4000 RGB image stored as float32 takes \\(3000 \\times 4000 \\times 3 \\times {{c1::4}}\\) bytes, which is {{c2::144}} MB. That data crosses the bus once to the GPU and once back.",
+  "text": "A 3000 by 4000 RGB image stored as float32 takes \\(3000 \\times 4000 \\times 3 \\times\\) {{c1::\\(4\\)}} bytes, which is {{c2::144}} MB. That data crosses the bus once to the GPU and once back.",
   "extra": "A float32 value is 4 bytes. GPU memory is separate from system memory, so the kernel can't start until the upload finishes.",
   "tags": [
    "b06_warp_images",

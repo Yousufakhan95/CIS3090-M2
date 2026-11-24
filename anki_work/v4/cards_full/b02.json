@@ -1,6 +1,6 @@
 [
  {
-  "text": "You time the serial program and the parallel program on the same input. Speedup is \\(S = {{c1::\\frac{T_{\\text{serial} } }{T_{\\text{parallel} } } }}\\).",
+  "text": "You time the serial program and the parallel program on the same input. Speedup is \\(S =\\) {{c1::\\(\\frac{T_{\\text{serial} } }{T_{\\text{parallel} } }\\)}}.",
   "extra": "A speedup of 4 means the parallel version finishes in a quarter of the serial time.",
   "tags": [
    "b02_performance",
@@ -10,7 +10,7 @@
   "yield": "high"
  },
  {
-  "text": "Linear speedup is the best case. With \\(p\\) cores, \\(S = {{c1::p}}\\), so \\(T_{\\text{parallel} } = {{c2::T_{\\text{serial} }/p}}\\).",
+  "text": "Linear speedup is the best case. With \\(p\\) cores, \\(S =\\) {{c1::\\(p\\)}}, so \\(T_{\\text{parallel} } =\\) {{c2::\\(T_{\\text{serial} }/p\\)}}.",
   "extra": "Lecture 14 says linear speedup does not normally happen, because real programs pay overheads that grow with \\(p\\).",
   "tags": [
    "b02_performance",
@@ -20,7 +20,7 @@
   "yield": "high"
  },
  {
-  "text": "Efficiency is the speedup you get per core, \\(E = {{c1::\\frac{S}{p} }} = {{c2::\\frac{T_{\\text{serial} } }{p \\cdot T_{\\text{parallel} } } }}\\).",
+  "text": "Efficiency is the speedup you get per core, \\(E =\\) {{c1::\\(\\frac{S}{p}\\)}} \\(=\\) {{c2::\\(\\frac{T_{\\text{serial} } }{p \\cdot T_{\\text{parallel} } }\\)}}.",
   "extra": "Linear speedup gives \\(E = 1\\). Lecture 14 writes the first fraction as \\(S/P\\) with a capital P, but P and \\(p\\) are both the core count.",
   "tags": [
    "b02_performance",
@@ -80,7 +80,7 @@
   "yield": "high"
  },
  {
-  "text": "Lecture 14 writes parallel run-time as \\(T_{\\text{parallel} } = {{c1::\\frac{T_{\\text{serial} } }{p} }} + {{c2::T_{\\text{overhead} } }}\\).",
+  "text": "Lecture 14 writes parallel run-time as \\(T_{\\text{parallel} } =\\) {{c1::\\(\\frac{T_{\\text{serial} } }{p}\\)}} \\(+\\) {{c2::\\(T_{\\text{overhead} }\\)}}.",
   "extra": "The first term is the ideal time with the work split evenly. The second is the added time to manage the parallel operations.",
   "tags": [
    "b02_performance",
@@ -114,7 +114,7 @@
   "yield": "high"
  },
  {
-  "text": "Lecture 14 writes Amdahl's law as \\[S = \\frac{1}{ {{c1::\\frac{\\text{parallelizable portion} }{\\text{perfect speedup} } }} + {{c2::\\text{inherently serial portion} }} }\\]",
+  "text": "Lecture 14 writes Amdahl's law as \\(S = 1 / (\\) {{c1::\\(\\frac{\\text{parallelizable portion} }{\\text{perfect speedup} }\\)}} \\(+\\) {{c2::\\(\\text{inherently serial portion}\\)}} \\()\\).",
   "extra": "The two portions add up to 1, and the perfect speedup of the parallelizable part is \\(p\\).",
   "tags": [
    "b02_performance",
@@ -124,7 +124,7 @@
   "yield": "high"
  },
  {
-  "text": "With serial fraction \\(a\\) on \\(p\\) cores, Amdahl's law gives \\(S = {{c1::\\frac{1}{(1-a)/p + a} }}\\).",
+  "text": "With serial fraction \\(a\\) on \\(p\\) cores, Amdahl's law gives \\(S =\\) {{c1::\\(\\frac{1}{(1-a)/p + a}\\)}}.",
   "extra": "This is the study guide's form. \\(1-a\\) is the parallelizable portion. The textbook calls the serial fraction \\(r\\) instead of \\(a\\).",
   "tags": [
    "b02_performance",
@@ -158,7 +158,7 @@
   }
  },
  {
-  "text": "A program takes 20 s serially, and 90% of it parallelizes perfectly. On \\(p\\) cores it takes \\(T_{\\text{parallel} } = {{c1::18/p + 2}}\\) seconds, so it never runs faster than {{c2::2}} seconds.",
+  "text": "A program takes 20 s serially, and 90% of it parallelizes perfectly. On \\(p\\) cores it takes \\(T_{\\text{parallel} } =\\) {{c1::\\(18/p + 2\\)}} seconds, so it never runs faster than {{c2::2}} seconds.",
   "extra": "The parallel part is \\(0.9 \\times 20 / p\\) and the serial part is \\(0.1 \\times 20\\). The 2-second serial part gives the cap \\(S \\le 20/2 = 10\\).",
   "tags": [
    "b02_performance",
@@ -168,7 +168,7 @@
   "yield": "high"
  },
  {
-  "text": "With serial fraction 0.1 on 8 cores, Amdahl's law gives \\(S = 1/(0.9/8 + 0.1) \\approx {{c1::4.7}}\\), so efficiency is only about {{c2::0.59}}.",
+  "text": "With serial fraction 0.1 on 8 cores, Amdahl's law gives \\(S = 1/(0.9/8 + 0.1) \\approx\\) {{c1::\\(4.7\\)}}, so efficiency is only about {{c2::0.59}}.",
   "extra": "The same program gets \\(S \\approx 1.82\\) on 2 cores and 6.4 on 16 cores, with efficiency 0.91 and 0.40.",
   "tags": [
    "b02_performance",
@@ -178,7 +178,7 @@
   "yield": "high"
  },
  {
-  "text": "Lecture 14 says Amdahl's law rules out {{c1::super-linear}} speedup, at least as a result of parallelization. With an inherently serial portion of 0, the law gives \\(S = {{c2::p}}\\).",
+  "text": "Lecture 14 says Amdahl's law rules out {{c1::super-linear}} speedup, at least as a result of parallelization. With an inherently serial portion of 0, the law gives \\(S =\\) {{c2::\\(p\\)}}.",
   "extra": "This follows from the formula. \\((1-a)/p + a\\) is never smaller than \\(1/p\\), so \\(S\\) never exceeds \\(p\\).",
   "tags": [
    "b02_performance",

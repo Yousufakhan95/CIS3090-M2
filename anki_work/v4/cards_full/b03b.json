@@ -244,7 +244,7 @@
   "yield": "high"
  },
  {
-  "text": "The trapezoidal rule splits \\([a, b]\\) into n trapezoids of equal base width \\(h = {{c1::\\frac{b-a}{n} }}\\).",
+  "text": "The trapezoidal rule splits \\([a, b]\\) into n trapezoids of equal base width \\(h =\\) {{c1::\\(\\frac{b-a}{n}\\)}}.",
   "extra": "Narrower trapezoids give a better approximation, because their over- and under-estimates average out.",
   "tags": [
    "b03_mpi",
@@ -254,7 +254,7 @@
   "yield": "high"
  },
  {
-  "text": "One trapezoid between \\(x_i\\) and \\(x_{i+1}\\) has area \\({{c1::\\frac{h}{2}\\left(f(x_i) + f(x_{i+1})\\right) }}\\).",
+  "text": "One trapezoid between \\(x_i\\) and \\(x_{i+1}\\) has area {{c1::\\(\\frac{h}{2}\\left(f(x_i) + f(x_{i+1})\\right)\\)}}.",
   "extra": "Summing all n trapezoids gives \\(h\\left[\\frac{f(x_0)}{2} + f(x_1) + \\cdots + f(x_{n-1}) + \\frac{f(x_n)}{2}\\right]\\), so only the two endpoints are halved.",
   "tags": [
    "b03_mpi",
@@ -278,7 +278,7 @@
   }
  },
  {
-  "text": "Each rank integrates \\(\\mathrm{local\\_n} = {{c1::n/\\mathrm{comm\\_sz} }}\\) trapezoids, starting at \\(\\mathrm{local\\_a} = {{c2::a + \\mathrm{my\\_rank} \\cdot \\mathrm{local\\_n} \\cdot h}}\\).",
+  "text": "Each rank integrates \\(\\mathrm{local\\_n} =\\) {{c1::\\(n/\\mathrm{comm\\_sz}\\)}} trapezoids, starting at \\(\\mathrm{local\\_a} =\\) {{c2::\\(a + \\mathrm{my\\_rank} \\cdot \\mathrm{local\\_n} \\cdot h\\)}}.",
   "extra": "It ends at \\(\\mathrm{local\\_b} = \\mathrm{local\\_a} + \\mathrm{local\\_n} \\cdot h\\). The slides assume n divides evenly by \\(\\mathrm{comm\\_sz}\\) to keep the code short.",
   "tags": [
    "b03_mpi",

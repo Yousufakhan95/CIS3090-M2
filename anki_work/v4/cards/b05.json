@@ -7,7 +7,8 @@
    "convolution"
   ],
   "source": "05a_lecture_16_image_basics.pdf p.6, p.15",
-  "yield": "high"
+  "yield": "high",
+  "guid": "z(Fxa=-F?7"
  },
  {
   "text": "Kernel normalization divides every coefficient by the {{c1::sum of the coefficients}}. A smoothing kernel then sums to {{c2::1}}, so an area of constant intensity keeps its {{c3::same value}} after filtering.",
@@ -17,7 +18,8 @@
    "kernel_normalization"
   ],
   "source": "05a_lecture_16_image_basics.pdf p.12",
-  "yield": "high"
+  "yield": "high",
+  "guid": "O[K8@6PVl"
  },
  {
   "text": "A student writes a \\(3 \\times 3\\) mean filter with every weight 1 instead of \\(\\frac{1}{9}\\). On an 8-bit image, the output comes out about {{c1::nine times brighter}}, and most pixels {{c2::clip at 255}}.",
@@ -27,7 +29,8 @@
    "kernel_normalization"
   ],
   "source": "05a_lecture_16_image_basics.pdf p.12",
-  "yield": "high"
+  "yield": "high",
+  "guid": "PI$ETZ([z["
  },
  {
   "text": "At the border, part of the kernel falls outside the image. On an \\(M \\times N\\) image, a \\(5 \\times 5\\) kernel can only process a {{c1::\\((M-4) \\times (N-4)\\)}} region, with its origin at {{c2::\\((2,2)\\)}}.",
@@ -37,7 +40,8 @@
    "image_borders"
   ],
   "source": "05a_lecture_16_image_basics.pdf p.19-21",
-  "yield": "high"
+  "yield": "high",
+  "guid": "y:fjCHj!w!"
  },
  {
   "text": "With the copy of input pixels border strategy, the output keeps the {{c1::same size}} as the input. Its border pixels are {{c2::unprocessed copies}} of the input pixels.",
@@ -47,7 +51,8 @@
    "image_borders"
   ],
   "source": "05a_lecture_16_image_basics.pdf p.22",
-  "yield": "high"
+  "yield": "high",
+  "guid": "zRWrj*Ysf#"
  },
  {
   "text": "With truncation of the image, the filter removes every pixel it cannot convolve. The output is {{c1::smaller than}} the input and {{c2::offset}} relative to it.",
@@ -57,7 +62,8 @@
    "image_borders"
   ],
   "source": "05a_lecture_16_image_basics.pdf p.21-22",
-  "yield": "high"
+  "yield": "high",
+  "guid": "y$.*}ZkwMv"
  },
  {
   "text": "Truncation of the kernel treats border pixels as a special case and convolves them with a {{c1::modified kernel}} that leaves out the cells outside the image. Lecture 16 says this adds {{c2::considerable complexity}} to convolution.",
@@ -67,7 +73,8 @@
    "image_borders"
   ],
   "source": "05a_lecture_16_image_basics.pdf p.23",
-  "yield": "high"
+  "yield": "high",
+  "guid": "f7l=u@%0.Z"
  },
  {
   "text": "Reflected indexing checks whether a neighbour coordinate falls outside the image and, if it does, {{c1::reflects it back into the image}}. This simulates {{c2::mirroring}} the image at its borders.",
@@ -77,7 +84,8 @@
    "image_borders"
   ],
   "source": "05a_lecture_16_image_basics.pdf p.24",
-  "yield": "high"
+  "yield": "high",
+  "guid": "lhu&}q@C|*"
  },
  {
   "text": "Lecture 16 calls {{c1::reflected indexing}} the most useful border option. {{c2::Circular indexing}}, which treats the image as repeating endlessly in all directions, is rarely used in image processing.",
@@ -87,27 +95,30 @@
    "image_borders"
   ],
   "source": "05a_lecture_16_image_basics.pdf p.24-25",
-  "yield": "high"
+  "yield": "high",
+  "guid": "PIem(Ki;MN"
  },
  {
-  "text": "Unsharp masking first builds an edge image \\(g(x,y) = {{c1::f(x,y) - S(f(x,y))}}\\), where \\(S(f(x,y))\\) is a {{c2::blurred}} version of the original image \\(f(x,y)\\).",
+  "text": "Unsharp masking first builds an edge image \\(g(x,y) =\\) {{c1::\\(f(x,y) - S(f(x,y))\\)}}, where \\(S(f(x,y))\\) is a {{c2::blurred}} version of the original image \\(f(x,y)\\).",
   "extra": "Subtracting the blurred image removes the low spatial frequencies, so the edges and fine detail remain.",
   "tags": [
    "b05_image",
    "unsharp_masking"
   ],
   "source": "05b_lecture_17_image_filters.pdf p.9-10",
-  "yield": "high"
+  "yield": "high",
+  "guid": "ifX%Rak`E6"
  },
  {
-  "text": "Unsharp masking adds the edge image \\(g\\) back to the original \\(f\\), so the sharpened image is \\(f_{\\text{UM} }(x,y) = {{c1::f(x,y) + k\\,g(x,y)}}\\).",
+  "text": "Unsharp masking adds the edge image \\(g\\) back to the original \\(f\\), so the sharpened image is \\(f_{\\text{UM} }(x,y) =\\) {{c1::\\(f(x,y) + k\\,g(x,y)\\)}}.",
   "extra": "Here \\(k\\) is a scaling constant. The study guide writes this as \\(f_{\\text{UM} } = f + kg\\).",
   "tags": [
    "b05_image",
    "unsharp_masking"
   ],
   "source": "05b_lecture_17_image_filters.pdf p.11",
-  "yield": "high"
+  "yield": "high",
+  "guid": "oJ}s5ld:A)"
  },
  {
   "text": "In unsharp masking, a larger \\(k\\) gives {{c1::more}} sharpening. Lecture 17 gives reasonable values of \\(k\\) between {{c2::0.2 and 0.7}}. With \\(k > 1\\), unsharp masking is called a {{c3::high-boost}} filter.",
@@ -117,7 +128,8 @@
    "unsharp_masking"
   ],
   "source": "05b_lecture_17_image_filters.pdf p.9, p.11",
-  "yield": "high"
+  "yield": "high",
+  "guid": "j+XtEPikEq"
  },
  {
   "text": "A mean filter reduces noise but {{c1::blurs edges}}, because noise and edges are both sharp intensity transitions. A {{c2::larger kernel}}, or repeated application of a small one, gives stronger smoothing.",
@@ -127,7 +139,8 @@
    "mean_filter"
   ],
   "source": "05b_lecture_17_image_filters.pdf p.22-25",
-  "yield": "high"
+  "yield": "high",
+  "guid": ">-.^?W[)~"
  },
  {
   "text": "A Gaussian filter is a smoothing filter with a {{c1::nonuniform}} kernel whose weights get {{c2::smaller}} with distance from the centre. The kernel is {{c3::isotropic}}, so it smooths the same amount in every direction.",
@@ -137,7 +150,8 @@
    "gaussian_filter"
   ],
   "source": "05b_lecture_17_image_filters.pdf p.27-30",
-  "yield": "high"
+  "yield": "high",
+  "guid": "q`;%5&e1yg"
  },
  {
   "text": "In a Gaussian filter, a larger \\(\\sigma\\) gives {{c1::more blurring}} and a larger kernel. The kernel spans \\(-[3\\sigma]\\) to \\([3\\sigma]\\) in each direction, so \\(\\sigma = 1\\) gives a {{c2::\\(7 \\times 7\\)}} kernel.",
@@ -147,7 +161,8 @@
    "gaussian_filter"
   ],
   "source": "05b_lecture_17_image_filters.pdf p.28-30",
-  "yield": "high"
+  "yield": "high",
+  "guid": "c7%lX5Xiu("
  },
  {
   "text": "A median filter sorts the intensities in the neighbourhood and replaces the pixel with the {{c1::middle-ranked}} value. It is a {{c2::non-linear}} filter from the rank, or order-statistic, family.",
@@ -157,7 +172,8 @@
    "median_filter"
   ],
   "source": "05b_lecture_17_image_filters.pdf p.21, p.34-35",
-  "yield": "high"
+  "yield": "high",
+  "guid": "m6)*VA)TOf"
  },
  {
   "text": "A median filter removes any structure that covers {{c1::less than half}} of the neighbourhood. That removes {{c2::impulse}} noise, and it also removes real thin lines and small objects.",
@@ -167,7 +183,8 @@
    "median_filter"
   ],
   "source": "05b_lecture_17_image_filters.pdf p.35",
-  "yield": "high"
+  "yield": "high",
+  "guid": "nH);$Rk>9j"
  },
  {
   "text": "Unlike a mean filter, a median filter does not {{c1::compress the brightness range}} in the neighbourhood, so it {{c2::preserves sharp edges}}.",
@@ -177,6 +194,7 @@
    "median_filter"
   ],
   "source": "05b_lecture_17_image_filters.pdf p.38-39",
-  "yield": "high"
+  "yield": "high",
+  "guid": "EQ21vLZ#Aw"
  }
 ]

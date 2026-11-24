@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>b02 preview (copy) — cloze highlight check</title>
+<style>
+.card { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-size: 21px;
+        line-height: 1.45; text-align: left; color: #1d1d1f; background: #fbfbfa; padding: 8px 14px; }
+.cloze { font-weight: 700; color: #1a5fb4; }
+.extra { margin-top: 16px; padding: 10px 12px; border-left: 4px solid #e5a50a; background: #fdf6e3;
+         font-size: 17px; color: #3a3a3a; }
+.diag { margin: 8px 0 16px; padding: 8px 10px; background: #fff3cd; border: 1px solid #e0c36a; font-size: 14px; }
+.ok { background: #e8f5e9; border-color: #81c784; }
+.cardwrap { border: 1px solid #ddd; border-radius: 8px; margin: 18px 0; overflow: hidden; }
+.hdr { background: #eee; padding: 6px 12px; font-size: 13px; color: #444; }
+.side { padding: 4px 0; }
+h1 { font-size: 22px; }
+.note { max-width: 820px; margin: 0 auto; padding: 20px; }
+</style>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] }
+};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head><body><div class="note">
+<h1>Preview copy: 02 Speedup efficiency Amdahl</h1>
+<p>This is a <b>read-only HTML copy</b> of the card JSON. The Anki deck / .apkg was not edited.</p>
+<p>Blue text = <code>.cloze</code> highlight (<code>#1a5fb4</code>). Yellow flags =
+blank lives inside MathJax, which is why the blue often fails in Anki too.</p>
+
+<div class="cardwrap">
+  <div class="hdr">b02 #0 · tags: b02_performance, speedup · showing cloze c1</div>
+  <div class="diag ok">Card 0: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>You time the serial program and the parallel program on the same input. Speedup is \(S =\) <span class="cloze">[...]</span>.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>You time the serial program and the parallel program on the same input. Speedup is \(S =\) <span class="cloze">\(\frac{T_{\text{serial} } }{T_{\text{parallel} } }\)</span>.
+    <div class="extra">A speedup of 4 means the parallel version finishes in a quarter of the serial time.</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #1 · tags: b02_performance, linear_speedup · showing cloze c1</div>
+  <div class="diag ok">Card 1: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>Linear speedup is the best case. With \(p\) cores, \(S =\) <span class="cloze">[...]</span>, so \(T_{\text{parallel} } =\) \(T_{\text{serial} }/p\).</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>Linear speedup is the best case. With \(p\) cores, \(S =\) <span class="cloze">\(p\)</span>, so \(T_{\text{parallel} } =\) \(T_{\text{serial} }/p\).
+    <div class="extra">Lecture 14 says linear speedup does not normally happen, because real programs pay overheads that grow with \(p\).</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #2 · tags: b02_performance, efficiency · showing cloze c1</div>
+  <div class="diag ok">Card 2: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>Efficiency is the speedup you get per core, \(E =\) <span class="cloze">[...]</span> \(=\) \(\frac{T_{\text{serial} } }{p \cdot T_{\text{parallel} } }\).</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>Efficiency is the speedup you get per core, \(E =\) <span class="cloze">\(\frac{S}{p}\)</span> \(=\) \(\frac{T_{\text{serial} } }{p \cdot T_{\text{parallel} } }\).
+    <div class="extra">Linear speedup gives \(E = 1\). Lecture 14 writes the first fraction as \(S/P\) with a capital P, but P and \(p\) are both the core count.</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #3 · tags: b02_performance, speedup_efficiency_calc · showing cloze c1</div>
+  <div class="diag ok">Card 3: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>A program takes 100 s on 1 core, 40 s on 4 cores and 25 s on 8 cores. Speedup grows from <span class="cloze">[...]</span> to <span class="cloze">[...]</span>, and efficiency drops from 0.625 to 0.5.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>A program takes 100 s on 1 core, 40 s on 4 cores and 25 s on 8 cores. Speedup grows from <span class="cloze">2.5</span> to <span class="cloze">4</span>, and efficiency drops from 0.625 to 0.5.
+    <div class="extra">\(S = 100/40 = 2.5\) and \(E = 2.5/4\). \(S = 100/25 = 4\) and \(E = 4/8\). This is study guide practice question 5.</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #4 · tags: b02_performance, efficiency · showing cloze c1</div>
+  <div class="diag ok">Card 4: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>Add more cores to the same problem and speedup <span class="cloze">[...]</span>, but efficiency falls, because the overheads grow with the number of threads or processes.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>Add more cores to the same problem and speedup <span class="cloze">rises</span>, but efficiency falls, because the overheads grow with the number of threads or processes.
+    <div class="extra">In the Lecture 14 table, \(S\) goes 1, 1.9, 3.6, 6.5, 10.8 for \(p = 1, 2, 4, 8, 16\), while \(E\) goes 1, 0.95, 0.9, 0.81, 0.675.</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #5 · tags: b02_performance, overheads · showing cloze c1</div>
+  <div class="diag ok">Card 5: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>Lecture 14 lists the overheads that slow a parallel program. For threads, they are managing the threads, <span class="cloze">[...]</span>, and calls to mutex functions.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>Lecture 14 lists the overheads that slow a parallel program. For threads, they are managing the threads, <span class="cloze">critical sections</span>, and calls to mutex functions.
+    <div class="extra">A mutex makes the threads run the critical section one at a time. A serial program has none of these costs.</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #6 · tags: b02_performance, overheads · showing cloze c1</div>
+  <div class="diag ok">Card 6: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>Lecture 14 also counts <span class="cloze">[...]</span> in distributed systems and file I/O as overheads that slow a parallel program.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>Lecture 14 also counts <span class="cloze">network I/O</span> in distributed systems and file I/O as overheads that slow a parallel program.
+    <div class="extra">Network transfers are much slower than local memory access, and more processes usually means more data sent over the network.</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #7 · tags: b02_performance, overhead_model · showing cloze c1</div>
+  <div class="diag ok">Card 7: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>Lecture 14 writes parallel run-time as \(T_{\text{parallel} } =\) <span class="cloze">[...]</span> \(+\) \(T_{\text{overhead} }\).</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>Lecture 14 writes parallel run-time as \(T_{\text{parallel} } =\) <span class="cloze">\(\frac{T_{\text{serial} } }{p}\)</span> \(+\) \(T_{\text{overhead} }\).
+    <div class="extra">The first term is the ideal time with the work split evenly. The second is the added time to manage the parallel operations.</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #8 · tags: b02_performance, problem_size · showing cloze c1</div>
+  <div class="diag ok">Card 8: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>Keep \(p\) fixed and make the problem bigger. The overhead grows <span class="cloze">[...]</span> than \(T_{\text{serial} }\), so speedup and efficiency both increase.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>Keep \(p\) fixed and make the problem bigger. The overhead grows <span class="cloze">more slowly</span> than \(T_{\text{serial} }\), so speedup and efficiency both increase.
+    <div class="extra">In textbook Table 2.5 at \(p = 16\), efficiency is 0.39 for half size, 0.68 for the original size and 0.89 for double size.</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #9 · tags: b02_performance, amdahl_law · showing cloze c1</div>
+  <div class="diag ok">Card 9: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>With serial fraction \(a\) on \(p\) cores, Amdahl&#x27;s law gives \(S =\) <span class="cloze">[...]</span>.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>With serial fraction \(a\) on \(p\) cores, Amdahl&#x27;s law gives \(S =\) <span class="cloze">\(\frac{1}{(1-a)/p + a}\)</span>.
+    <div class="extra">This is the study guide&#x27;s form. \(1-a\) is the parallelizable portion. The textbook calls the serial fraction \(r\) instead of \(a\).</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #10 · tags: b02_performance, amdahl_limit · showing cloze c1</div>
+  <div class="diag ok">Card 10: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>As \(p\) keeps growing, the Amdahl speedup approaches <span class="cloze">[...]</span>, where \(a\) is the inherently serial fraction of the work.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>As \(p\) keeps growing, the Amdahl speedup approaches <span class="cloze">\(1/a\)</span>, where \(a\) is the inherently serial fraction of the work.
+    <div class="extra">The \((1-a)/p\) term goes to 0, so only \(a\) is left in the denominator. Past some point, extra cores add almost nothing.</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #11 · tags: b02_performance, amdahl_limit · showing cloze c1</div>
+  <div class="diag ok">Card 11: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>A program that is 90% parallelizable can never get a speedup above <span class="cloze">[...]</span>, even on 1000 cores. At 95% the cap is 20, and at 99% it is 100.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>A program that is 90% parallelizable can never get a speedup above <span class="cloze">10</span>, even on 1000 cores. At 95% the cap is 20, and at 99% it is 100.
+    <div class="extra">The cap is \(1/a\), so \(1/0.1 = 10\), \(1/0.05 = 20\) and \(1/0.01 = 100\). A program that is 50% parallelizable caps at 2.</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #12 · tags: b02_performance, amdahl_example · showing cloze c1</div>
+  <div class="diag ok">Card 12: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>A program takes 20 s serially, and 90% of it parallelizes perfectly. On \(p\) cores it takes \(T_{\text{parallel} } =\) <span class="cloze">[...]</span> seconds, so it never runs faster than 2 seconds.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>A program takes 20 s serially, and 90% of it parallelizes perfectly. On \(p\) cores it takes \(T_{\text{parallel} } =\) <span class="cloze">\(18/p + 2\)</span> seconds, so it never runs faster than 2 seconds.
+    <div class="extra">The parallel part is \(0.9 \times 20 / p\) and the serial part is \(0.1 \times 20\). The 2-second serial part gives the cap \(S \le 20/2 = 10\).</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #13 · tags: b02_performance, amdahl_law · showing cloze c1</div>
+  <div class="diag ok">Card 13: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>Lecture 14 says Amdahl&#x27;s law rules out <span class="cloze">[...]</span> speedup, at least as a result of parallelization. With an inherently serial portion of 0, the law gives \(S =\) \(p\).</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>Lecture 14 says Amdahl&#x27;s law rules out <span class="cloze">super-linear</span> speedup, at least as a result of parallelization. With an inherently serial portion of 0, the law gives \(S =\) \(p\).
+    <div class="extra">This follows from the formula. \((1-a)/p + a\) is never smaller than \(1/p\), so \(S\) never exceeds \(p\).</div>
+  </div>
+</div>
+<div class="cardwrap">
+  <div class="hdr">b02 #14 · tags: b02_performance, amdahl_use · showing cloze c1</div>
+  <div class="diag ok">Card 14: cloze(s) are outside math — blue highlight should show normally.</div>
+  <div class="card side"><b>Front:</b><br>Time the inherently serial part over several trial runs and Amdahl&#x27;s law gives the <span class="cloze">[...]</span>. That tells you how many execution units your program can use before extra ones stop adding speedup.</div>
+  <hr>
+  <div class="card side"><b>Back:</b><br>Time the inherently serial part over several trial runs and Amdahl&#x27;s law gives the <span class="cloze">maximum speedup</span>. That tells you how many execution units your program can use before extra ones stop adding speedup.
+    <div class="extra">Lecture 14 uses this for a cost and benefit analysis of what hardware or cloud compute to buy.</div>
+  </div>
+</div>
+</div></body></html>
