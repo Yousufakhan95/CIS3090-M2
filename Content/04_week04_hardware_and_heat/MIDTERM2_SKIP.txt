@@ -1,0 +1,6 @@
+Not on Midterm 2:
+- 08_heat_distribution_case_study.pdf (shared-memory heat case study)
+- code/heatTransfer.zip
+
+For Midterm 2 hardware, use the study_plan batch 1 pack instead
+(Content/11_week11_midterm2/textbook_m2_readings and Lecture 7 slides 11-16 only).

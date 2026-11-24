@@ -12,3 +12,10 @@ Skip inside this range
 - 3.4.6 Data distributions, from the bottom of page 116 to the 3.4.7 heading on page 117. Block, cyclic, and block-cyclic partitions are not on the slides.
 
 Stop on page 121 at the heading "3.4.9 Allgather". Allgather and matrix-vector multiplication are not on the slides.
+
+Do not keep reading past this batch
+- pp. 127-134 (3.6 MPI performance) and pp. 135-144 (3.7 odd-even sort). Not on Midterm 2.
+- Lecture 12 slides: 12_odd_even_sort_distributed_memory.pdf (week 07). Not on Midterm 2.
+- Lecture 13 slides: 13_heat_distribution_distributed_memory.pdf (week 08). Not on Midterm 2.
+- Shared-memory heat case study: 08_heat_distribution_case_study.pdf (week 04). Not on Midterm 2.
+The study guide says L12-13 (odd-even sort and heat distribution with MPI) will not be on the midterm.

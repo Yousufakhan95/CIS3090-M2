@@ -1,0 +1,5 @@
+Not on Midterm 2 (whole week):
+- 13_heat_distribution_distributed_memory.pdf (Lecture 13 heat case study)
+- code/heatDiffusion.zip
+
+The Midterm 2 study guide says Lectures 12-13 will not be on the exam.

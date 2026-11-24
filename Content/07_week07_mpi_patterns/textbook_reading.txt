@@ -1,1 +1,8 @@
 Pacheco Ch3 secs 3.2, 3.4 (see week06 textbook for 3.4), 3.6, 3.7. Excerpts in textbook/
+
+Midterm 2 only: stop after Lecture 11 / trapezoidal rule and collectives through 3.4.8.
+Do not study for Midterm 2:
+- 12_odd_even_sort_distributed_memory.pdf (Lecture 12)
+- textbook/ch03_3.7_odd_even_sort_printed_p135-144.pdf
+- textbook/ch03_3.6_mpi_performance_printed_p127-134.pdf
+- recordings/lecture_12_recording_2026-10-29.url

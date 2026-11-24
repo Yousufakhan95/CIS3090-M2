@@ -39,13 +39,15 @@ Every batch folder has a `PRACTICE_QUESTIONS.md` with three questions, or four f
 - pp. 38–49 after "Distributed-memory interconnects": ring, mesh, hypercube, bisection width, cache coherence. No slide covers these.
 - pp. 66–70: scalability, taking timings, GPU performance. Lecture 14 cites only §§2.6.1–2.6.2.
 - pp. 121–134: Allgather, matrix-vector, derived datatypes, MPI performance evaluation. Not on any M2 slide or the guide.
-- pp. 135+: odd-even sort, Lectures 12–13. Not on the midterm.
+- pp. 127–134: §3.6 MPI performance. Not on the midterm.
+- pp. 135+: §3.7 odd-even / parallelized sorting, Lectures 12–13. Not on the midterm.
+- Heat-distribution case studies: shared-memory (week 04, Lecture 8 slides) and MPI (week 08, Lecture 13 slides). Not on the midterm.
 - Chapter 4 (Pthreads): the M2 guide's compare table is enough.
 
 ### Slides you can skip
 
 Lectures 9, 10, 11, 14, and Lecture 7 apart from slides 11–16. The batch readings cover them.  
-Lectures 12–13 are out of scope.
+Lectures 12–13 (odd-even sort, heat distribution) and the week-04 heat case study are out of scope.
 
 ---
 
