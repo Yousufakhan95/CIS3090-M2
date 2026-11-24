@@ -1,0 +1,73 @@
+import json
+
+F = "06_lecture_18_warp_images.pdf"
+T = "b06_warp_images"
+
+
+def card(text, extra, sub, pages, figure=None):
+    c = {"text": text, "extra": extra, "tags": [T, sub], "source": f"{F} {pages}", "yield": "high"}
+    if figure:
+        c["figure"] = {"file": F, "page": figure}
+    return c
+
+
+cards = [
+    card(r"Warp can't read a PIL image directly. The program converts the PIL image to a {{c1::NumPy}} array of float32 with np.asarray, then copies it into a {{c2::Warp}} array with wp.array.",
+         r"NumPy is the intermediate format in both directions. The study guide lists the chain as Image.open, NumPy, Warp arrays, kernel, NumPy, Image.fromarray.",
+         "image_pipeline", "p.3, p.6, p.12"),
+    card(r"After the kernel runs, the program calls {{c1::.numpy()}} on the output Warp array to get a NumPy array. Then {{c2::Image.fromarray}} builds the PIL image that gets saved to disk.",
+         r"The .numpy() call also copies the data from device memory back to system memory.",
+         "image_pipeline", "p.16"),
+    card(r"PIL mode {{c1::L}} is greyscale, with one 8-bit unsigned integer per pixel. Mode RGB has {{c2::3}} per pixel. Mode RGBA has {{c3::4}}, and the fourth one is alpha.",
+         r"Lecture 18 shows a greyscale copy and an RGBA copy of the same picture that look identical, so the program must check image.mode instead of trusting how the image looks.",
+         "image_modes", "p.5, p.9"),
+    card(r"Pillow's image.size gives width first, as \((w, h)\). NumPy's shape gives {{c1::height}} first, as \((h, w, c)\) for a colour image and {{c2::\((h, w)\)}} for greyscale.",
+         r"An RGB image gives \((h, w, 3)\) and an RGBA image gives \((h, w, 4)\). A greyscale array has no channel axis at all.",
+         "image_modes", "p.7, p.8"),
+    card(r"For a greyscale image, the program adds a channel axis of size {{c1::1}}, turning \((h, w)\) into \((h, w, 1)\). Then one {{c2::3D}} kernel handles greyscale, RGB and RGBA images the same way.",
+         r"The program launches with dim=npInData.shape, and every thread gets its indices with i, j, k = wp.tid().",
+         "greyscale_channel_axis", "p.10, p.18"),
+    card(r"Before saving a greyscale result, the program must {{c1::remove the size-1 channel axis}} again, because PIL won't build an image from shape \((h, w, 1)\).",
+         r"The slide does this with npOutData[:, :, 0] when image.mode is L. A3 also requires the output image to have the same mode as the input.",
+         "greyscale_channel_axis", "p.11"),
+    card(r"For an RGBA image, the kernel filters only the colour channels, \(k < 3\). It {{c1::copies alpha through unchanged}} from the input, at channel index {{c2::3}}.",
+         r"A3 also requires the alpha channel of an RGBA image to stay unchanged.",
+         "alpha_channel", "p.7, p.19"),
+    card(r"If your filter also blurs the alpha channel, nothing fails. A fully opaque image has constant alpha, so the output {{c1::looks correct}} and you won't catch the bug by eye.",
+         r"Blurring a constant channel gives back the same constant. On an image with varying transparency, the filtered alpha values are meaningless.",
+         "alpha_channel", "p.19"),
+    card(r"The output array comes from \(\text{wp.zeros\_like}\), so alpha starts at {{c1::0}}. If the kernel skips alpha without copying it from the input, the saved image is {{c2::fully transparent}}.",
+         r"\(\text{wp.zeros\_like}\) gives an array with the same shape, dtype and device as the input, filled with zeros.",
+         "alpha_channel", "p.12, p.19"),
+    card(r"To give a kernel a constant such as k for unsharp masking or \(\sigma\) for a Gaussian, you pass it as an ordinary {{c1::kernel argument}} with a {{c2::type annotation}}, such as float.",
+         r"In wp.launch the constant goes into the inputs list in the same position as in the kernel signature, as in inputs=[source, dest, 2.0].",
+         "kernel_constants", "p.13"),
+    card(r"Warp reads a constant kernel argument {{c1::at launch}}, so you can change k between launches without {{c2::recompiling}} the kernel.",
+         r"Warp closures are for values needed when the kernel is compiled, such as the length of a fixed-size vector. Lecture 18 says the course doesn't need them.",
+         "kernel_constants", "p.13"),
+    card(r"wp.launch joins inputs= and outputs= into the kernel's positional arguments {{c1::in order}}. Warp doesn't check which arrays the kernel writes, so outputs= is only {{c2::documentation}} for the reader.",
+         r"A kernel can write to an array passed through inputs= and Warp won't complain.",
+         "launch_arguments", "p.14"),
+    card(r"In wp.launch, dim sets the {{c1::launch grid}}, not the shape of any array. Each thread's wp.tid() is its index into that grid.",
+         r"The image filters set dim to the image shape because each output pixel comes from the same input pixel's neighbourhood. A reduction such as a histogram passes arrays with different shapes.",
+         "launch_arguments", "p.15, p.20"),
+    card(r"In Lecture 18's blur kernel, each thread writes {{c1::exactly one}} output cell and reads only the input array. That is why the kernel runs race-free with {{c2::no synchronization}}.",
+         r"No two threads write the same location, and no thread reads a value another thread writes. Pthreads code that updates shared data would need a mutex instead.",
+         "race_free_kernel", "p.21"),
+    card(r"Unsharp masking pushes values above 255 and below 0 at strong edges. np.uint8 {{c1::does not clamp}}, so without np.clip you see {{c2::salt-and-pepper}} noise along the edges.",
+         r"The slide's full line is Image.fromarray(np.uint8(np.clip(np.rint(npOutData), 0, 255))).",
+         "output_clipping", "p.16"),
+    card(r"A 3000 by 4000 RGB image stored as float32 takes \(3000 \times 4000 \times 3 \times {{c1::4}}\) bytes, which is {{c2::144}} MB. That data crosses the bus once to the GPU and once back.",
+         r"A float32 value is 4 bytes. GPU memory is separate from system memory, so the kernel can't start until the upload finishes.",
+         "transfer_cost", "p.22"),
+    card(r"On a T4, Lecture 18's sharpen filter is about 555x faster than one CPU thread in the kernel alone, but only about 37x faster {{c1::end-to-end}}. The gap is time spent {{c2::copying data between host and device}}.",
+         r"Transfers take 94% of the GPU's time for sharpen. The p.24 table's headers are shifted one cell left, and pages 25 and 26 show its two data columns are sharpen and median.",
+         "transfer_cost", "p.24, p.25", figure=24),
+    card(r"Median filtering reaches about 134x end-to-end speedup, versus 37x for sharpen, while moving the same 144 MB. It does more {{c1::compute per byte moved}}, so the transfer cost is spread over more useful work.",
+         r"Lecture 18's rule is that the more work per byte moved, the better the GPU looks. A filter that copies data across the bus to do nine additions is the GPU's worst case.",
+         "transfer_cost", "p.26"),
+]
+
+with open(r"C:\github\CIS3090-M2\anki_work\v4\cards\b06.json", "w", encoding="utf-8") as f:
+    json.dump(cards, f, ensure_ascii=False, indent=1)
+print(len(cards))

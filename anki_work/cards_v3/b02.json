@@ -1,0 +1,93 @@
+[
+ {
+  "text": "You time the serial program, then the parallel one. Speedup is \\(S = {{c1::T_{\\mathrm{serial} }/T_{\\mathrm{parallel} } }}\\).",
+  "extra": "Run times change with input size, but speedup changes much less, so the course talks about performance in terms of speedup.",
+  "tags": ["b02_performance", "speedup"],
+  "source": "Lecture 14 slide 26; Textbook p.62",
+  "yield": "high"
+ },
+ {
+  "text": "You split the work evenly over \\(p\\) cores and pay no overhead at all. That best case is linear speedup, \\(S = {{c1::p}}\\), and it {{c2::almost never}} happens in practice.",
+  "extra": "Linear means 2 cores run twice as fast, 4 cores four times as fast, and so on.",
+  "tags": ["b02_performance", "linear_speedup"],
+  "source": "Lecture 14 slides 27 and 28",
+  "yield": "high"
+ },
+ {
+  "text": "Efficiency tells you how much speedup each core contributes: \\(E = {{c1::S/p}} = {{c2::T_{\\mathrm{serial} }/(p \\cdot T_{\\mathrm{parallel} }) }}\\).",
+  "extra": "Lecture 14 also calls it the fraction of parallel run time each core spends on the actual problem. Linear speedup gives \\(E = 1\\).",
+  "tags": ["b02_performance", "efficiency"],
+  "source": "Lecture 14 slide 35; Textbook p.62",
+  "yield": "high"
+ },
+ {
+  "text": "Thread management, critical sections, mutex calls, network I/O, and file I/O all slow a parallel program down. These overheads {{c1::grow}} as you add threads or processes.",
+  "extra": "That is why real speedup curves bend below the straight line \\(S = p\\).",
+  "tags": ["b02_performance", "overheads"],
+  "source": "Lecture 14 slide 29; M2 guide p.2",
+  "yield": "high"
+ },
+ {
+  "text": "As you add processors, speedup {{c1::increases}} but efficiency {{c2::decreases}}. Each extra processor buys you less than the one before it.",
+  "extra": "Lecture 14's table has \\(S = 6.5\\) at 8 cores and \\(S = 10.8\\) at 16 cores, while \\(E\\) drops from 0.81 to 0.675.",
+  "tags": ["b02_performance", "speedup_vs_efficiency"],
+  "source": "Lecture 14 slides 30 to 36",
+  "yield": "high"
+ },
+ {
+  "text": "With overhead included, parallel run time is \\(T_{\\mathrm{parallel} } = {{c1::T_{\\mathrm{serial} }/p + T_{\\mathrm{overhead} } }}\\).",
+  "extra": "The first term is the ideal split. The second is the time spent managing the parallel work.",
+  "tags": ["b02_performance", "overhead_formula"],
+  "source": "Lecture 14 slides 37 and 38; Textbook p.63",
+  "yield": "high"
+ },
+ {
+  "text": "Make the problem bigger and the overhead usually grows {{c1::more slowly}} than \\(T_{\\mathrm{serial} }\\). So with a bigger problem, speedup and efficiency both {{c2::increase}}.",
+  "extra": "The cores do more real work, so the overhead becomes a smaller share of the total.",
+  "tags": ["b02_performance", "problem_size"],
+  "source": "Lecture 14 slide 39; Textbook p.64",
+  "yield": "high"
+ },
+ {
+  "text": "A 20 s program is 90% parallelizable and the parallel part scales perfectly. On \\(p\\) cores it takes {{c1::\\(18/p + 2\\)}} seconds, because only the 18 s part shrinks.",
+  "extra": "The 2 s serial part never gets faster, no matter how many cores you add.",
+  "tags": ["b02_performance", "amdahl_example"],
+  "source": "Lecture 14 slides 41 and 42",
+  "yield": "high"
+ },
+ {
+  "text": "Amdahl's law with serial fraction \\(a\\) says \\(S = {{c1::1/((1-a)/p + a) }}\\).",
+  "extra": "The parallel part \\(1-a\\) is divided by \\(p\\). The serial part \\(a\\) stays the same.",
+  "tags": ["b02_performance", "amdahl_formula"],
+  "source": "Lecture 14 slide 44; M2 guide p.2",
+  "yield": "high"
+ },
+ {
+  "text": "Under Amdahl, adding cores forever only pushes speedup toward {{c1::\\(1/a\\)}}. A program that is 90% parallelizable never beats a speedup of {{c2::10}}.",
+  "extra": "At 95% parallelizable the cap is 20. At 99% it is 100.",
+  "tags": ["b02_performance", "amdahl_limit"],
+  "source": "Lecture 14 slide 46; Textbook p.65",
+  "yield": "high"
+ },
+ {
+  "text": "Amdahl's law tells you {{c1::superlinear}} speedup, meaning better than \\(S = p\\), will not come from parallelization.",
+  "extra": "If the whole program is parallelizable, Amdahl gives exactly \\(S = p\\) and no more.",
+  "tags": ["b02_performance", "no_superlinear"],
+  "source": "Lecture 14 slide 48",
+  "yield": "high"
+ },
+ {
+  "text": "Measure how much of your run is serial, and Amdahl gives you the {{c1::maximum}} number of cores worth paying for. Past that point, more hardware buys almost nothing.",
+  "extra": "The lecture frames this as a cost and benefit decision about how much hardware or cloud compute to buy.",
+  "tags": ["b02_performance", "using_amdahl"],
+  "source": "Lecture 14 slide 49; M2 guide p.2",
+  "yield": "high"
+ },
+ {
+  "text": "A job takes 100 s on 1 core, 40 s on 4 cores, and 25 s on 8 cores. Speedup goes from 2.5 to {{c1::4}}, and efficiency drops from {{c2::0.625}} to {{c3::0.5}}.",
+  "extra": "\\(S = 100/40\\) and \\(100/25\\). \\(E = 2.5/4\\) and \\(4/8\\). This is study guide practice question 5, answer A.",
+  "tags": ["b02_performance", "practice_q5"],
+  "source": "M2 guide p.5",
+  "yield": "high"
+ }
+]

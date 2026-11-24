@@ -1,0 +1,202 @@
+[
+ {
+  "text": "In Pthreads, every thread works in one {{c1::shared address space}}. The threads synchronize with {{c2::mutexes}}, condition variables and atomics.",
+  "extra": "Any thread can read or write any shared variable, so shared data needs a lock or an atomic update.",
+  "tags": [
+   "b07_m2_compare",
+   "memory_model"
+  ],
+  "source": "07_m2_study_guide.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "MPI runs {{c1::separate processes}} that share no memory. The processes exchange data only by {{c2::message passing}}, either point-to-point or with collectives.",
+  "extra": "Lecture 9 says the data each process works on must be explicitly sent to it.",
+  "tags": [
+   "b07_m2_compare",
+   "memory_model"
+  ],
+  "source": "07_m2_study_guide.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "Warp keeps {{c1::host and device}} memory separate. Your data is {{c2::copied to the device}} first, and the kernels then operate on GPU device memory.",
+  "extra": "Lecture 9 says CPU code sees main memory and GPU code sees GPU memory, so the two need explicit transfers.",
+  "tags": [
+   "b07_m2_compare",
+   "memory_model"
+  ],
+  "source": "07_m2_study_guide.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "Of Pthreads, MPI and Warp, the two that need explicit data movement before the work starts are {{c1::MPI}} and {{c1::Warp}}.",
+  "extra": "MPI sends the data as messages and Warp copies it from host to device. Pthreads threads read shared memory directly.",
+  "tags": [
+   "b07_m2_compare",
+   "memory_model"
+  ],
+  "source": "07_m2_study_guide.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "Pthreads runs {{c1::threads}} on a single {{c2::shared-memory}} machine.",
+  "extra": "Lecture 9 calls Pthreads a low-level, OS-specific API that assumes shared memory.",
+  "tags": [
+   "b07_m2_compare",
+   "execution_target"
+  ],
+  "source": "07_m2_study_guide.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "MPI runs {{c1::processes}} across {{c2::one or more}} nodes.",
+  "extra": "Lecture 9 says the processes can run on different machines, on the same machine, or both, and the MPI code is the same either way.",
+  "tags": [
+   "b07_m2_compare",
+   "execution_target"
+  ],
+  "source": "07_m2_study_guide.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "Warp targets a heterogeneous system with a CPU host and an {{c1::NVIDIA GPU}} device. Without a GPU, Warp can still run the kernel on the {{c2::CPU}} as a fallback.",
+  "extra": "The fallback is device=\"cpu\", which runs serially for portability. device=\"cuda\" runs in parallel on the NVIDIA GPU.",
+  "tags": [
+   "b07_m2_compare",
+   "execution_target"
+  ],
+  "source": "07_m2_study_guide.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "The built-in Pthreads call that makes each thread wait until all the threads reach the same point is {{c1::\\(\\mathrm{pthread\\_barrier\\_wait}\\)}}.",
+  "extra": "The study guide lists the barrier as the main built-in Pthreads facility for parallel work.",
+  "tags": [
+   "b07_m2_compare",
+   "built_ins"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Pthreads has {{c1::no collectives}}. To combine values from all the threads, you write the {{c2::reduction}} yourself.",
+  "extra": "Lecture 9 says Pthreads was designed for concurrency rather than parallel computation, so you do everything by hand.",
+  "tags": [
+   "b07_m2_compare",
+   "built_ins"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Of Pthreads, MPI and Warp, only {{c1::MPI}} has a rich set of built-in collectives such as Bcast, Reduce, Allreduce and Gather.",
+  "extra": "Lecture 9 says MPI was designed with parallel computation in mind, and Pthreads was not.",
+  "tags": [
+   "b07_m2_compare",
+   "built_ins"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Warp's built-in facility is a {{c1::kernel launch}} over {{c2::N elements}}.",
+  "extra": "Each thread calls wp.tid() to get the index of the element it works on.",
+  "tags": [
+   "b07_m2_compare",
+   "built_ins"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Pthreads is the best fit for {{c1::fine-grained}} updates to {{c2::shared state}}, as long as you synchronize them carefully.",
+  "extra": "Threads see the same memory, so small frequent updates need no messages or copies.",
+  "tags": [
+   "b07_m2_compare",
+   "best_fit"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "MPI is the best fit when the work splits into {{c1::large independent chunks}} with only {{c2::modest communication}} between steps.",
+  "extra": "Lecture 9 says machines on a network must spend more time computing than communicating, or the speedup is small.",
+  "tags": [
+   "b07_m2_compare",
+   "best_fit"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Warp is the best fit for large {{c1::data-parallel maps}} where every element gets {{c2::uniform}} work.",
+  "extra": "Every GPU thread runs the same kernel on its own element, so uneven work leaves threads idle.",
+  "tags": [
+   "b07_m2_compare",
+   "best_fit"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "A Warp job is only worth it when each element has {{c1::enough work}} to pay for the {{c2::copies}} between host and device.",
+  "extra": "The copy to the GPU and back is a fixed cost that the compute time must outweigh.",
+  "tags": [
+   "b07_m2_compare",
+   "best_fit"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "The common Pthreads pitfalls are {{c1::data races}}, deadlocks and {{c2::oversubscription}}.",
+  "extra": "Oversubscription means you start more threads than the machine has cores, so the threads take turns on the same cores.",
+  "tags": [
+   "b07_m2_compare",
+   "pitfalls"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "The common MPI pitfalls are mismatched {{c1::tags or ranks}}, deadlocks and {{c2::frequent small messages}} between machines.",
+  "extra": "A receive with the wrong tag or rank never matches its send and can hang. Every message between machines costs network time.",
+  "tags": [
+   "b07_m2_compare",
+   "pitfalls"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "The common Warp pitfalls are excessive {{c1::host-device copies}}, {{c2::non-contiguous}} data, and problems too {{c3::small}} to pay for the copies.",
+  "extra": "Lecture 7 says a flat contiguous array moves to the GPU in one block, and scattered data does not.",
+  "tags": [
+   "b07_m2_compare",
+   "pitfalls"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "The study guide lists {{c1::deadlock}} as a pitfall for both Pthreads and MPI, but not for Warp.",
+  "extra": "Pthreads threads deadlock on locks. MPI processes deadlock when a blocking send or receive never finds its partner.",
+  "tags": [
+   "b07_m2_compare",
+   "pitfalls"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "The study guide lists data races as a pitfall for {{c1::Pthreads}} only.",
+  "extra": "Pthreads threads share one address space, so two threads can write the same variable at once. MPI processes share no memory.",
+  "tags": [
+   "b07_m2_compare",
+   "pitfalls"
+  ],
+  "source": "07_m2_study_guide.pdf p.3-4",
+  "yield": "high"
+ }
+]

@@ -1,0 +1,609 @@
+
+===== PAGE 1 =====
+CIS*3090
+GPGPU, intro to Warp
+Based on the notes from An Introduction to Parallel Programming by Peter Pacheco and Matthew Malensek, NVIDIA GPU Gems 2, and GPU Architectures - A CPU 
+Perspective by Derek Hower
+
+===== PAGE 2 =====
+3D gaming and 3D graphics
+• Consider a game with 3D graphics 
+• Each game runs at a certain frame rate - e.g. 60 
+frames per second (FPS) 
+• A frame is rendered at the desired screen resolution 
+(e.g. 1920×1080) 
+• The colour of each pixel must be computed 
+individually
+2
+https://i1.wp.com/www.multiplayergames.com/wp-content/uploads/2010/07/starcraft2.jpg?ssl=1
+
+===== PAGE 3 =====
+3D gaming and 3D graphics
+• This means that we need to compute colour for 
+1920*1080 ≈ 2,000,000 pixels 
+• We do this 60 times per second, so we need to 
+compute  ≈ 120 million pixel colours per second 
+• We cannot do this on a CPU - even a very high-end 
+modern CPU 
+•
+At least not for a modern game 
+•
+Each pixel colour computation requires multiple 
+matrix / vector operations 
+•
+Each matrix/vector multiplication can take dozens of 
+CPU instructions
+3
+https://i1.wp.com/www.multiplayergames.com/wp-content/uploads/2010/07/starcraft2.jpg?ssl=1
+
+===== PAGE 4 =====
+3D gaming and GPU
+• This led to development of dedicated hardware - GPUs (Graphics 
+Processing Units) 
+• One dedicated purpose: rendering 3D graphics 
+• Models are stored as collections of 3D points 
+• Surface direction, light direction, and camera orientation are all 
+represented as 3D vectors 
+• Model surface texture (shininess, colour texture, bumpiness) is 
+represented as vectors and image maps (texture maps)
+4
+https://en.wikipedia.org/wiki/3D_rendering
+https://en.wikipedia.org/wiki/Utah_teapot
+
+===== PAGE 5 =====
+3D gaming and GPU
+• To create a single 3D frame, we need to 
+•
+combine multiple models in one scene 
+•
+add texture to the surface 
+•
+apply light computations 
+•
+perform perspective projection to convert a 3D scene 
+into a 2D image 
+• All this has to be done for every vertex - and then again 
+for every pixel. 
+5
+https://en.wikipedia.org/wiki/3D_rendering
+https://www.pcmag.com/encyclopedia/term/viewing-frustum
+
+===== PAGE 6 =====
+3D gaming and GPU
+• 3D rendering involves: 
+•
+Coordinates and vectors represented (usually with 3 or 
+4 components) 
+•
+Transformations represented as matrices - rotation, 
+translation (movement), scaling, projection 
+•
+Geometric computations using these vectors and 
+matrices 
+• All this involves a very large amount of vector-matrix 
+computations 
+• And everything feels a bit SIMD-y...
+6
+https://en.wikipedia.org/wiki/3D_rendering
+https://www.pcmag.com/encyclopedia/term/viewing-frustum
+
+===== PAGE 7 =====
+GPUs: an overview
+• GPUs are specialized processors originally designed for one specific goal: optimizing for 
+basic matrix/vector manipulation 
+• These optimizations are accompanied by lack of general-purpose GPU hardware 
+• GPUs often skip complex branch/control logic and cache/memory management, and 
+dedicate most transistors to processing units
+7
+
+===== PAGE 8 =====
+GPUs: an overview
+• These optimizations allowed for very high degree of parallelism 
+•
+Modern CPUs usually have 2-96 cores, maxing out at over 250. 
+•
+Modern GPUs have a few hundred to a few thousand cores (>10,000 for high-end GPUs) 
+• This allows fast rendering of the individual pixels in each 3D graphics frame, so we can get 
+reasonable frame rates 
+• The more computing cores we have, the more pixels we can render in parallel 
+• With more cores we can increase 
+•
+the screen resolution (more pixels in a frame) 
+•
+frame rate (more frames per second)
+8
+
+===== PAGE 9 =====
+GPGPU
+• It was quickly realized that these architectures can do more than just 3D graphics for gaming 
+and 3D animation 
+• This led to a field known as General Purpose computing on the GPU, or GPGPU 
+• Huge number of applications: 
+•
+Physics simulations (both for gaming and scientific / engineering applications) 
+•
+Machine Learning 
+•
+GPGPU has largely enabled the ML explosion of the last 15-20 years 
+•
+Robotics (used for training the robot AI) 
+•
+Audio, image, and video processing 
+•
+Science, finance, and many others
+9
+
+===== PAGE 10 =====
+GPGPU
+How do the GPUs help?
+• Physics simulations 
+•
+Objects can be represented using points (i.e. vectors) 
+•
+Forces can be represented using vectors and matrices 
+• Machine learning 
+•
+Neural network training involves adjusting weights of the network nodes using inputs and 
+outputs 
+•
+This can be formulated as a vector operation 
+• Image processing 
+•
+Each pixel in an image is a point 
+•
+Many image manipulation techniques can be represented as matrices
+10
+
+===== PAGE 11 =====
+The stream programming model
+• 3D graphics computations - and therefore, the overall GPU architecture - are based around 
+the stream programming model 
+• All data is represented as a stream - an ordered set of data of the same data type 
+•
+Can be simple - a stream of integers or floating-point numbers 
+•
+Can be more complex - a stream of points / triangles / transformation matrices 
+•
+We expect thousands of elements in the stream - or more! 
+• Operations on streams include  
+•
+copying them 
+•
+indexing into them with a separate index stream 
+•
+performing computation on them with kernels - which is what we are most interested in
+11
+
+===== PAGE 12 =====
+Kernels
+• A kernel is a generic term for a small program / function that operates on elements in a stream 
+•
+This term kernel comes from mathematics, where it's used in functional analysis, linear algebra, etc. 
+•
+Also used in image processing, where a kernel represents a transformation matrix 
+• A kernel operates on entire streams, taking one or more streams as inputs and producing one or 
+more streams as outputs 
+• The defining characteristic of a kernel is that it operates on entire streams of elements, as 
+opposed to individual elements 
+• The most typical use of a kernel is to evaluate a function on each element of an input stream - a 
+map operation 
+•
+E.g. a transformation kernel may project each element of a stream of 3D points into a different 3D 
+coordinate system
+12
+
+===== PAGE 13 =====
+Kernels
+• Kernel operations include 
+•
+expansions - more than one output element is produced for each input element 
+•
+reductions - more than one element is combined into a single output element 
+•
+filters - a subset of input elements are output 
+• Think of individual 3D points of a model forming a stream 
+• Each operation in a rendering pipeline can be represented as one or more kernels 
+• Multiple operations could be combined into a single kernel
+13
+
+===== PAGE 14 =====
+Kernels and data parallelism
+• Kernel outputs are based only on their kernel inputs 
+• Within a kernel, you can read any element of the input arrays and write one output 
+•
+However, your output may not depend on another thread's output 
+• These restrictions give us a high degree of data parallelism and have two major advantages 
+•
+First, the data required for kernel execution is completely known when the kernel is written (or 
+compiled) 
+•
+Kernels can thus be highly efficient when their input elements and their intermediate computed 
+data are stored locally or are carefully controlled global references 
+•
+Requiring independence of computation on separate stream elements within a single kernel 
+allows mapping what appears to be a serial kernel calculation onto data-parallel hardware
+14
+
+===== PAGE 15 =====
+Kernels and GPGPU
+• GPGPU programming follows the following pattern: 
+• Arrange the problem so that the input data is a stream 
+• Write one or more kernels that operate on the stream 
+•
+If you have more than one, they have to work in sequence 
+•
+In the stream model, only one kernel can be applied to a stream at a time 
+• Load the data and the kernel, and run the computation
+15
+
+===== PAGE 16 =====
+GPU architecture overview
+• All parallel approaches we have seen in the course so far - shared memory with Pthreads and 
+distributed memory with MPI - assume computations using the CPU 
+• However, as we have seen, the GPUs have a somewhat different architecture  
+•
+Primarily optimized for matrix / vector operations 
+•
+Very large number of small, specialized "cores" - which give us a different level of parallelization 
+•
+Cores have some internal organization
+16
+
+===== PAGE 17 =====
+SIMD vs SIMT
+• Single Instruction Multiple Data (SIMD) - Split 
+identical, independent work over multiple 
+execution units (lanes) 
+• More efficient: Eliminate redundant fetch/decode  
+• Still only a single thread that uses one register file 
+- with very wide registers
+17
+fetch decode Execution lane 2 
+Execution lane 1 
+Execution lane 3 
+CPU
+Register file
+
+===== PAGE 18 =====
+SIMD vs SIMT
+• Single Instruction Multiple Thread (SIMT) - Split 
+identical, independent work over multiple lockstep 
+threads  
+• Multiple Threads + Scalar Ops = One PC, multiple 
+register files 
+18
+Execution lane 1 
+Execution lane 3 
+GPU
+fetch decode Execution lane 2 
+
+===== PAGE 19 =====
+Data Parallel Execution Models 
+19
+Multiple independent threads 
+Single thread with a  
+wide data path
+Multiple lockstep threads 
+
+===== PAGE 20 =====
+Data Parallel Execution Models 
+20
+Multi-core CPUs
+x86 SSE (vector processors)
+GPU
+
+===== PAGE 21 =====
+Shading / SIMT units
+• As a result, GPUs consist of multiple small, simple units that run 
+floating-point operations - shading units  
+•
+Known under various vendor-specific names, e.g. CUDA cores for 
+Nvidia GPUs, SIMT unit, etc. 
+•
+Often more than one thread per shading unit 
+• GPUs work on a SIMT model 
+• Multiple SIMT threads are grouped together into a shading unit
+21
+Shading unit 
+
+===== PAGE 22 =====
+Compute units
+• Multiple shading units are organized into compute units  
+• Each compute unit usually has dozens of shading units (up 
+to 128 or more)
+22
+Compute unit 
+
+===== PAGE 23 =====
+GPU architecture overview
+23
+Simplified compute unit with 8 shading units 
+Each shading unit can run multiple SIMT threads 
+
+===== PAGE 24 =====
+GPU architecture overview
+24
+GPU with multiple compute units
+
+===== PAGE 25 =====
+GPU and data
+• GPUs are designed to have lock-step threads operate on pre-loaded data 
+• Anything that breaks the uniformity affects performance 
+• Threads execute in lockstep groups 
+•
+If threads in a group take different branches, the group runs both paths and masks off the 
+inactive lanes 
+•
+The divergent code costs the sum of both branches 
+• So it is best to load one flat data buffer (stream), which is then operated on by the various 
+compute units and shading units (all running a single kernel)
+25
+
+===== PAGE 26 =====
+Homogeneous computing 
+• All examples we have seen in the course were examples of homogeneous computing - all 
+execution units were of the same type (CPU cores) 
+•
+In MPI, each node on the network might be a slightly different CPU 
+•
+However, the code is still compiled to run on all CPUs, so the CPUs must be compatible with 
+each other 
+•
+Each process still runs in a CPU core, and all CPU cores would have a very similar architecture 
+•
+Otherwise the code simply won't run 
+•
+E.g. mixing Intel and AMD CPUs will be fine - all are x86 compatible 
+•
+Mixing Intel and ARM CPUs will not work
+26
+
+===== PAGE 27 =====
+Heterogeneous computing 
+• GPGPU is an example of heterogeneous 
+computing 
+• We start a main program on a CPU 
+•
+It loads the data (stream) 
+•
+It loads the GPU kernels (written in their own 
+language) 
+•
+They are compiled before being loaded, so 
+they can run on the GPU architecture 
+•
+It sends the data stream to the GPU, so 
+kernels can operate on it 
+•
+Executes the kernels 
+•
+It gets the result back from the GPU
+27
+GPU 
+host 
+application
+kernels
+kernels
+
+===== PAGE 28 =====
+New cost
+• On the surface, GPGPU looks like threading - shared memory, direct access, etc. 
+• Once the code and the data are on the GPU, you do indeed get direct access to the memory 
+(and potential for data races), though the programming model itself is fundamentally different 
+• However, it borrows from the distributed memory programming as well - on most systems, 
+the CPU and GPU have their own memory spaces 
+• Moving the data to the GPU requires a copy over the bus, which is expensive 
+• In fact, it can be the dominant cost for small problems - and the reason why a naive GPU port 
+might be slower than the original CPU implementation
+28
+
+===== PAGE 29 =====
+Writing GPGPU code with Warp
+
+===== PAGE 30 =====
+30
+GPGPU libraries
+• CUDA (Compute Unified Device Architecture) is a proprietary GPGPU computing platform 
+and API created by Nvidia 
+•
+Only runs on Nvidia GPU hardware 
+•
+Nvidia maintains the software tools  
+• OpenCL (Open Computing Language) is a FOSS alternative - open standard that does 
+GPGPU on a variety of platforms 
+• CUDA is the most popular option in the industry 
+• OpenCL is has traditionally been used in situations where access to Nvidia GPU hardware is 
+not guaranteed - e.g. academia - but its use has been declining
+
+===== PAGE 31 =====
+Nvidia Warp
+• The GPGPU API used in this course is Nvidia Warp 
+•
+Free, open-source 
+•
+Developed by Nvidia 
+• Runs on Nvidia GPUs in parallel 
+• Runs on the CPU - but only as a single-thread, serial program (for now, anyway...) 
+• Can be used with CPU and GPU backend with identical code/semantics 
+• With CPU mode, you can learn GPGPU programming, though you won't get the speedup 
+benefits, unless you run it on compatible Nvidia hardware
+31
+
+===== PAGE 32 =====
+Nvidia Warp
+Advantages
+• Hides a lot of complexities of GPGPU 
+• Both CPU code and kernel code are written in Python 
+•
+JIT converted to C++/CUDA and compiled at runtime 
+•
+In OpenCL or CUDA, you write  
+•
+CPU code in C 
+•
+the kernel code - in a dedicated programming language (different for CUDA and OpenCL) 
+• Simple architecture - data stream and kernels 
+•
+Don't need to deal with the complexities of multiple compute units and all the non-trivial 
+communication and synchronization between them
+32
+
+===== PAGE 33 =====
+Using Warp in 3 simple steps
+• We write the GPU kernel in Python  
+• We write the CPU portion in Python 
+• We execute the CPU code as a normal Python program (the file can contain the GPU kernel 
+in it) 
+• Behind the scenes, Warp does the following: 
+•
+Auto-generates C/C++ code based on the CPU code, compiles it 
+•
+Auto-generates CUDA code based on the GPU code, compiles it 
+•
+Executes the CPU code, which executes the GPU kernel and manages all the data transfer 
+between the CPU and the GPU
+33
+
+===== PAGE 34 =====
+Using Warp
+The general steps for the CPU code
+1. Load / create the data 
+2. Convert data - e.g. NumPy array - into a Warp array 
+3. Create an empty Warp array for the output data and initialize it to zero 
+4. Launch the kernel - which is written separately 
+5. Convert the output Warp array to a CPU array - e.g. back to NumPy
+34
+
+===== PAGE 35 =====
+Warp example 1: adding two arrays
+Z = X + Y
+• Start by writing the kernel - a Python function annotated with the @wp.kernel decorator 
+•
+A kernel will consist of one function 
+• Conceptually the kernel is applied to the whole stream 
+• Syntactically you write the body for a single element and Warp launches one thread per 
+element
+35
+
+===== PAGE 36 =====
+Warp example 1: adding two arrays
+Z = X + Y
+• Warp is statically typed, so we need to specify the types of input and outputs 
+• GPU kernels do not return values - they store the computed values into one (or more) of the 
+inputs 
+• So we specify three inputs: 
+•
+the 1st input array, x 
+•
+the 2nd input array, y 
+•
+the output array, z
+36
+
+===== PAGE 37 =====
+Warp example 1: adding two arrays
+Z = X + Y
+• Internally, the kernel function will need to know its unique ID - just like a Pthread function or 
+an MPI process - called thread index in Warp 
+• We get it with the function wp.tid(): 
+tid = wp.tid() 
+• We can then do the addition - each individual call to the kernel function adds the two 
+elements from x and y at the thread index and saves them to z at thread index 
+ 
+z[tid] = x[tid]+y[tid]
+37
+
+===== PAGE 38 =====
+Warp example 1: adding two arrays
+The kernel
+@wp.kernel 
+def addArrays(x: wp.array(dtype=float), 
+           y: wp.array(dtype=float), 
+           z: wp.array(dtype=float)): 
+    # thread index 
+    tid = wp.tid() 
+    # compute the sum 
+    z[tid] = x[tid]+y[tid]
+38
+
+===== PAGE 39 =====
+Warp example 1: adding two arrays
+The CPU portion - load / create 
+• Set device="cpu" for running in Docker 
+• Create input data arrays X and Y using host (CPU) data types 
+• NumPy library is widely used for numerical computation on Python, so we will use it for the 
+host data type: 
+• E.g. two NumPy arrays of floats 
+ 
+hostX = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=np.float32) 
+hostY = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], dtype=np.float32) 
+•
+We are declaring the NumPy array as 32-bit floats - that's what we want to use on the GPU
+39
+
+===== PAGE 40 =====
+Warp example 1: adding two arrays
+The CPU portion - convert data to Warp types 
+• Warp can create Warp arrays from NumPy arrays using wp.array(): 
+ 
+x = wp.array(hostX, dtype=float, device=device) 
+y = wp.array(hostY, dtype=float, device=device)
+40
+
+===== PAGE 41 =====
+Warp example 1: adding two arrays
+The CPU portion - create empty output Warp array
+• We also need to prepare an output array for the resulting sum: 
+ 
+numElements = len(hostX) 
+z = wp.zeros(numElements, dtype=float, device=device) 
+•
+numElements must be the same as the length of x and y
+41
+
+===== PAGE 42 =====
+Warp example 1: adding two arrays
+Launch the kernel
+• Call wp.launch() with 4 arguments: 
+•
+kernel function name 
+•
+the number of threads to launch - for a simple map over one array, this is the array's length. 
+•
+an array with all the inputs 
+•
+A string specifying whether the kernel runs on the CPU or the GPU 
+• E.g. 
+	
+wp.launch(kernel=addArrays, 
+	
+          dim=len(z), 
+	
+          inputs=[x, y], 
+      outputs=[z], 
+	
+          device=device)
+42
+
+===== PAGE 43 =====
+Warp example 1: adding two arrays
+Convert the output Warp array to a CPU array
+• For this example, this is optional, but we would do it with the .numpy() method of Warp 
+arrays, e.g.  
+ 
+z.numpy()
+43
+
+===== PAGE 44 =====
+Warp example 1: adding two arrays
+• Done! 
+• See arrAdd.py
+44
+
+===== PAGE 45 =====
+Warp versions
+• On Docker, we have Warp 1.16 - it was the current version this summer, when I worked with 
+SoCS IT to prepare the Docker container for this course 
+• The current version on Warp's GitHub page is 1.20.0  (last time I checked, anyway) 
+• We will stick with version 1.16, just to be safe
+45

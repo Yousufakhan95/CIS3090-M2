@@ -1,0 +1,259 @@
+[
+ {
+  "text": "A manager receives with \\(\\mathrm{MPI\\_ANY\\_SOURCE}\\) as the source. After the call, it reads {{c1::\\(\\mathrm{status.MPI\\_SOURCE}\\)}} to learn which rank sent the message, and {{c2::\\(\\mathrm{status.MPI\\_TAG}\\)}} to learn its tag.",
+  "tags": [
+   "b03_mpi",
+   "status_any_source"
+  ],
+  "source": "03_ch03_mpi.pdf p.10",
+  "yield": "high",
+  "extra": "MPI does not overwrite the source argument you passed in. The sender's rank is only in the \\(\\mathrm{MPI\\_Status}\\) struct, which has at least the members \\(\\mathrm{MPI\\_SOURCE}\\), \\(\\mathrm{MPI\\_TAG}\\) and \\(\\mathrm{MPI\\_ERROR}\\)."
+ },
+ {
+  "text": "The count you pass to \\(\\mathrm{MPI\\_Recv}\\) is only the buffer capacity. To get the number of elements that arrived, the receiver calls {{c1::\\(\\mathrm{MPI\\_Get\\_count}\\)}} with the status and the receive datatype.",
+  "tags": [
+   "b03_mpi",
+   "status_any_source"
+  ],
+  "source": "03_ch03_mpi.pdf p.10",
+  "yield": "high",
+  "extra": "The count is not a member of the status struct because it depends on the datatype. It is the bytes received divided by the bytes per element, so MPI computes it only when you ask."
+ },
+ {
+  "text": "\\(\\mathrm{MPI\\_Send}\\) and \\(\\mathrm{MPI\\_Recv}\\) return {{c1::an error code}}, which is {{c2::\\(\\mathrm{MPI\\_SUCCESS}\\)}} on success. They do not return the number of elements received.",
+  "tags": [
+   "b03_mpi",
+   "status_any_source"
+  ],
+  "source": "03c_lecture_09_mpi_intro.pdf p.33",
+  "yield": "high",
+  "extra": "This is the trap in study guide practice question 2. The element count comes from \\(\\mathrm{MPI\\_Get\\_count}\\)."
+ },
+ {
+  "text": "Workers finish in an unpredictable order. If rank 0 receives in rank order, it {{c1::blocks on a slow worker}} while finished results wait. With {{c2::\\(\\mathrm{MPI\\_ANY\\_SOURCE}\\)}} it takes results in the order the workers finish.",
+  "tags": [
+   "b03_mpi",
+   "status_any_source"
+  ],
+  "source": "03_ch03_mpi.pdf p.9",
+  "yield": "high",
+  "extra": "A2 uses this for its work queue. The manager receives each request with \\(\\mathrm{MPI\\_ANY\\_SOURCE}\\) and then reads the sender from the status."
+ },
+ {
+  "text": "Process q sends and process r receives. The receive matches only if both use the same {{c1::communicator}} and the same {{c2::tag}}, the send's dest is r, and the receive's source is {{c3::q}}.",
+  "tags": [
+   "b03_mpi",
+   "message_matching"
+  ],
+  "source": "03_ch03_mpi.pdf p.8",
+  "yield": "high",
+  "extra": "The study guide says communicator, source and tag must all agree. If any one differs, the receive never completes."
+ },
+ {
+  "text": "Once the communicator, tag and ranks match, the receive succeeds if the receive type equals the send type and the receive buffer size is {{c1::at least}} the send size.",
+  "tags": [
+   "b03_mpi",
+   "message_matching"
+  ],
+  "source": "03_ch03_mpi.pdf p.8",
+  "yield": "high",
+  "extra": "The greetings program sends 31 chars into a 100 char buffer, which is fine."
+ },
+ {
+  "text": "A message sent on one communicator {{c1::cannot be received}} on a different communicator. Passing separate communicators to two libraries keeps their messages apart.",
+  "tags": [
+   "b03_mpi",
+   "message_matching"
+  ],
+  "source": "03_ch03_mpi.pdf p.7",
+  "yield": "high",
+  "extra": "Pacheco gives an atmosphere library and an ocean library their own communicators. Splitting the tag range between them would also work, but it is harder to manage."
+ },
+ {
+  "text": "Only the {{c1::receiver}} can use a wildcard such as \\(\\mathrm{MPI\\_ANY\\_TAG}\\). The sender always names a rank and a tag, so MPI uses a {{c2::push}} mechanism. There is no wildcard for the {{c3::communicator}}.",
+  "tags": [
+   "b03_mpi",
+   "message_matching"
+  ],
+  "source": "03_ch03_mpi.pdf p.9",
+  "yield": "high",
+  "extra": "The two receive wildcards are \\(\\mathrm{MPI\\_ANY\\_SOURCE}\\) and \\(\\mathrm{MPI\\_ANY\\_TAG}\\)."
+ },
+ {
+  "text": "A tag is a {{c1::nonnegative int}} that tells apart messages that are otherwise identical, for example floats to print versus floats to use in a computation.",
+  "tags": [
+   "b03_mpi",
+   "tags"
+  ],
+  "source": "03_ch03_mpi.pdf p.7",
+  "yield": "high",
+  "extra": "Process 1 can send the floats to print with tag 0 and the floats for the computation with tag 1."
+ },
+ {
+  "text": "In A2 the tag gives the message's purpose and the buffer carries the payload. The manager answers each worker request with {{c1::\\(\\mathrm{TAG\\_WORK}\\)}} and a ciphertext, or with {{c2::\\(\\mathrm{TAG\\_STOP}\\)}} once the batch is empty.",
+  "tags": [
+   "b03_mpi",
+   "tags"
+  ],
+  "source": "A2_mpi.txt p.3",
+  "yield": "high",
+  "extra": "Workers send \\(\\mathrm{TAG\\_REQUEST}\\) with a count, then one \\(\\mathrm{TAG\\_RESULT}\\) message per valid decryption."
+ },
+ {
+  "text": "Messages from one sender to one receiver are {{c1::non-overtaking}}, so they arrive in the order they were sent. Messages from different senders have {{c2::no guaranteed order}}.",
+  "tags": [
+   "b03_mpi",
+   "message_ordering"
+  ],
+  "source": "03_ch03_mpi.pdf p.11",
+  "yield": "high",
+  "extra": "MPI cannot control network speed. If q runs on Mars and t runs on the same machine as r, q's earlier message may still arrive after t's."
+ },
+ {
+  "text": "\\(\\mathrm{MPI\\_Send}\\) may {{c1::buffer}} the message and return, or {{c2::block}} until it can start transmitting. Which one happens depends on the MPI implementation.",
+  "tags": [
+   "b03_mpi",
+   "send_recv_semantics"
+  ],
+  "source": "03_ch03_mpi.pdf p.10",
+  "yield": "high",
+  "extra": "Typical implementations buffer messages smaller than a cutoff size and block on larger ones."
+ },
+ {
+  "text": "When \\(\\mathrm{MPI\\_Send}\\) returns, you only know that the {{c1::send buffer can be reused}}. You do not know whether the message was transmitted.",
+  "tags": [
+   "b03_mpi",
+   "send_recv_semantics"
+  ],
+  "source": "03_ch03_mpi.pdf p.10",
+  "yield": "high",
+  "extra": "A buffered send returns as soon as MPI has copied the data and envelope into its own storage."
+ },
+ {
+  "text": "\\(\\mathrm{MPI\\_Recv}\\) {{c1::always blocks}} until a matching message arrives. So a receive with no matching send makes the process {{c2::hang}} forever.",
+  "tags": [
+   "b03_mpi",
+   "blocking_pitfalls"
+  ],
+  "source": "03_ch03_mpi.pdf p.11",
+  "yield": "high",
+  "extra": "Lecture 9 says the number of sends and receives must be equal for this reason."
+ },
+ {
+  "text": "If the tag or rank in a receive doesn't match the intended send, the receiver may hang, or it may {{c1::match the wrong send}}.",
+  "tags": [
+   "b03_mpi",
+   "blocking_pitfalls"
+  ],
+  "source": "03_ch03_mpi.pdf p.11",
+  "yield": "high",
+  "extra": "Pacheco calls the wrong match perhaps worse than a hang."
+ },
+ {
+  "text": "A send with no matching receive makes the sender {{c1::hang}} if \\(\\mathrm{MPI\\_Send}\\) blocks. If the send was buffered, the message is {{c2::lost}}.",
+  "tags": [
+   "b03_mpi",
+   "blocking_pitfalls"
+  ],
+  "source": "03_ch03_mpi.pdf p.11",
+  "yield": "high"
+ },
+ {
+  "text": "Most MPI implementations let only {{c1::rank 0}} of \\(\\mathrm{MPI\\_COMM\\_WORLD}\\) read stdin. That rank reads the input and {{c2::sends it to the other ranks}}.",
+  "tags": [
+   "b03_mpi",
+   "mpi_io"
+  ],
+  "source": "03_ch03_mpi.pdf p.18",
+  "yield": "high",
+  "extra": "If several processes could read stdin, there would be no rule for which one gets which part of the input. A2 applies the same rule to input files."
+ },
+ {
+  "text": "Every rank may print to stdout, but the order of the lines is {{c1::nondeterministic}}, and one rank's output can {{c2::interrupt}} another's.",
+  "tags": [
+   "b03_mpi",
+   "mpi_io"
+  ],
+  "source": "03_ch03_mpi.pdf p.16",
+  "yield": "high",
+  "extra": "The processes compete for stdout and MPI does not schedule access to it, so the order changes from run to run."
+ },
+ {
+  "text": "To print in rank order, the other ranks {{c1::send their output to rank 0}}, and rank 0 prints it in rank order. The greetings program does this.",
+  "tags": [
+   "b03_mpi",
+   "mpi_io"
+  ],
+  "source": "03_ch03_mpi.pdf p.18",
+  "yield": "high"
+ },
+ {
+  "text": "{{c1::\\(\\mathrm{MPI\\_Init}\\)}} sets up MPI and creates \\(\\mathrm{MPI\\_COMM\\_WORLD}\\). No MPI call should come before it, and none after {{c2::\\(\\mathrm{MPI\\_Finalize}\\)}}.",
+  "tags": [
+   "b03_mpi",
+   "init_size_rank"
+  ],
+  "source": "03_ch03_mpi.pdf p.4",
+  "yield": "high",
+  "extra": "\\(\\mathrm{MPI\\_Finalize}\\) frees the resources MPI allocated."
+ },
+ {
+  "text": "You start 4 processes. Each one calls \\(\\mathrm{MPI\\_Comm\\_size}\\) and gets {{c1::4}}. Each one calls \\(\\mathrm{MPI\\_Comm\\_rank}\\) and gets its own rank, from {{c2::0 to 3}}.",
+  "tags": [
+   "b03_mpi",
+   "init_size_rank"
+  ],
+  "source": "03_ch03_mpi.pdf p.5",
+  "yield": "high",
+  "extra": "The rank plays the role of a process ID, but MPI keeps it system independent."
+ },
+ {
+  "text": "MPI programs are SPMD. You compile {{c1::one program}}, and each process {{c2::branches on its rank}} to do different work.",
+  "tags": [
+   "b03_mpi",
+   "init_size_rank"
+  ],
+  "source": "03_ch03_mpi.pdf p.5",
+  "yield": "high",
+  "extra": "SPMD means single program, multiple data. Write the program to run with any number of processes, because you rarely know the core count in advance."
+ },
+ {
+  "text": "You compile an MPI program with {{c1::mpicc}}, a wrapper script around the C compiler. You start 4 processes with {{c2::mpiexec -n 4}}.",
+  "tags": [
+   "b03_mpi",
+   "init_size_rank"
+  ],
+  "source": "03c_lecture_09_mpi_intro.pdf p.25",
+  "yield": "high"
+ },
+ {
+  "text": "Pthreads assumes {{c1::shared memory}} and works with threads. MPI assumes {{c2::distributed memory}} and works with {{c3::processes}}.",
+  "tags": [
+   "b03_mpi",
+   "distributed_memory"
+  ],
+  "source": "03c_lecture_09_mpi_intro.pdf p.8",
+  "yield": "high",
+  "extra": "MPI processes share nothing, so every piece of data a process needs must be sent to it explicitly."
+ },
+ {
+  "text": "A distributed memory system only makes sense when the machines spend more time {{c1::computing}} than {{c2::communicating}}.",
+  "tags": [
+   "b03_mpi",
+   "distributed_memory"
+  ],
+  "source": "03c_lecture_09_mpi_intro.pdf p.5",
+  "yield": "high",
+  "extra": "Sending data over the network takes much longer than sharing data between threads, so long data-parallel computations fit best."
+ },
+ {
+  "text": "In the parallel trapezoidal rule with \\(h = (b-a)/n\\), each rank gets \\(\\mathrm{local\\_n} = {{c1::n / \\mathrm{comm\\_sz} }}\\) trapezoids. Its interval starts at \\(\\mathrm{local\\_a} = {{c2::a + \\mathrm{my\\_rank} \\cdot \\mathrm{local\\_n} \\cdot h}}\\).",
+  "tags": [
+   "b03_mpi",
+   "trapezoid_partition"
+  ],
+  "source": "03_ch03_mpi.pdf p.14",
+  "yield": "high",
+  "extra": "This assumes \\(\\mathrm{comm\\_sz}\\) divides \\(n\\) evenly. Each rank other than 0 then sends its local integral to rank 0, which adds them up."
+ }
+]

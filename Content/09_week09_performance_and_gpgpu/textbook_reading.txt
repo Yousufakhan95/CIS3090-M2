@@ -1,0 +1,9 @@
+Week 9 reading, trimmed to what Lecture 14 covers
+
+Pacheco Ch2:
+- READ pages 21-23 (2.2.1 caching and locality, stop at 2.2.2)
+- READ pages 31-38 (2.3.1-2.3.4: Flynn, SIMD, vector processors, MIMD, UMA/NUMA, clusters, bus, crossbar)
+  stop on page 38 at "Distributed-memory interconnects"
+- READ pages 61-66 (2.6.1 speedup and efficiency, 2.6.2 Amdahl), stop at 2.6.3
+
+Excerpts in textbook/

@@ -1,0 +1,18 @@
+{
+  "name": "cc-card-gen",
+  "owner": {
+    "name": "AshtonLong",
+    "url": "https://github.com/AshtonLong"
+  },
+  "metadata": {
+    "description": "Claude Code card generation: lecture materials to Anki cloze decks."
+  },
+  "plugins": [
+    {
+      "name": "cc-card-gen",
+      "source": "./",
+      "description": "Turn a folder of lecture slides or notes into an Anki cloze deck (.apkg), with full / exam / cram depth settings.",
+      "version": "1.0.0"
+    }
+  ]
+}

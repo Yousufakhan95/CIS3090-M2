@@ -1,0 +1,76 @@
+[
+ {
+  "text": "Warp image pipeline: open with PIL, check mode, cast NumPy to {{c1::float32}}, upload with {{c2::wp.array}}, zero the output, launch the kernel, pull back with {{c3::.numpy()}}, then Image.fromarray and save.",
+  "extra": "NumPy sits in the middle both ways: PIL to NumPy to Warp, then Warp to NumPy to PIL.",
+  "tags": [
+   "b07_warp_images",
+   "pipeline_order"
+  ],
+  "source": "07_lecture_18_warp_images.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "Check image.mode first. Mode L is greyscale with NumPy shape {{c1::(h, w)}}. RGB is {{c2::(h, w, 3)}}. RGBA is {{c3::(h, w, 4)}}.",
+  "extra": "Each channel is one 8-bit unsigned integer per pixel.",
+  "tags": [
+   "b07_warp_images",
+   "image_modes"
+  ],
+  "source": "07_lecture_18_warp_images.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "Pillow image.size is {{c1::(w, h)}}, but a colour NumPy array is {{c2::(h, w, c)}}. Expand greyscale to {{c3::(h, w, 1)}} so one 3D kernel can handle every mode, then strip that axis before you save mode L.",
+  "extra": "PIL will not build a greyscale image from shape (h, w, 1). Launch with dim equal to the 3D array shape.",
+  "tags": [
+   "b07_warp_images",
+   "size_vs_shape"
+  ],
+  "source": "07_lecture_18_warp_images.pdf p.8",
+  "yield": "high"
+ },
+ {
+  "text": "On RGBA, only filter channels where {{c1::k < 3}} and {{c2::copy alpha unchanged}}. Leave alpha at zero from wp.zeros and you save a {{c3::fully transparent}} image.",
+  "extra": "Filtering alpha is meaningless. On a fully opaque image the bug still looks fine, so you may not catch it by eye.",
+  "tags": [
+   "b07_warp_images",
+   "rgba_alpha"
+  ],
+  "source": "07_lecture_18_warp_images.pdf p.19",
+  "yield": "high",
+  "figure": {
+   "file": "07_lecture_18_warp_images.pdf",
+   "page": 19
+  }
+ },
+ {
+  "text": "Set the Warp device to {{c1::\"cpu\"}} for Docker on a laptop. Use {{c2::\"cuda\"}} on an Nvidia GPU or Colab.",
+  "extra": "cpu is the portable serial fallback. cuda runs the kernel in parallel on the GPU.",
+  "tags": [
+   "b07_warp_images",
+   "device"
+  ],
+  "source": "07_lecture_18_warp_images.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Upload with {{c1::wp.array}}(npInData, dtype=wp.float32, device=device). Allocate the output with {{c2::\\(\\text{wp.zeros\\_like}\\)}}(inWarpImage) so it matches shape, dtype, and device, filled with zeros.",
+  "extra": "On cuda, wp.array copies host memory onto the device. The study guide also allows wp.zeros with an explicit shape.",
+  "tags": [
+   "b07_warp_images",
+   "wp_array"
+  ],
+  "source": "07_lecture_18_warp_images.pdf p.12",
+  "yield": "high"
+ },
+ {
+  "text": "Pass neighbourhood size, unsharp k, or Gaussian sigma into a Warp kernel as {{c1::typed arguments}}. Warp reads each value at {{c2::launch}}, so you can change it without recompiling.",
+  "extra": "Annotate the type in the signature, then pass the number in inputs=. Closures are for compile-time constants and are not needed in this course.",
+  "tags": [
+   "b07_warp_images",
+   "kernel_constants"
+  ],
+  "source": "07_lecture_18_warp_images.pdf p.13",
+  "yield": "high"
+ }
+]

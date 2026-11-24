@@ -1,0 +1,82 @@
+[
+ {
+  "text": "You time a serial run and a parallel run. Speedup is \\(S = {{c1::T_{\\text{serial} }/T_{\\text{parallel} } }}\\). Efficiency is \\(E = {{c2::S/p }}\\). Linear speedup means \\(S = {{c3::p }}\\).",
+  "extra": "Ideal linear speedup gives \\(E = 1\\). Real runs usually land lower.",
+  "tags": [
+   "b08_m2_guide",
+   "speedup_efficiency"
+  ],
+  "source": "08_m2_study_guide.pdf p.1",
+  "yield": "high"
+ },
+ {
+  "text": "Amdahl with serial fraction \\(a\\): \\(S = {{c1::1/((1-a)/p + a) }}\\). As \\(p \\to \\infty\\), \\(S\\) caps at {{c2::\\(1/a\\)}}.",
+  "extra": "The serial slice sets the ceiling no matter how many cores you throw at the parallel part. Use that bound when you pick \\(p\\).",
+  "tags": [
+   "b08_m2_guide",
+   "amdahl"
+  ],
+  "source": "08_m2_study_guide.pdf p.2",
+  "yield": "high"
+ },
+ {
+  "text": "Add more processes and efficiency \\(E = S/p\\) usually {{c1::falls}}, because thread management, mutexes, network I/O, and file I/O all grow with \\(p\\).",
+  "extra": "Speedup can still climb while \\(E\\) slides down. That is the overhead tax.",
+  "tags": [
+   "b08_m2_guide",
+   "overheads"
+  ],
+  "source": "08_m2_study_guide.pdf p.2",
+  "yield": "high"
+ },
+ {
+  "text": "Memory model: Pthreads share one {{c1::address space}} and sync with mutexes. MPI uses {{c2::separate processes}} that pass messages. Warp keeps {{c3::host and device}} memory apart, so you copy data in first.",
+  "extra": "Kernels then run on device memory. This is the first axis on the study-guide compare table.",
+  "tags": [
+   "b08_m2_guide",
+   "compare_memory"
+  ],
+  "source": "08_m2_study_guide.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "Where it runs: Pthreads are threads on a {{c1::shared-memory}} machine. MPI is processes across {{c2::one or more nodes}}. Warp pairs a CPU host with an {{c3::NVIDIA GPU}} (or a CPU fallback).",
+  "extra": "MPI can span machines. Warp is heterogeneous GPGPU.",
+  "tags": [
+   "b08_m2_guide",
+   "compare_execution"
+  ],
+  "source": "08_m2_study_guide.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "Built-ins: Pthreads give you {{c1::barriers}} and DIY reductions. MPI ships rich {{c2::collectives}} like Bcast and Reduce. Warp fires {{c3::kernel launches}} over \\(N\\) elements.",
+  "extra": "No collectives in Pthreads. MPI collectives are the big win for chunky distributed work.",
+  "tags": [
+   "b08_m2_guide",
+   "compare_builtins"
+  ],
+  "source": "08_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Best fit: reach for Pthreads on {{c1::fine-grained}} shared-state updates. Pick MPI for {{c2::large independent chunks}} with modest messaging. Warp wins on {{c3::uniform data-parallel maps}} big enough to pay for copies.",
+  "extra": "Match the model to communication cost and how fine the work is.",
+  "tags": [
+   "b08_m2_guide",
+   "compare_best_fit"
+  ],
+  "source": "08_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Classic traps: Pthreads hit {{c1::data races}}, deadlocks, and oversubscription. MPI hangs on {{c2::mismatched tags}} or ranks, plus tiny chatty messages. Warp dies on {{c3::excessive host-device copies}} or problems too small to amortize transfers.",
+  "extra": "These are the signature failure modes on the compare table.",
+  "tags": [
+   "b08_m2_guide",
+   "compare_pitfalls"
+  ],
+  "source": "08_m2_study_guide.pdf p.4",
+  "yield": "high"
+ }
+]

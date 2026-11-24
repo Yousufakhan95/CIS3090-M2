@@ -1,0 +1,294 @@
+[
+ {
+  "text": "Flynn's taxonomy classifies a computer by how many {{c1::instruction streams}} and how many {{c2::data streams}} it can run at the same time.",
+  "extra": "Crossing single and multiple for each gives the four classes SISD, SIMD, MISD and MIMD.",
+  "tags": [
+   "b01_hardware",
+   "flynn_taxonomy"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.3",
+  "yield": "high"
+ },
+ {
+  "text": "A traditional single-core von Neumann computer runs one instruction on one piece of data at a time, so Flynn's taxonomy calls it {{c1::SISD}}.",
+  "extra": "SISD means single instruction, single data. It is the serial baseline every other class is compared against.",
+  "tags": [
+   "b01_hardware",
+   "flynn_taxonomy"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Very few real systems are {{c1::MISD}}, which would run multiple instructions on a single piece of data.",
+  "extra": "Lecture 14 lists MISD for completeness and says there aren't many systems of this kind.",
+  "tags": [
+   "b01_hardware",
+   "flynn_taxonomy"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.11",
+  "yield": "high"
+ },
+ {
+  "text": "A SIMD system has one {{c1::control unit}} that broadcasts each instruction to many {{c2::ALUs}}, and each ALU applies that instruction to its own data item.",
+  "extra": "SIMD means single instruction, multiple data. With m ALUs, Lecture 14 says arithmetic can run up to m times faster.",
+  "tags": [
+   "b01_hardware",
+   "simd"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "In a classical SIMD system, the ALUs run {{c1::synchronously}} and cannot {{c2::store instructions}}, so each ALU waits for the controller to broadcast the next one.",
+  "extra": "Lecture 14 says the ALUs are tied to the controller. No ALU can save an instruction and run it later.",
+  "tags": [
+   "b01_hardware",
+   "simd"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.6",
+  "yield": "high"
+ },
+ {
+  "text": "SIMD fits {{c1::data parallelism}}, such as a simple loop over a large array, and does poorly on most other kinds of parallel problems.",
+  "extra": "Data parallelism means you split the data among processors and each one applies the same instructions to its share.",
+  "tags": [
+   "b01_hardware",
+   "simd"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.6",
+  "yield": "high"
+ },
+ {
+  "text": "A SIMD loop runs x[i] += y[i] only when y[i] > 0. Every datapath whose y[i] is not positive sits {{c1::idle}} while the others do the addition.",
+  "extra": "All datapaths must run the same instruction or do nothing, so a branch wastes the datapaths that take the other path.",
+  "tags": [
+   "b01_hardware",
+   "simd"
+  ],
+  "source": "01_ch02_hardware.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "A vector processor holds operands in {{c1::vector registers}} and applies the same operation to every element at once, so it is a {{c2::SIMD}} system.",
+  "extra": "The vector length is fixed by the system, usually 4 to 256 elements of 64 bits each. A conventional CPU operates on one scalar at a time.",
+  "tags": [
+   "b01_hardware",
+   "vector_processors"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.7",
+  "yield": "high"
+ },
+ {
+  "text": "With vector instructions, the loop x[i] += y[i] needs one load, add and store per {{c1::block of vector-length elements}}. A conventional CPU needs one load, add and store per {{c2::element}}.",
+  "extra": "This is where the vector processor's speed comes from. One instruction covers a whole block of the array.",
+  "tags": [
+   "b01_hardware",
+   "vector_processors"
+  ],
+  "source": "01_ch02_hardware.pdf p.6",
+  "yield": "high"
+ },
+ {
+  "text": "Lecture 14 lists two benefits of vector processors. The compiler finds loops to vectorize and {{c1::reports why}} a loop can't be vectorized, and {{c2::every data item}} the processor loads is used.",
+  "extra": "A cache-based system may load a full cache line and use only part of it. Lecture 14 also lists high memory bandwidth and ease of use as benefits.",
+  "tags": [
+   "b01_hardware",
+   "vector_processors"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.8",
+  "yield": "high"
+ },
+ {
+  "text": "Lecture 14 gives two drawbacks of vector processors. They handle {{c1::irregular data structures}} poorly, and they are hard to {{c2::scale}} because longer vectors aren't very useful.",
+  "extra": "Irregular means anything other than arrays. The textbook adds that systems scale by adding more vector processors, not longer vectors.",
+  "tags": [
+   "b01_hardware",
+   "vector_processors"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.8",
+  "yield": "high"
+ },
+ {
+  "text": "A GPU core uses SIMD datapaths, but a GPU also runs many independent instruction streams on its cores. So a GPU is {{c1::neither purely SIMD nor purely MIMD}}.",
+  "extra": "The textbook says current GPUs can run more than one instruction stream per core and have dozens of cores.",
+  "tags": [
+   "b01_hardware",
+   "gpu_classification"
+  ],
+  "source": "01_ch02_hardware.pdf p.7",
+  "yield": "high"
+ },
+ {
+  "text": "A MIMD system has independent cores, each with its own {{c1::control unit and ALU}}. The cores run {{c2::asynchronously}}, each at its own pace.",
+  "extra": "Without synchronization that the programmer adds, two cores running the same code may be on different statements at any instant.",
+  "tags": [
+   "b01_hardware",
+   "mimd"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.9",
+  "yield": "high"
+ },
+ {
+  "text": "In a shared-memory MIMD system, cores communicate {{c1::implicitly}} through shared data structures. In a distributed-memory system, each processor has private memory and communicates {{c2::explicitly}} by sending messages over a network.",
+  "extra": "Lecture 14 draws shared memory as CPUs on one bus to one memory, and distributed memory as CPU and memory pairs on a network.",
+  "tags": [
+   "b01_hardware",
+   "mimd"
+  ],
+  "source": "01_ch02_hardware.pdf p.8",
+  "yield": "high",
+  "figure": {
+   "file": "01c_lecture_14_performance.pdf",
+   "page": 10
+  }
+ },
+ {
+  "text": "In a {{c1::UMA}} system, every core takes the same time to reach every memory location. This makes it {{c2::easier to program}}.",
+  "extra": "UMA means uniform memory access. The programmer does not have to think about where data lives.",
+  "tags": [
+   "b01_hardware",
+   "uma_numa"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.14",
+  "yield": "high"
+ },
+ {
+  "text": "In a NUMA system, a core reaches memory attached to {{c1::its own chip}} faster than memory attached to another chip. NUMA systems can also hold {{c2::more memory}} than UMA systems.",
+  "extra": "NUMA means nonuniform memory access. Each chip has its own block of memory, and other chips reach it through special hardware.",
+  "tags": [
+   "b01_hardware",
+   "uma_numa"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.18",
+  "yield": "high",
+  "figure": {
+   "file": "01c_lecture_14_performance.pdf",
+   "page": 18
+  }
+ },
+ {
+  "text": "A cluster is a collection of commodity computers on a commodity network such as Ethernet. Its nodes are usually shared-memory systems, so a cluster is also called a {{c1::hybrid}} system.",
+  "extra": "Hybrid means the system mixes shared memory inside each node with distributed memory between nodes.",
+  "tags": [
+   "b01_hardware",
+   "clusters_grids"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.19",
+  "yield": "high"
+ },
+ {
+  "text": "A grid joins clusters spread over a large geographic area. Its nodes are often {{c1::heterogeneous}}, meaning they use different hardware and operating systems.",
+  "extra": "The textbook says a grid turns geographically distributed computers into one distributed-memory system.",
+  "tags": [
+   "b01_hardware",
+   "clusters_grids"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.19",
+  "yield": "high"
+ },
+ {
+  "text": "On a bus, all connected devices share the same {{c1::communication wires}}. As you add processors, they {{c2::wait longer}} to access memory, so bus performance drops.",
+  "extra": "A bus has low cost and flexibility. Lecture 14 calls the bus the most common interconnect, but the textbook says buses are being replaced by switched interconnects as systems grow.",
+  "tags": [
+   "b01_hardware",
+   "interconnects"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.20",
+  "yield": "high"
+ },
+ {
+  "text": "In a crossbar, switches choose among multiple data paths. Two CPUs conflict only when they access the {{c1::same memory module}}. A crossbar is faster than a bus, but it is {{c2::more expensive}}.",
+  "extra": "The slide shows CPU 1 on Memory 4, CPU 2 on Memory 3, CPU 3 on Memory 1 and CPU 4 on Memory 2, all at the same time. The switches and links are what cost more.",
+  "tags": [
+   "b01_hardware",
+   "interconnects"
+  ],
+  "source": "01c_lecture_14_performance.pdf p.24",
+  "yield": "high",
+  "figure": {
+   "file": "01c_lecture_14_performance.pdf",
+   "page": 23
+  }
+ },
+ {
+  "text": "A program that accesses one memory location will likely access a nearby location soon. The nearby part is {{c1::spatial}} locality, and the soon part is {{c2::temporal}} locality.",
+  "extra": "Caches rely on both. A loop over an array is the textbook's example of spatial locality.",
+  "tags": [
+   "b01_hardware",
+   "locality"
+  ],
+  "source": "01_ch02_hardware.pdf p.2",
+  "yield": "high"
+ },
+ {
+  "text": "Memory moves into the cache in blocks called {{c1::cache lines}}. If a line holds 16 floats, reading z[0] also brings in z[1] through z[15], so the next 15 reads {{c2::hit the cache}}.",
+  "extra": "The first read may stall the processor while the line comes from memory. The textbook says a line usually holds 8 to 16 times one memory location.",
+  "tags": [
+   "b01_hardware",
+   "locality"
+  ],
+  "source": "01_ch02_hardware.pdf p.2",
+  "yield": "high"
+ },
+ {
+  "text": "Adjacent elements of an array are adjacent in memory, but adjacent elements of a {{c1::linked list}} can be far apart. So a loop over a flat array gets spatial locality for free.",
+  "extra": "Following pointers from node to node jumps around memory, so each cache line brings in less useful data.",
+  "tags": [
+   "b01_hardware",
+   "data_layout"
+  ],
+  "source": "01b_lecture_07_data_layout.pdf p.1",
+  "yield": "high"
+ },
+ {
+  "text": "Value types such as structs are easier to cache than {{c1::reference types}}, such as pointers to structs or structs made of pointers.",
+  "extra": "A struct's fields sit next to each other in memory. A pointer sends the CPU to a different address.",
+  "tags": [
+   "b01_hardware",
+   "data_layout"
+  ],
+  "source": "01b_lecture_07_data_layout.pdf p.1",
+  "yield": "high"
+ },
+ {
+  "text": "Contiguous data is easy to transfer, because you move {{c1::N bytes starting from address M}} in one block.",
+  "extra": "This is why one flat array can go out as a single MPI message or a single copy to the GPU.",
+  "tags": [
+   "b01_hardware",
+   "data_layout"
+  ],
+  "source": "01b_lecture_07_data_layout.pdf p.2",
+  "yield": "high"
+ },
+ {
+  "text": "Parallel code stores a 2D array as a {{c1::1D array}} with index arithmetic, and it represents a complex object as {{c2::several 1D arrays}}.",
+  "extra": "Lecture 7 gives a 3D model as the example. A game engine stores it as a vertex buffer, an index buffer and a texture buffer, each one a flat array.",
+  "tags": [
+   "b01_hardware",
+   "data_layout"
+  ],
+  "source": "01b_lecture_07_data_layout.pdf p.2",
+  "yield": "high"
+ },
+ {
+  "text": "Shared-memory programs rarely transfer data, but they still need {{c1::cache locality}}. Distributed-memory and CPU/GPU programs must move {{c2::large blocks of data}}, so they use simple flat structures.",
+  "extra": "Lecture 7 says performance is the reason to write parallel code at all, so transfer overhead has to stay small.",
+  "tags": [
+   "b01_hardware",
+   "data_layout"
+  ],
+  "source": "01b_lecture_07_data_layout.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "Lecture 7's tips for contiguous memory are to use {{c1::structs}} instead of objects, put no {{c2::pointers}} in structs, and use {{c3::contiguous arrays}} instead of linked data.",
+  "extra": "All three keep the data in one block, which is easy to cache and easy to transfer.",
+  "tags": [
+   "b01_hardware",
+   "data_layout"
+  ],
+  "source": "01b_lecture_07_data_layout.pdf p.6",
+  "yield": "high"
+ }
+]

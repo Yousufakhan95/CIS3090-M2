@@ -1,0 +1,318 @@
+===== PRINTED PAGE 127 =====
+3.6 Performance evaluation of MPI programs 127
+int MPI_Type_commit (
+MPI_Datatype∗ new_mpi_t_p / ∗ in / out ∗ / );
+This allows the MPI implementation to optimize its internal representation of the
+datatype for use in communication functions.
+Now, to use input_mpi_t, we make the following call to MPI_Bcast on each process:
+MPI_Bcast(&a ,1,input_mpi_t ,0,comm );
+So we can use input_mpi_t, just as we would use one of the basic MPI datatypes.
+In constructing the new datatype, it’s likely that the MPI implementation had to
+allocate additional storage internally. So when we’re through using the new type, we
+can free any additional storage used with a call to
+int MPI_Type_free ( MPI_Datatype∗ old_mpi_t_p / ∗ in / out ∗ / );
+We used the steps outlined here to deﬁne a Build_mpi_type function that our
+Get_input function can call. The new function and the updated Get_input function
+are shown in Program 3.13.
+3.6 Performance evaluation of MPI programs
+Let’s take a look at the performance of the matrix-vector multiplication program. For
+the most part, we write parallel programs because we expect that they’ll be faster
+than a serial program that solves the same problem. How can we verify this? We
+spent some time discussing this in Section 2.6, so we’ll start by recalling some of the
+material we learned there.
+3.6.1 Taking timings
+We’re usually not interested in the time taken from the start of program execution
+to the end of program execution. For example, in the matrix-vector multiplication,
+we’re not interested in the time it takes to type in the matrix or print out the product.
+We’re only interested in the time it takes to do the actual multiplication, so we need
+to modify our source code by adding in calls to a function that will tell us the amount
+of time that elapses from the beginning to the end of the actual matrix-vector mul-
+tiplication. MPI provides a function, MPI_Wtime, that returns the number of seconds
+that have elapsed since some time in the past:
+double MPI_Wtime ( void );
+We can time a block of MPI code as follows:
+double start , finish ;
+...
+start = MPI_Wtime ();
+/ ∗ Code to be timed ∗ /
+...
+===== PRINTED PAGE 128 =====
+128 CHAPTER 3 Distributed memory programming with MPI
+void Build_mpi_type (
+double∗ a_p / ∗ in ∗ / ,
+double∗ b_p / ∗ in ∗ / ,
+int∗ n_p / ∗ in ∗ / ,
+MPI_Datatype∗ input_mpi_t_p / ∗ out ∗ / ){
+int array_of_blocklengths [3] = {1, 1, 1};
+MPI_Datatype array_of_types [3] = {MPI_DOUBLE , MPI_DOUBLE ,
+MPI_INT };
+MPI_Aint a_addr , b_addr , n_addr ;
+MPI_Aint array_of_displacements [3] = {0};
+MPI_Get_address ( a_p ,&a_addr );
+MPI_Get_address ( b_p ,&b_addr );
+MPI_Get_address ( n_p ,&n_addr );
+array_of_displacements [1] = b_addr−a_addr ;
+array_of_displacements [2] = n_addr−a_addr ;
+MPI_Type_create_struct (3 , array_of_blocklengths ,
+array_of_displacements , array_of_types ,
+input_mpi_t_p );
+MPI_Type_commit ( input_mpi_t_p );
+} / ∗ Build_mpi_type ∗ /
+void Get_input ( int my_rank , int comm_sz , double∗ a_p ,
+double∗ b_p , int∗ n_p ){
+MPI_Datatype input_mpi_t ;
+Build_mpi_type ( a_p , b_p , n_p ,&input_mpi_t );
+if ( my_rank == 0) {
+printf ( "Enter a, b, and n\n" );
+scanf ( "%lf %lf %d" , a_p , b_p , n_p );
+}
+MPI_Bcast ( a_p ,1,input_mpi_t ,0,MPI_COMM_WORLD );
+MPI_Type_free(& input_mpi_t );
+} / ∗ Get_input ∗ /
+Program 3.13: The Get_input function with a derived datatype.
+finish = MPI_Wtime ();
+printf ( "Proc %d > Elapsed time = %e seconds\n"
+my_rank , finish−start );
+To time serial code, it’s not necessary to link in the MPI libraries. There is a
+POSIX library function called gettimeofday that returns the number of microseconds
+===== PRINTED PAGE 129 =====
+3.6 Performance evaluation of MPI programs 129
+that have elapsed since some point in the past. The syntax details aren’t too important:
+there’s a C macro GET_TIME deﬁned in the header ﬁle timer.h that can be downloaded
+from the book’s website. This macro should be called with a double argument:
+# include "timer.h"
+...
+double now ;
+...
+GET_TIME ( now );
+After executing this macro, now will store the number of seconds since some time in
+the past. So we can get the elapsed time of serial code with microsecond resolution
+by executing
+# include "timer.h"
+...
+double start , finish ;
+...
+GET_TIME ( start );
+/ ∗ Code to be timed ∗ /
+...
+GET_TIME ( finish );
+printf ( "Elapsed time = %e seconds\n" , finish−start );
+One point to stress here: GET_TIME is a macro, so the code that deﬁnes it is inserted
+directly into your source code by the preprocessor. Hence, it can operate directly on
+its argument, and the argument is a double, not a pointer to a double. A ﬁnal note in
+this connection: Since timer.h is not in the system include ﬁle directory, it’s necessary
+to tell the compiler where to ﬁnd it if it’s not in the directory where you’re compiling.
+For example, if it’s in the directory /home/peter/my_include, the following command
+can be used to compile a serial program that uses GET_TIME:
+$ gcc −g −Wall −I / home / peter / my_include −o < executable >
+< source_code . c >
+Both MPI_Wtime and GET_TIME return wall clock time. Recall that a timer, such as
+the C clock function, returns CPU time: the time spent in user code, library functions,
+and operating system code. It doesn’t include idle time, which can be a signiﬁcant part
+of parallel run time. For example, a call to MPI_Recv may spend a signiﬁcant amount
+of time waiting for the arrival of a message. Wall clock time, on the other hand, gives
+total elapsed time. So it includes idle time.
+There are still a few remaining issues. First, as we’ve described it, our parallel
+program will report comm_sz times: one for each process. We would like to have it
+report a single time. Ideally, all of the processes would start execution of the matrix-
+vector multiplication at the same time, and then we would report the time that elapsed
+when the last process ﬁnished. In other words, the parallel execution time would be
+the time it took the “slowest” process to ﬁnish. We can’t get exactly this time because
+we can’t ensure that all the processes start at the same instant. However, we can come
+reasonably close. The MPI collective communication function MPI_Barrier ensures
+===== PRINTED PAGE 130 =====
+130 CHAPTER 3 Distributed memory programming with MPI
+that no process will return from calling it until every process in the communicator
+has started calling it. Its syntax is
+int MPI_Barrier ( MPI_Comm comm / ∗ in ∗ / );
+So the following code can be used to time a block of MPI code and report a single
+elapsed time:
+double local_start , local_finish , local_elapsed , elapsed ;
+...
+MPI_Barrier ( comm );
+local_start = MPI_Wtime ();
+/ ∗ Code to be timed ∗ /
+...
+local_finish = MPI_Wtime ();
+local_elapsed = local_finish − local_start ;
+MPI_Reduce(& local_elapsed ,&elapsed ,1,MPI_DOUBLE ,
+MPI_MAX ,0,comm );
+if ( my_rank == 0)
+printf ( "Elapsed time = %e seconds\n" , elapsed );
+Note that the call to MPI_Reduce is using the MPI_MAX operator: it ﬁnds the largest of
+the input arguments local_elapsed.
+As we noted in Chapter 2, we also need to be aware of variability in timings:
+when we run a program several times, we’re likely to see a substantial variation in the
+times. This will be true, even if for each run we use the same input, the same number
+of processes, and the same system. This is because the interaction of the program
+with the rest of the system, especially the operating system, is unpredictable. Since
+this interaction will almost certainly not make the program run faster than it would
+run on a “quiet” system, we usually report the minimum run-time, rather than the
+mean or median. (For further discussion of this, see [6].)
+Finally, when we run an MPI program on a hybrid system in which the nodes are
+multicore processors, we’ll only run one MPI process on each node. This may reduce
+contention for the interconnect and result in somewhat better run-times. It may also
+reduce variability in run-times.
+3.6.2 Results
+The results of timing the matrix-vector multiplication program are shown in Ta-
+ble 3.5. The input matrices were square. The times shown are in milliseconds, and
+we’ve rounded each time to two signiﬁcant digits. The times for comm_sz = 1arethe
+run-times of the serial program running on a single core of the distributed memory
+system. Not surprisingly, if we ﬁx comm_sz, and increase n, the order of the matrix,
+the run-times increase. For relatively small numbers of processes, doubling n results
+in roughly a four-fold increase in the run-time. However, for large numbers of pro-
+cesses, this formula breaks down.
+===== PRINTED PAGE 131 =====
+3.6 Performance evaluation of MPI programs 131
+Table 3.5 Run-times of serial and parallel matrix-
+vector multiplication (times are in milliseconds).
+Order of Matrix
+comm_sz 1024 2048 4096 8192 16,384
+1 4.1 16.0 64.0 270 1100
+2 2.3 8.5 33.0 140 560
+4 2.0 5.1 18.0 70 280
+8 1.7 3.3 9.8 36 140
+16 1.7 2.6 5.9 19 71
+If we ﬁx n and increase comm_sz, the run-times usually decrease. In fact, for large
+values of n, doubling the number of processes roughly halves the overall run-time.
+However, for small n, there is very little beneﬁt in increasing comm_sz. In fact, in going
+from 8 to 16 processes when n = 1024, the overall run time is unchanged.
+These timings are fairly typical of parallel run-times—as we increase the problem
+size, the run-times increase, and this is true regardless of the number of processes.
+The rate of increase can be fairly constant (e.g., the one process times) or it can vary
+wildly (e.g., the sixteen process times). As we increase the number of processes, the
+run-times typically decrease for a while. However, at some point, the run-times can
+actually start to get worse. The closest we came to this behavior was going from 8 to
+16 processes when the matrix had order 1024.
+The explanation for this is that there is a fairly common relation between the
+run-times of serial programs and the run-times of corresponding parallel programs.
+Recall that we denote the serial run-time by Tserial. Since it typically depends on the
+size of the input, n, we’ll frequently denote it as Tserial(n). Also recall that we denote
+the parallel run-time by Tparallel. Since it depends on both the input size, n, and the
+number of processes, comm_sz = p, we’ll frequently denote it as Tparallel(n,p).Aswe
+noted in Chapter 2, it’s often the case that the parallel program will divide the work
+of the serial program among the processes, and add in some overhead time, which we
+denoted Toverhead:
+Tparallel(n,p) = Tserial(n)/p + Toverhead.
+In MPI programs, the parallel overhead typically comes from communication, and it
+can depend on both the problem size and the number of processes.
+It’s not to hard to see that this formula applies to our matrix-vector multiplication
+program. The heart of the serial program is the pair of nested for loops:
+for ( i =0;i < m ; i ++) {
+y [ i ] = 0.0;
+for ( j =0;j < n ; j ++)
+y [ i ]+=A [ i ∗n+j ]∗ x [ j ];
+}
+===== PRINTED PAGE 132 =====
+132 CHAPTER 3 Distributed memory programming with MPI
+If we only count ﬂoating point operations, the inner loop carries out n multiplications
+and n additions, for a total of 2n ﬂoating point operations. Since we execute the inner
+loop m times, the pair of loops executes a total of 2mn ﬂoating point operations. So
+when m = n,
+Tserial(n) ≈ an2
+for some constant a. (The symbol ≈ means “is approximately equal to.”)
+If the serial program multiplies an n × n matrix by an n-dimensional vector, then
+each process in the parallel program multiplies an n/p × n matrix by an n-dimen-
+sional vector. The local matrix-vector multiplication part of the parallel program
+therefore executes n2/p ﬂoating point operations. Thus it appears that this local
+matrix-vector multiplication reduces the work per process by a factor of p.
+However, the parallel program also needs to complete a call to MPI_Allgather be-
+fore it can carry out the local matrix-vector multiplication. In our example, it appears
+that
+Tparallel(n,p) = Tserial(n)/p + Tallgather.
+Furthermore, in light of our timing data, it appears that for smaller values of p and
+larger values of n, the dominant term in our formula is Tserial(n)/p. To see this, ob-
+serve ﬁrst that for small p (e.g., p = 2, 4), doubling p roughly halves the overall run
+time. For example,
+Tserial(4096) = 1.9 × Tparallel(4096, 2)
+Tserial(8192) = 1.9 × Tparallel(8192, 2)
+Tparallel(8192, 2) = 2.0 × Tparallel(8192, 4)
+Tserial(16,384) = 2.0 × Tparallel(16,384, 2)
+Tparallel(16,384, 2) = 2.0 × Tparallel(16,384, 4)
+Also, if we ﬁx p at a small value (e.g., p = 2, 4), then increasing n seems to have
+approximately the same effect as increasing n for the serial program. For example,
+Tserial(4096) = 4.0 × Tserial(2048)
+Tparallel(4096, 2) = 3.9 × Tserial(2048, 2)
+Tparallel(4096, 4) = 3.5 × Tserial(2048, 4)
+Tserial(8192) = 4.2 × Tserial(4096)
+Tserial(8192, 2) = 4.2 × Tparallel(4096, 2)
+Tparallel(8192, 4) = 3.9 × Tparallel(8192, 4)
+These observations suggest that the parallel run-times are behaving much as the run-
+times of the serial program, i.e., Tserial(n)/p. In other words, the overhead Tallgather
+has little effect on the performance.
+===== PRINTED PAGE 133 =====
+3.6 Performance evaluation of MPI programs 133
+Table 3.6 Speedups of parallel matrix-vector mul-
+tiplication.
+Order of Matrix
+comm_sz 1024 2048 4096 8192 16,384
+1 1.0 1.0 1.0 1.0 1.0
+2 1.8 1.9 1.9 1.9 2.0
+4 2.1 3.1 3.6 3.9 3.9
+8 2.4 4.8 6.5 7.5 7.9
+16 2.4 6.2 10.8 14.2 15.5
+On the other hand, for small n and large p, these patterns break down. For exam-
+ple,
+Tparallel(1024, 8) = 1.0 × Tparallel(1024, 16)
+Tparallel(2048, 16) = 1.5 × Tparallel(1024, 16)
+So it appears that for small n and large p, the dominant term in our formula for
+Tparallel is Tallgather.
+3.6.3 Speedup and efﬁciency
+Recall that the most widely used measure of the relation between the serial and the
+parallel run-times is the speedup. It’s just the ratio of the serial run-time to the parallel
+run-time:
+S(n,p)= Tserial(n) Tparallel(n,p).
+The ideal value for S(n,p) is p.IfS(n,p) = p, then our parallel program with
+comm_sz = p processes is running p times faster than the serial program. In practice,
+this speedup, sometimes called linear speedup, is not often achieved. Our matrix-
+vector multiplication program got the speedups shown in Table 3.6. For small p and
+large n, our program obtained nearly linear speedup. On the other hand, for large
+p and small n, the speedup was considerably less than p. The worst case being
+n = 1024 and p = 16, when we only managed a speedup of 2.4.
+Also recall that another widely used measure of parallel performance is parallel
+efﬁciency. This is “per process” speedup:
+E(n,p)= S(n,p) p = Tserial(n) p × Tparallel(n,p).
+So linear speedup corresponds to a parallel efﬁciency of p/p = 1.0, and, in general,
+we expect that our efﬁciencies will usually be less than 1.
+===== PRINTED PAGE 134 =====
+134 CHAPTER 3 Distributed memory programming with MPI
+Table 3.7 Efﬁciencies of parallel matrix-vector
+multiplication.
+Order of Matrix
+comm_sz 1024 2048 4096 8192 16,384
+1 1.00 1.00 1.00 1.00 1.00
+2 0.89 0.94 0.97 0.96 0.98
+4 0.51 0.78 0.89 0.96 0.98
+8 0.30 0.61 0.82 0.94 0.98
+16 0.15 0.39 0.68 0.89 0.97
+The efﬁciencies for the matrix-vector multiplication program are shown in Ta-
+ble 3.7. Once again, for small p and large n, our parallel efﬁciencies are near linear,
+and for large p and small n, they are very far from linear.
+3.6.4 Scalability
+Our parallel matrix-vector multiplication program doesn’t come close to obtaining
+linear speedup for small n and large p. Does this mean that it’s not a good program?
+Many computer scientists answer this question by looking at the “scalability” of the
+program. Recall that very roughly speaking a program is scalable if the problem size
+can be increased at a rate so that the efﬁciency doesn’t decrease as the number of
+processes increase.
+The problem with this deﬁnition is the phrase “the problem size can be increased
+at a rate ....” Consider two parallel programs: program A and program B. Sup-
+pose that if p ≥ 2, the efﬁciency of program A is 0.75, regardless of problem size.
+Also suppose that the efﬁciency of program B is n/(625p), provided p ≥ 2 and
+1000 ≤ n ≤ 625p. Then according to our “deﬁnition,” both programs are scalable.
+For program A, the rate of increase needed to maintain constant efﬁciency is 0, while
+for program B if we increase n at the same rate as we increase p, we’ll maintain a
+constant efﬁciency. For example, if n = 1000 and p = 2, the efﬁciency of B is 0.80.
+If we then double p to 4 and we leave the problem size at n = 1000, the efﬁciency
+will drop to 0.4, but if we also double the problem size to n = 2000, the efﬁciency
+will remain constant at 0.8. Program A is thus more scalable than B, but both satisfy
+our deﬁnition of scalability.
+Looking at our table of parallel efﬁciencies (Table 3.7), we see that our matrix-
+vector multiplication program deﬁnitely doesn’t have the same scalability as pro-
+gram A: in almost every case when p is increased, the efﬁciency decreases. On the
+other hand, the program is somewhat like program B:ifp ≥ 2 and we increase both
+p and n by a factor of 2, the parallel efﬁciency, for the most part, actually increases.
+Furthermore, the only exceptions occur when we increase p from 2 to 4, and when
+computer scientists discuss scalability, they’re usually interested in large values of p.
+When p is increased from 4 to 8 or from 8 to 16, our efﬁciency always increases
+when we increase n by a factor of 2.

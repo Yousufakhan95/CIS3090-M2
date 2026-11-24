@@ -1,0 +1,502 @@
+
+===== PAGE 1 =====
+CIS*3090Parallel systems architectures; more on performance
+Based on the CIS*3090 notes by David Calvert and the notes from An Introduction to Parallel Programming by Peter Pacheco and Matthew Malensek
+
+===== PAGE 2 =====
+Part 1: high-level overview of 
+parallel systems
+
+===== PAGE 3 =====
+Flynn's taxonomy
+•Flynn’s Taxonomy is used to classify computer architectures. 
+•It describes the number of instructions and the number of data streams that a system can 
+execute simultaneously. 
+•There are four types of system: 
+•SISD - single instruction, single data 
+•SIMD - single instruction, multiple data 
+•MISD - multiple instruction, single data 
+•MIMD - multiple instruction, multiple data 
+
+===== PAGE 4 =====
+Flynn's taxonomy - SISD
+•SISD is the serial von Neumann system.
+•It is the traditional single core computer. 
+•One instruction is run using one piece of data 
+Control  
+registers CPUALU #1
+
+===== PAGE 5 =====
+Flynn's taxonomy - SIMD
+•SIMD (single instruction, multiple data) systems execute the same instruction on multiple 
+data streams. 
+•You can think of it as one control unit and multiple ALUs. 
+•This can perform arithmetic m times faster (if there are m ALUs). 
+Control  
+registers CPUALU #1
+ALU #3
+ALU #2
+
+===== PAGE 6 =====
+Flynn's taxonomy - SIMD
+•In traditional SIMD systems, all of the ALUs were synchronized and could not store 
+instructions.
+•They were tied to the controller. 
+•This type of system was good for parallelizing simple loops that work on large arrays of data. 
+•It was most useful for data parallelism but not much else. 
+
+===== PAGE 7 =====
+Vector processors
+•An example of a SIMD system is the vector processor. 
+•These operate on vectors (arrays) of data. 
+•They use vector registers and perform operations simultaneously on their contents. 
+•Vector length is ﬁxed per system but is normally between 4 and 256 elements, each of which 
+is 64 bits. 
+•The same operation is applied to all elements of the vector (SIMD). 
+
+===== PAGE 8 =====
+Vector processors
+•Beneﬁts of the vector processor: 
+•fast and easy to use
+•compilers are good at identifying code to vectorize 
+•compilers provide feedback on how to vectorize loops 
+•high memory bandwidth
+•unlike cached data, all loaded data is used 
+•Disadvantages of the vector processor: 
+•don’t work well with irregular data structures (i.e. anything other than arrays)
+•are hard to scale - longer vectors aren’t very useful 
+
+===== PAGE 9 =====
+Flynn's taxonomy - MIMD
+•MIMD systems (multiple instruction, multiple data) are general purpose parallel systems. 
+•Independent cores each contain their own ALU
+•Asynchronous processors operate at their own pace
+•Can be shared memory or distributed memory systems. 
+
+===== PAGE 10 =====
+Flynn's taxonomy - MIMD
+CPU
+Bus
+Memory
+CPU CPU CPU
+Memory
+CPU CPU
+Memory Memory
+Network
+Shared memory Distributed memory
+•MIMD systems (multiple instruction, multiple data) are general purpose parallel systems. 
+•Independent cores each contain their own ALU
+•Asynchronous processors operate at their own pace
+•Can be shared memory or distributed memory systems. 
+
+===== PAGE 11 =====
+Flynn's taxonomy - MISD
+•What about MISD (multiple instructions, single data) systems? 
+•There aren’t many systems which run multiple instructions using a single piece of data. 
+
+===== PAGE 12 =====
+Shared memory - UMA
+•There are two types of shared memory. They diﬀer in how the memory is organized.
+•Uniform Memory Access (UMA) is arranged in one large unit. 
+core 1 core 2
+Bus
+Memory
+core 1 core 2
+Memory is one large chunk 
+chip 1 chip 2
+
+===== PAGE 13 =====
+All memory accesses times are 
+the same for all cores. core 1 core 2
+Bus
+Memory
+core 1 core 2
+Memory is one large chunk 
+chip 1 chip 2
+Shared memory - UMA
+•There are two types of shared memory. They diﬀer in how the memory is organized.
+•Uniform Memory Access (UMA) is arranged in one large unit. 
+
+===== PAGE 14 =====
+All memory accesses times are 
+the same for all cores. core 1 core 2
+Bus
+Memory
+core 1 core 2
+Memory is one large chunk 
+chip 1 chip 2
+Shared memory - UMA
+•There are two types of shared memory. They diﬀer in how the memory is organized.
+•Uniform Memory Access (UMA) is arranged in one large unit. 
+Easier to program because memory 
+access times are are all the same. 
+
+===== PAGE 15 =====
+Shared memory - NUMA
+•An alternative to UMA is the Nonuniform Memory Access (NUMA) shared memory system. 
+core 1 core 2
+Bus
+Memory
+core 1 core 2
+chip 1 chip 2
+Bus
+Memory
+
+===== PAGE 16 =====
+core 1 core 2
+Bus
+Memory
+core 1 core 2
+chip 1 chip 2
+Bus
+Memory
+faster faster
+Shared memory - NUMA
+•An alternative to UMA is the Nonuniform Memory Access (NUMA) shared memory system. 
+
+===== PAGE 17 =====
+core 1 core 2
+Bus
+Memory
+core 1 core 2
+chip 1 chip 2
+Bus
+Memory
+faster faster
+slower
+Shared memory - NUMA
+•An alternative to UMA is the Nonuniform Memory Access (NUMA) shared memory system. 
+
+===== PAGE 18 =====
+core 1 core 2
+Bus
+Memory
+core 1 core 2
+chip 1 chip 2
+Bus
+Memory
+faster faster
+slower
+Shared memory - NUMA
+•Access to memory which is directly connected to the core is faster. Access to another chip is 
+slower.
+•This type of system allows for a larger amount of memory than UMA system. 
+
+===== PAGE 19 =====
+Distributed-memory systems: definitions 
+•Clusters are a collection of systems. They are often connected through a commodity network 
+(ethernet). 
+•Nodes in these systems (the computers) are normally shared memory systems. These are 
+sometimes called hybrid systems because they contain both shared memory and distributed 
+memory systems
+•A grid is the same idea with multiple clusters spread over a large (geographic) area. They are 
+a large and spread out collection of clusters. 
+•Grid systems are often heterogeneous. This means the nodes may use diﬀerent types of 
+hardware and operating systems. 
+
+===== PAGE 20 =====
+Shared memory interconnects
+•The two most common shared memory interconnects are the bus and the switch. 
+•The Bus: 
+•most common
+•the communications path (wires) are shared by the devices connected to it 
+•low cost and ﬂexible
+•multiple devices can be connected to it for little cost as the number of devices using the bus 
+increases, the performance will likely decrease
+•a larger number of processors on a bus means more waiting to access memory 
+
+===== PAGE 21 =====
+Shared memory interconnects
+•Switched Memory: 
+•uses switches to direct data to and from devices
+•multiple data paths are used - a path is selected by the switch (unlike the bus which has one 
+path)
+•can use multiple memory modules 
+
+===== PAGE 22 =====
+•An example of a crossbar switch with four CPUs and four memory modules. 
+CPU 1 CPU 2 CPU 3 CPU 4
+Memory 1
+Memory 2
+Memory 3
+Memory 4
+Shared memory interconnects
+
+===== PAGE 23 =====
+CPU 1 CPU 2 CPU 3 CPU 4
+Memory 1
+Memory 2
+Memory 3
+Memory 4
+CPU 3 accessing 
+Memory 1 
+CPU 4 accessing 
+Memory 2
+CPU 2 accessing 
+Memory 3
+CPU 1 accessing 
+Memory 4
+•An example of a crossbar switch with four CPUs and four memory modules. 
+Shared memory interconnects
+
+===== PAGE 24 =====
+•In this example, four processors can access memory without blocking each other. 
+•This is faster than the bus. 
+•You can change which processor and memory communicate. 
+•They are not permanently connected. 
+•These systems are expensive compared to bus systems.
+•The only conﬂict occurs if two processors try to access the same memory. 
+Shared memory interconnects
+
+===== PAGE 25 =====
+Part 2: performance of parallel 
+systems, revisited
+
+===== PAGE 26 =====
+Speedup revisited
+•Since the goal of parallelism is to improve performance we need a method to measure it
+•In the ideal case, we measure speedup in a parallel program as:  
+S = Tserial / Tparallel  where T is time. 
+•Tparallel = Tserial / p, where T is time
+•Run times depend on the input data size, but speedup is less dependent in it (diﬀerences get 
+averaged away), so it is easier to talk about performance using speedup, rather than run-time 
+•For the rest of the class, we will talk about what happens with the speedup in more realistic, 
+non-ideal scenarios 
+
+===== PAGE 27 =====
+Linear speedup
+The best-case scenario
+#cores 1 2 4 8
+Tparallel / 
+Tserial 1 1/2 1/4 1/8
+•Since the goal of parallelism is to improve performance we need a method to measure it. 
+•The best we can hope for is linear speedup: S = p
+•This means that with p cores the program will run p times faster.
+
+===== PAGE 28 =====
+Linear speedup
+The best-case scenario
+#cores 1 2 4 8
+Tparallel / 
+Tserial 1 1/2 1/4 1/8
+•Since the goal of parallelism is to improve performance we need a method to measure it. 
+•The best we can hope for is linear speedup: S = p
+•This means that with p cores the program will run p times faster.
+This doesn't normally happen!         
+
+===== PAGE 29 =====
+Speedup: general case
+•Things that slow down a parallel program: 
+•overhead in managing threads
+•critical sections
+•overhead from mutex functions
+•network I/O in distributed systems
+•ﬁle I/O
+•These overheads increase with the number of threads  
+or processes 
+perfect liner speedup 
+real-world, not-quite-linear speedup
+Speedup
+
+===== PAGE 30 =====
+Speedup properties
+•As the number of processes (p) increases, the speedup should also increase, but the beneﬁt 
+from each additional processor decreases.
+•Adding the ﬁrst additional processor gives you more speedup than adding a second or third
+•We will capture this using another concept - eﬃciency 
+•Eﬃciency is the share of work that each processor contributes 
+
+===== PAGE 31 =====
+Speedup example
+•Example of speedup S with more processors 
+p 1 2 4 8 16
+S 1 1.9 3.6 6.5 10.8
+If we start with one processor (p=1) then the speedup 
+will be 1.0 because both the serial and parallel times 
+will be the same. The one processor is worth 1.0 of 
+the speedup (all of it). 
+
+===== PAGE 32 =====
+Speedup example
+•Example of speedup S with more processors 
+p 1 2 4 8 16
+S 1 1.9 3.6 6.5 10.8
+Adding one processor gives a 0.9 increase. 
+Each processor is worth 0.95 of the 
+speedup. 
+
+===== PAGE 33 =====
+•Example of speedup S with more processors 
+p 1 2 4 8 16
+S 1 1.9 3.6 6.5 10.8
+With four processors each is worth 0.9 of 
+the total speedup. 
+Speedup example
+
+===== PAGE 34 =====
+•Example of speedup S with more processors 
+p 1 2 4 8 16
+S 1 1.9 3.6 6.5 10.8
+With eight processors each is 
+worth 0.81 of the total speedup. 
+With 16 processors each is worth 
+0.675 of the total speedup. 
+Adding more processors improves the performance, but the beneﬁts of each extra processor 
+decreases
+Speedup example
+
+===== PAGE 35 =====
+Efficiency
+•Eﬃciency is the fraction of parallel run-time each core spends on the actual problem, i.e., 
+utilization 
+ 
+
+•It measures how much speedup you get from each processor. 
+•From the previous example: 
+E=S P= Tserial p×Tparallel
+p 1 2 4 8 16
+S 1 1.9 3.6 6.5 10.8
+E 1 0.95 0.9 0.81 0.675
+
+===== PAGE 36 =====
+Efficiency
+•Eﬃciency is the share of work that each processor contributes  
+ 
+
+•It measures how much speedup you get from each processor. 
+•From the previous example: 
+E=S P= Tserial p×Tparallel
+p 1 2 4 8 16
+S 1 1.9 3.6 6.5 10.8
+E 1 0.95 0.9 0.81 0.675
+Increases
+Decreased
+The speedup S increases, but the eﬃciency E decreases with more processors. 
+
+===== PAGE 37 =====
+•Overhead is the added time to manage the parallel operations. 
+Overhead
+Tparallel=Tserial p+Toverhead
+{Ideal (optimal)
+
+===== PAGE 38 =====
+Overhead
+•Overhead is the added time to manage the parallel operations. 
+{real world{Ideal (optimal)
+Tparallel=Tserial p+Toverhead
+
+===== PAGE 39 =====
+Overhead
+•Overhead is the added time to manage the parallel operations. 
+•As the problem grows, the overhead grows more slowly than the serial time Tserial. 
+•When this happens the speedup and eﬃciency both increase
+•In this case, more work is done by the processors and the relative amount of overhead is less 
+{Ideal (optimal)
+Tparallel=Tserial p+Toverhead
+
+===== PAGE 40 =====
+Amdahl's law
+•Amdahl's law is another eﬃciency-related concept 
+•In a nutshell, Amdahl's Law states that unless virtually all of a serial program is parallelized, 
+the possible speedup is going to be very limited — regardless of the number of cores 
+available.
+
+===== PAGE 41 =====
+Example
+•We can parallelize 90% of a serial program.
+•Parallelization is “perfect” regardless of the number of cores p we use (i.e. no overhead).
+•Tserial = 20 seconds
+•Runtime  of parallelizable part is  
+ 
+0.9 × Tserial / p = 18 / p seconds  
+•This means that all we can improve is the 18 seconds of parallelizable run-time
+
+===== PAGE 42 =====
+Example
+•Runtime  of “unparallelizable” part is   
+ 
+0.1 x Tserial  = 2 seconds 
+•Overall parallel run-time is 
+ 
+ secondsTparallel=0.9×Tserial p +0.1×Tserial=18/p+2
+
+===== PAGE 43 =====
+Example
+•Speedup 
+ 
+ S= Tserial
+(0.9×Tserial)/p+0.1×Tserial
+=Tserial
+Tserial
+1
+0.9/p+0.1= 1 0.9/p+0.1
+
+===== PAGE 44 =====
+Amdahl's law
+•This can be generalized to the Amdahl's Law equation: 
+ 
+
+•where parallelizable portion + inherently serial portion = 1
+S= 1 parallelizableportion
+perfectspeedup +inherentlyserialportion
+
+===== PAGE 45 =====
+Example: Amdahl's law
+•If parallelizable portion is 0.9 and the inherently serial portion is 0.1, then Amdahl's law gives 
+us S as  
+ 
+1 / ( 0.9 / p + 0.1) 
+ 
+p 1 2 4 8 16
+S 1 1.82 3.07 4.7 6.4
+E 1 0.91 0.77 0.59 0.40
+
+===== PAGE 46 =====
+Example: Amdahl's law
+•Amdahl's law means that for every ratio of parallelizable / serial work, we eventually hit a 
+point where adding more cores / processors no longer oﬀers any beneﬁt
+•Mathematically, the speedup approaches an asymptote 1 / a, where a is the serial part of the 
+work
+•For example
+•Max speedup is 2, if we use a = 0.5 (50% parallelizable)
+•Max speedup is 10, if we use a = 0.1 (90% parallelizable) 
+•Max speedup is 20, if we use a = 0.05 (95% parallelizable) 
+•Max speedup is 100, if we use a = 0.01 (99% parallelizable)
+
+===== PAGE 47 =====
+Example: Amdahl's law
+0 50 100 150 200 250 300 350
+25
+50
+75
+Perfect linear speedup
+99% parallelizzable
+95% parallelizable
+90% parallelizable
+50% parallelizable
+
+===== PAGE 48 =====
+Using Amdahl's law
+•Amdahl's law tells us that super-linear (better-than-liner) speedup won't happen, at least as a 
+result of parallelization
+•Formula 
+
+•If parallelizabe portion = 1 and inherently serial = 0, S = perfect speedup = p
+S= 1 parallelizableportion
+perfectspeedup +inherentlyserialportion
+
+===== PAGE 49 =====
+Using Amdahl's law
+•You can measure the timing of the inherently serial portion for a variety of trial runs, compare 
+it to parallel run times, and compute the % of program execution that is inherently serial
+•You can then use this to establish the limits on the speedup in the problem you are trying to 
+solve
+•This will tell you the maximum number of "execution units" your program will beneﬁt from, so 
+you can do cost/beneﬁt analysis and decide what sort of hardware / cloud compute 
+capability you should buy
+
+===== PAGE 50 =====
+References
+•Textbook, Chapter 2, 
+•section 2.3 (Part 1)
+•sections 2.6.1–2.6.2 (Part 2)

@@ -1,0 +1,122 @@
+[
+ {
+  "text": "GPGPU is {{c1::heterogeneous}} computing: a host {{c2::CPU}} runs the main program, and kernels run on the {{c3::GPU}}.",
+  "extra": "The host loads data and kernels, copies the stream to the device, launches, then copies results back.",
+  "tags": [
+   "b05_gpgpu_warp",
+   "heterogeneous_computing"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.27",
+  "yield": "high"
+ },
+ {
+  "text": "CPU and GPU usually keep {{c1::separate}} memory. Moving data to the GPU means an expensive bus {{c2::copy}}, and that cost can {{c3::dominate}} a small problem.",
+  "extra": "A naive GPU port can lose to CPU code when transfer time outweighs the compute you save.",
+  "tags": [
+   "b05_gpgpu_warp",
+   "host_device_copy"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.28",
+  "yield": "high"
+ },
+ {
+  "text": "For Warp or GPGPU work, prefer {{c1::flat, contiguous}} buffers, {{c2::uniform}} work per thread, and enough work to amortize host-device copies.",
+  "extra": "Divergent branches and scattered layouts hurt lockstep GPU threads. Tiny problems die on transfer cost.",
+  "tags": [
+   "b05_gpgpu_warp",
+   "gpgpu_design"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.25",
+  "yield": "high"
+ },
+ {
+  "text": "A function marked {{c1::@wp.kernel}} is {{c2::statically typed}}. GPU kernels {{c3::do not return}} values. They write into arrays instead.",
+  "extra": "Write the body for one element. Warp launches one thread per stream element.",
+  "tags": [
+   "b05_gpgpu_warp",
+   "wp_kernel"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.36",
+  "yield": "high"
+ },
+ {
+  "text": "Inside a Warp kernel, {{c1::wp.tid()}} gives your per-thread {{c2::element index}}, so you can write \\(z[\\text{tid}] = x[\\text{tid}] + y[\\text{tid}]\\).",
+  "extra": "Same role as a thread ID or MPI rank for owning one array slot.",
+  "tags": [
+   "b05_gpgpu_warp",
+   "wp_tid"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.37",
+  "yield": "high"
+ },
+ {
+  "text": "Practice: launch over \\(N\\) elements on an Nvidia GPU with the kernel, {{c1::dim=N}}, arguments in {{c2::inputs=}} (in order), and {{c3::device=\"cuda\"}}.",
+  "extra": "Study-guide practice Q3 answer C. device is optional and defaults to Warp's default. The lecture demo also passes outputs=[z].",
+  "tags": [
+   "b05_gpgpu_warp",
+   "wp_launch"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.42",
+  "yield": "high"
+ },
+ {
+  "text": "Warp device=\"cpu\" runs {{c1::single-thread serial}} code for portability. device=\"cuda\" runs {{c2::in parallel}} on Nvidia GPUs.",
+  "extra": "Same code and semantics on both backends. CPU mode teaches the API but gives no GPU speedup.",
+  "tags": [
+   "b05_gpgpu_warp",
+   "warp_devices"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.31",
+  "yield": "high"
+ },
+ {
+  "text": "Host prep: wrap NumPy with {{c1::wp.array(...)}}, allocate the output with {{c2::wp.zeros}}, and after launch call {{c3::.numpy()}} to bring results back.",
+  "extra": "Match dtype and device. For a 1D map, lengths must match. A zero array shaped like an input works too.",
+  "tags": [
+   "b05_gpgpu_warp",
+   "warp_arrays"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.40",
+  "yield": "high"
+ },
+ {
+  "text": "Memory models: Pthreads use a {{c1::shared}} address space. MPI uses {{c2::message passing}}. Warp keeps {{c3::separate host/device}} memory and needs explicit copies.",
+  "extra": "Once data is on the GPU, kernels operate on device memory.",
+  "tags": [
+   "b05_gpgpu_warp",
+   "pthreads_mpi_warp"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.28",
+  "yield": "high"
+ },
+ {
+  "text": "Warp fits large {{c1::data-parallel maps}} with uniform work. Pitfalls: excessive {{c2::host-device copies}} and {{c3::non-contiguous}} data.",
+  "extra": "Also skip problems that are too small to amortize the transfers.",
+  "tags": [
+   "b05_gpgpu_warp",
+   "warp_pitfalls"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.28",
+  "yield": "high"
+ },
+ {
+  "text": "Inside a kernel, your output may depend only on inputs, not on {{c1::another thread's output}}. That independence maps the work onto data-parallel hardware.",
+  "extra": "You can read any input element. You write one output slot.",
+  "tags": [
+   "b05_gpgpu_warp",
+   "kernel_independence"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.14",
+  "yield": "high"
+ },
+ {
+  "text": "In addArrays, pass typed arrays \\(x\\), \\(y\\), and output \\(z\\) as kernel arguments, store the sum in {{c1::z[tid]}}, and never {{c2::return}} the result.",
+  "extra": "Annotate with @wp.kernel and types like wp.array(dtype=float).",
+  "tags": [
+   "b05_gpgpu_warp",
+   "wp_kernel"
+  ],
+  "source": "05_lecture_15_gpgpu_warp.pdf p.38",
+  "yield": "high"
+ }
+]

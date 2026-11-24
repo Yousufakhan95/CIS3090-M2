@@ -1,0 +1,65 @@
+[
+ {
+  "text": "GPGPU is {{c1::heterogeneous}} computing. The {{c2::CPU}} host runs the main program, and the kernels run on the {{c3::GPU}} device.",
+  "extra": "The host loads the data, copies it to the device, launches the kernel, then copies the results back.",
+  "tags": ["b04_gpgpu_warp", "heterogeneous"],
+  "source": "Lecture 15 slide 27",
+  "yield": "high"
+ },
+ {
+  "text": "The CPU and GPU usually have {{c1::separate}} memory. Getting data onto the GPU means a slow {{c2::copy}} over the bus, and on a small problem that copy can take longer than the compute it saves.",
+  "extra": "So a straight GPU port of a small job can run slower than plain CPU code.",
+  "tags": ["b04_gpgpu_warp", "copy_cost"],
+  "source": "Lecture 15 slide 28",
+  "yield": "high"
+ },
+ {
+  "text": "To get good GPU performance from Warp, use {{c1::flat, contiguous}} buffers, give each thread the {{c2::same}} amount of work, and keep CPU to GPU copies to a minimum.",
+  "extra": "Branches that send threads down different paths and scattered data both slow down GPU threads that run in lockstep.",
+  "tags": ["b04_gpgpu_warp", "design"],
+  "source": "Lecture 15 slide 25; M2 guide p.2",
+  "yield": "high"
+ },
+ {
+  "text": "A function marked {{c1::@wp.kernel}} is statically typed, and it {{c2::cannot return}} a value. It writes its result into an output array instead.",
+  "extra": "You write the body for one element. Warp runs one thread per element.",
+  "tags": ["b04_gpgpu_warp", "wp_kernel"],
+  "source": "Lecture 15 slides 36 and 38",
+  "yield": "high"
+ },
+ {
+  "text": "Inside a Warp kernel, {{c1::wp.tid()}} gives each thread its own element index. So the add kernel writes z[tid] = x[tid] + y[tid].",
+  "extra": "It plays the same role as a thread ID in Pthreads or a rank in MPI.",
+  "tags": ["b04_gpgpu_warp", "wp_tid"],
+  "source": "Lecture 15 slide 37",
+  "yield": "high"
+ },
+ {
+  "text": "A kernel thread can read any input element, but its output must {{c1::not depend on another thread's output}}. That independence is what lets the GPU run every thread at once.",
+  "extra": "Each thread writes exactly one output slot.",
+  "tags": ["b04_gpgpu_warp", "independence"],
+  "source": "Lecture 15 slide 14",
+  "yield": "high"
+ },
+ {
+  "text": "You want a kernel over \\(N\\) elements on an Nvidia GPU. You call wp.launch with the kernel, {{c1::dim=N}}, the arguments in order in {{c2::inputs=}}, and {{c3::device=\"cuda\"}}.",
+  "extra": "This is study guide practice question 3, answer C. The device argument is optional and falls back to Warp's default device.",
+  "tags": ["b04_gpgpu_warp", "wp_launch"],
+  "source": "Lecture 15 slide 42; M2 guide p.5",
+  "yield": "high"
+ },
+ {
+  "text": "With device=\"cpu\", Warp runs the kernel as {{c1::serial}} code for portability. With device=\"cuda\", it runs {{c2::in parallel}} on an Nvidia GPU.",
+  "extra": "The code is the same on both. CPU mode lets you test without a GPU, but you get no speedup.",
+  "tags": ["b04_gpgpu_warp", "devices"],
+  "source": "Lecture 15 slide 31",
+  "yield": "high"
+ },
+ {
+  "text": "On the host you wrap a NumPy array with {{c1::wp.array}}, allocate the output with {{c2::wp.zeros}}, and after the launch call {{c3::.numpy()}} to get the results back.",
+  "extra": "Match the dtype and the device on every array you pass in.",
+  "tags": ["b04_gpgpu_warp", "warp_arrays"],
+  "source": "Lecture 15 slide 40",
+  "yield": "high"
+ }
+]

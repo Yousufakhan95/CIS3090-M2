@@ -1,0 +1,13 @@
+# Python dependencies for skills/anki-deck/scripts.
+# Install these with:  python -m pip install -r requirements.txt
+# then install genanki WITHOUT its dependencies (its pyyaml dependency often fails to build
+# and isn't needed; build_deck.py stubs it):
+#   python -m pip install --no-deps genanki
+pymupdf
+chevron
+frozendict
+cached-property
+
+# Optional, only needed for .pptx / .docx lecture files:
+# python-pptx
+# python-docx

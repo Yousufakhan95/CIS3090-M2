@@ -1,0 +1,472 @@
+      CIS*3090
+      Basics of computer hardware and parallelism
+
+
+
+
+Based on the CIS*3090 notes by David Calvert and the notes from An Introduction to Parallel Programming by Peter Pacheco and Matthew Malensek
+The von Neumann Architecture
+
+• Parallel systems grew out of serial hardware.
+• The von Neumann architecture is used to structure serial hardware
+
+                            Arithmetic and Logic Unit             Control
+                                 (ALU) registers                 registers
+
+
+           Data is read/written to
+           memory using the bus.            Bus (Interconnect)
+
+
+
+                                              Main Memory
+Central processing unit (CPU)
+
+• Divided into two parts.
+• Control unit - responsible for deciding which instruction in a program should be executed.
+  (the boss)
+
+• Arithmetic and logic unit (ALU) - responsible for executing the actual instructions. (the
+  worker)
+Main memory
+
+• This is a collection of locations, each of which is capable of storing both instructions and
+  data.
+
+• Every location consists of an address, which is used to access the location, and the contents
+  of the location.
+The Von Neumann Bottleneck
+
+• The von Neumann Bottleneck is due to the separation of memory and CPU.
+• It means that the bus determines the rate at which memory and instructions can be
+  accessed.
+  • The problem is that memory is isolated from the CPU.
+  • While the system bus architectures have evolved and improved, the CPU still runs faster than
+    memory contents can be delivered to it
+  • In a way, the CPU becomes starved of data
+Basics of caching
+
+• The solution to this problem is the CPU cache which is memory the CPU can access faster
+  than main memory.
+
+• The cache is often on the same chip as the CPU or on another chip that can be accessed
+  much faster than main memory.
+
+• When the processor needs to read from or write to a location in memory, it rst checks for a
+  corresponding entry in the cache
+  • The cache checks for the contents of the requested memory location in any cache lines that
+    might contain that address.
+Basics of caching
+
+• A cache hit happens if the processor nds that the memory location is in the cache
+• A cache miss happens if the processor does not nd the memory location in the cache
+• In the case of a cache hit, the processor immediately reads or writes the data in the cache
+  line
+
+• For a cache miss, the cache allocates a new entry and copies data from main memory, then
+  the request is ful lled from the contents of the cache
+  • In other words, we cache that memory location
+                                  fi
+                                                                                      fi
+Cache levels
+
+• Modern CPU caches are multi-level
+  • L1 (fastest) - typically on each core of the CPU (smallest)
+  • L2 - historically typically shared between di erent cores of the CPU
+     • But some modern architectures di er - e.g. x86 may have per-core L2 and shared L3
+  • L3 (slowest) - can be shared between all cores (largest)
+     • Sometimes sub-groups of cores get their own L3 cache
+• Multi-level caches generally operate by checking the closest (i.e. fastest) L1 cache rst
+  • If it hits, the processor gets its data quickly
+  • If that smaller cache misses, the next fastest cache L2 is checked, and so on, before accessing
+     external memory.
+
+
+
+
+                                                                       ff
+                                                                                                ff
+Principle of locality
+
+• Accessing one location is followed by an access of a nearby location.
+• Spatial locality – accessing a nearby location.
+• Temporal locality – accessing the same location again in the near future..
+
+                               float z[1000];
+                               …
+                               sum = 0.0;
+                               for (i = 0; i < 1000; i++)
+                                  sum += z[i];
+Issues with cache
+
+• When a CPU writes data to cache, the value in cache may be inconsistent with the value in
+  main memory.
+
+• Write-through caches handle this by updating the data in main memory at the time it is
+  written to cache.
+
+• Write-back caches mark data in the cache as dirty and writes to memory at a later date
+  • When the cache line is replaced by a new cache line from memory, the dirty line is written to
+      memory.
+  •   In other words, write-back caches write dirty cache lines only when they are about to be
+      replaced
+Maximizing cache locality
+
+• Contiguous memory blocks are easier to cache - we get spatial locality for free
+  • adjacent elements in an array are adjacent in memory
+  • adjacent elements in a linked list can be far apart in memory
+• Value types (e.g. structs) are easier to cache than reference type (e.g. pointers to structs, or
+  structs consisting of pointers)
+
+• Contiguous data collections of value types are easier to cache than contiguous or linked data
+  structures of reference types
+Contiguous data and performance
+
+• Contiguous data in general is much more e cient for the hardware to deal with
+  • It is easy to cache
+  • It is easy to transfer - you move N bytes starting from address M
+• This is why, in code involving parallelism, we revert to more "old school", contiguous data
+  structures
+  • 2D arrays are actually 1D arrays with fancy indexing
+  • Complex objects are represented as several 1D arrays
+
+
+
+
+                                                                                                ffi
+Contiguous data and performance
+
+• For example, a 3D model is a collection of:
+  • Vertices (3D or 4D) vectors
+  • Faces - Flat surfaces, usually triangles (de ned as sequences of edges in a speci c order)
+  • Normals (3D or 4D vectors, one per face or one per vertex)
+  • Textures (2D arrays)
+  • Possibly other stu (bump maps, light maps, etc.)
+• A high-level view of a 3D model is a complex object with several data collections consisting
+  of objects (arrays of Point3D or Vector 3D objects, etc.)
+                                     ff
+                                                                                                 fi
+Contiguous data and performance
+
+• A low-level view (i.e. how it is actually stored) is a bunch of 1D arrays
+  • A vertex bu er with an unrolled 1D array of vertices
+  • An index bu er with an unrolled 1D array of faces (or edges)
+  • A texture bu er with an unrolled 1D array representing a 2D texture
+  • etc.
+• This allows for more e cient transfer of data - e.g. large multi-megabyte 3D models in a
+  game engine - between the disk, the main memory, and the GPU memory
+                     ff
+                          ff
+                               ff
+                                                  ffi
+Data layouts in parallel programming
+
+• When we are writing parallel programs, performance is the single most important
+  consideration
+  • Otherwise we do not need create parallel code in the rst place
+• In shared memory programs, we do not need to transfer data very often
+  • But we still want to ensure cache locality
+• In distributed memory programs, or in programs with heterogeneous hardware (e.g. CPU/
+  GPU), we need to transfer large blocks of data
+  • Need to be as e cient as possible to minimize the overhead of parallelization
+  • Need to rely on simpler, lower-level data structures to do this
+     • And rely on fancy indexing to navigate our unrolled data structures
+                                 ffi
+TL;DR
+Quick tips for maximizing contiguous memory
+
+• Structs instead of objects
+• No pointers in structs
+• Contiguous arrays instead of linked data
+Instruction level parallelism (ILP)
+
+• This improves processor performance by running multiple parts of the processor (CPU) at
+  one time.
+
+• This is done by multiple functional units executing instructions simultaneously.
+• This is generally done by the compiler and the CPU. It is not usually written by the
+  programmer.
+
+• There are two approaches to ILP:
+  • pipelining
+  • multiple issue
+Pipelining
+
+• Pipelining can be implemented when multiple instructions are repeated (many times) and the
+  instructions can be executed simultaneously.
+
+• For example, in the following code which added two numbers in a loop:
+  for (i=0; i<1000; i++)
+        z[i] = x[i] + y[i];
+
+• The loop repeats the instruction many (1000) times and the arrays contain oating-point
+  values
+
+• The addition is actually multiple instructions that are executed simultaneously by separate
+  parts of the CPU.
+Pipelining
+
+• The addition and assignment in the previous example (z[i] = x[i] + y[i]) consist of
+  these seven operations on oating point numbers:
+   1. Fetch - get x[] and y[] values.
+   2. Compare exponents - make sure the numbers have the same representation. (e.g. 9.0 × 104
+      and 7.3 × 103 have di erent exponents).
+   3. Shift numbers - make the exponents the same so the numbers can be summed.
+   4. Add the numbers.
+   5. Normalize - take the result and put it in the correct exponential format (one digit before the
+      decimal point)
+   6. Round the results - remove extra decimal values.
+   7. Store the result.
+                                            ff
+                                                                fl
+Pipelining
+
+• If these seven operations are run simultaneously then the CPU is potentially running seven
+  times faster than if they were run sequentially.
+
+• Each of these operations is performed by a functional unit.
+• A pipeline is created when it is possible to keep a repeated operations (seven of them in this
+  case) running at one time.
+Pipeline example
+Numbers in the table are subscripts of operands/results.
+                                      Operations
+       Time
+              Fetch   Comp.   Shift      Add     Norm.   Round   Store
+        0       0
+        1       1       0
+        2       2       1      0
+        3       3       2      1          0
+        4       4       3      2          1        0
+        5       5       4      3          2        1       0
+        6       6       5      4          3        2       1      0
+        7       7       6      5          4        3       2      1
+        8       8       7      6          5        4       3      2
+        9       9       8      7          6        5       4      3
+        ...
+Pipeline example
+After a few steps, all operations are running at once
+                                      Operations
+       Time
+              Fetch   Comp.   Shift      Add     Norm.   Round   Store
+        0       0
+        1       1       0
+        2       2       1      0
+        3       3       2      1          0
+        4       4       3      2          1        0
+        5       5       4      3          2        1       0             At this point there
+        6       6       5      4          3        2       1      0          are seven
+        7       7       6      5          4        3       2      1      operations running
+        8       8       7      6          5        4       3      2           at once.
+        9       9       8      7          6        5       4      3
+        ...
+Pipeline example
+After a few steps, all operations are running at once
+                                      Operations
+       Time
+              Fetch   Comp.   Shift      Add     Norm.   Round   Store
+        0       0
+        1       1       0
+        2       2       1      0
+        3       3       2      1          0
+        4       4       3      2          1        0
+        5       5       4      3          2        1       0
+        6       6       5      4          3        2       1      0       x[0]+y[0]
+        7       7       6      5          4        3       2      1      completed
+        8       8       7      6          5        4       3      2
+        9       9       8      7          6        5       4      3
+        ...
+Pipeline example
+After a few steps, all operations are running at once
+                                      Operations
+       Time
+              Fetch   Comp.   Shift      Add     Norm.   Round   Store
+        0       0
+        1       1       0
+        2       2       1      0
+        3       3       2      1          0
+        4       4       3      2          1        0
+        5       5       4      3          2        1       0
+        6       6       5      4          3        2       1      0
+                                                                          x[1]+y[1]
+        7       7       6      5          4        3       2      1
+                                                                         completed
+        8       8       7      6          5        4       3      2
+        9       9       8      7          6        5       4      3
+        ...
+Pipeline example
+After a few steps, all operations are running at once
+                                      Operations
+       Time
+              Fetch   Comp.   Shift      Add     Norm.   Round   Store
+        0       0
+        1       1       0
+        2       2       1      0
+        3       3       2      1          0
+        4       4       3      2          1        0
+        5       5       4      3          2        1       0
+        6       6       5      4          3        2       1      0
+        7       7       6      5          4        3       2      1       x[2]+y[2]
+        8       8       7      6          5        4       3      2      completed
+        9       9       8      7          6        5       4      3
+        ...
+Pipeline example
+Eventually, we complete all the operations and the pipeline drains
+                                       Operations
+       Time
+               Fetch   Comp.   Shift      Add     Norm.   Round   Store
+         0       0
+         1       1       0
+         2       2       1      0
+         3       3       2      1          0
+         4       4       3      2          1        0
+         5       5       4      3          2        1       0
+         6       6       5      4          3        2       1      0
+         ...     ...     ...    ...        ...      ...     ...    ...
+        999     999     998    997        996      995     994    993
+       1000             999    998        997      996     995    994
+       1001                    999        998      997     996    995
+       1002                               999      998     997    996
+       1003                                        999     998    997
+       1004                                                999    998
+       1005                                                       999
+Pipelining
+
+• A pipeline of k operations (doing k things at once) will not normally be k times faster.
+  • You will not get a k-fold improvement.
+• This is because some of the operations (functional units) are faster or slower than others
+  • In this case the system is only as fast as its slowest functional unit.
+• The pipeline can also be slowed due to waiting for a variable to become available
+  • For example, if it is locked or not in the cache.
+• If something stops the pipeline from being full (not all units running simultaneously) it is called
+  a pipeline stall.
+Multiple issue
+
+• Where pipelines perform multiple di erent operations at once, multiple issue CPUs can do
+  the same operation multiple times simultaneously.
+
+• This requires the CPU to have duplicate functional units.
+• For example, if the CPU has two oating point adders then the following code:
+  for (i=0; i<1000; i++)
+          z[i] = x[i] + y[i];
+  can run approximately twice as fast because two additions will be performed at one time.
+
+• When z[0] = x[0] + y[0] is calculated by the rst adder, then z[1] = x[1] + y[1]
+  is calculated by the second adder. This continues with each pair of adjacent array elements. It
+  would require 500 iterations instead of 1000 (roughly twice as fast).
+
+
+
+
+                                                                          fl
+                                                                                  ff
+     Pipelining vs multiple issue
+
+           Add              Round                            Add Add Add
+                                                             Add Add Add
+                    Shift
+
+            Read
+           memory          Store
+                          memory
+
+               Pipelined Operations                             Multiple Issue
+           Di erent operations performed           The same operations performed multiple
+      simultaneously. Di erent functional units             times simultaneously.
+                running at one time.              Multiple copies of the same functional unit
+                                                               running at once
+ff
+                                        ff
+Multiple issue
+
+• If the functional units are scheduled at compile time it is static multiple issue.
+• If they are scheduled at run time it is dynamic multiple issue.
+  • This is sometimes called superscalar.
+• Systems will also use speculation (or speculative execution) to schedule upcoming
+  instructions ahead of the current instruction pointer
+  • They guess which operations are likely to need execution, and execute them in advance
+Speculation in multiple issue systems
+
+• Speculation occurs when the compiler or CPU compute several operations at once but
+  guessing (usually from branch history) about the outcome of a calculation.
+
+• For example:
+  z = x + y;                                These operations could be performed at once.
+  if (z > 0)                                Or, at least, we could compute the true-branch
+        w = x + a;                                    before the if-statement itself
+  else
+        w = y + b;
+Speculation in multiple issue systems
+
+• Speculation occurs when the compiler or CPU compute several operations at once but
+  guessing (randomly) about the outcome of a calculation.
+
+• For example:
+  z = x + y;                  • After z is calculated, test if (z > 0).
+  if (z > 0)
+        w = x + a;              • If true then w is the correct value (already calculated).
+  else
+        w = y + b;
+                                • If false then calculate w = y + b.
+                              • If (z > 0) then we got a small speedup
+                              • Otherwise the code runs at normal speed (no bene t).
+Benefits of speculation
+
+• One of the main advantages of speculation is that it will handle events that might stall the
+  pipeline earlier, say, cache misses - this bene ts even single issue processors
+
+• On multiple issue processors, we also get a parallelization bene t
+Limitations of ILP
+
+• Instruction Level Parallelism (ILP) requires independent statements in long sequences to
+  work.
+
+• If calculations are based on previous calculations (dependent on earlier calculation) then it
+  doesn’t work well.
+
+• For example, Fibonacci numbers are based on previously calculated Fibonacci numbers.
+  for (i=2; i<n; i++)
+        f[i] = f[i-1] + f[i-2];
+
+• We need earlier values of f[i-1] and f[i-2], so this is di cult to parallelize - we need to
+  start with the base cases f[0] and f[1]
+Who implements ILP
+
+• Application-level software developers typically do not worry about manually doing ILP
+• Most of this is implemented in the CPU itself
+• Optimizations are enabled to let the compiler do what it can using the instruction set of the
+  CPU it compiles for
+  • e.g. -O2 for gcc (2nd level of optimization)
+Thread level parallelism (TLP)
+
+• The techniques we have used for far in the course are thread-level parallelism (TLP) - i.e.
+  parallelism through the use of many threads
+  • Using the Pthread library for now, but we will see others
+• It is coarser grained than ILP.
+  • This means that larger chunks (units) are being executed, rather than instructions (as in ILP).
+  • These are larger and di erent operations, not simply instructions (could be any chunk of code).
+• ILP is ner grained because it works with smaller pieces (instructions)
+         fi
+                                                 ff
+A note on hyper-threading
+
+• When running demos on Intel CPUs in this course, we came across simultaneous
+  multithreading - speci cally, hyper-threading on an Intel CPU
+
+• This is Intel's naming for their implementation of simultaneous multithreading (SMT)
+  • Each physical CPU core is assigned two virtual cores by the OS (so a quad-core CPU, for
+      example, would appear to have 8 cores)
+  •   The workload is shared between the virtual cores
+  •   Hyper-threading increases the number of independent instructions in the pipeline
+  •   This allows the instruction-level parallelization features of the CPU to do their magic
+
+• Two threads can be assigned to each core
+  • If Thread 1 encounters a memory stall, Thread 2 can make progress while Thread 1 waits
+                                                      fi
+A note on hyper-threading
+
+• Taking advantage of hyper-threaded cores can result is some performance increases when
+  doing thread-level parallelism - e.g. the examples we have seen so far in class
+
+• However, a single hyper-threaded physical core - represented as two virtual ones - will not be
+  as fast as two physical cores
+

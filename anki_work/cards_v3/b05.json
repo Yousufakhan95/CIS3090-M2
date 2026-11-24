@@ -1,0 +1,93 @@
+[
+ {
+  "text": "In discrete convolution, each new pixel is a {{c1::weighted sum}} of the pixels in its neighbourhood. The weights come from a {{c2::kernel}}, which is also called a mask or a filter.",
+  "extra": "When the neighbourhood is centred on the pixel, its size has to be odd, like \\(3\\times 3\\) or \\(5\\times 5\\).",
+  "tags": ["b05_image", "convolution"],
+  "source": "Lecture 16 slide 6",
+  "yield": "high"
+ },
+ {
+  "text": "To convolve at pixel \\(P\\), you centre the kernel on \\(P\\), multiply each neighbour by its weight, {{c1::add up}} the products, and write the result into a separate {{c2::output}} image.",
+  "extra": "Writing back into the input would change pixels that later neighbourhoods still need to read.",
+  "tags": ["b05_image", "convolution"],
+  "source": "Lecture 16 slide 18",
+  "yield": "high"
+ },
+ {
+  "text": "A smoothing kernel is normalized so its weights add up to {{c1::1}}. That keeps the average {{c2::brightness}} of the image the same.",
+  "extra": "Smoothing reduces noise, and the price is blurred edges. The scale factor is often written outside the matrix, like \\(1/9\\).",
+  "tags": ["b05_image", "normalization"],
+  "source": "Lecture 16 slide 12; M2 guide p.3",
+  "yield": "high"
+ },
+ {
+  "text": "A student writes a \\(3\\times 3\\) mean filter and forgets to divide by 9. On an 8-bit image clipped to 0 to 255, the result is about {{c1::nine times brighter}}, and most pixels end up at {{c2::255}}.",
+  "extra": "This is study guide practice question 4, answer B. The weights now sum to 9 instead of 1.",
+  "tags": ["b05_image", "normalization"],
+  "source": "M2 guide p.5",
+  "yield": "high"
+ },
+ {
+  "text": "With the copy border strategy, wherever the kernel would hang off the edge you {{c1::copy}} the input pixel straight to the output. The image keeps its size, but the rim stays {{c2::unprocessed}}.",
+  "extra": "Know what each border strategy does to the output size and to the border pixels.",
+  "tags": ["b05_image", "borders"],
+  "source": "Lecture 16 slide 22",
+  "yield": "high"
+ },
+ {
+  "text": "With truncation of the image, you drop every pixel where the kernel does not fit. The output comes out {{c1::smaller}} than the input.",
+  "extra": "Copy keeps the size and leaves a raw border. Truncation throws that border away.",
+  "tags": ["b05_image", "borders"],
+  "source": "Lecture 16 slide 22",
+  "yield": "high"
+ },
+ {
+  "text": "With truncation of the kernel, edge pixels get a {{c1::modified}} kernel that only covers the neighbours still inside the image.",
+  "extra": "Corners and each edge need their own cut-down kernel, so the code gets messy.",
+  "tags": ["b05_image", "borders"],
+  "source": "Lecture 16 slide 23",
+  "yield": "high"
+ },
+ {
+  "text": "With reflection, a coordinate that falls outside the image is {{c1::mirrored}} back inside it. The lecture calls this the most useful border option.",
+  "extra": "Circular wrapping treats the image as if it tiled forever, and it is rarely used for images.",
+  "tags": ["b05_image", "borders"],
+  "source": "Lecture 16 slide 24",
+  "yield": "high"
+ },
+ {
+  "text": "Unsharp masking first builds an edge image \\(g = {{c1::f - S(f)}}\\), where \\(S(f)\\) is a {{c2::blurred}} copy of the original \\(f\\).",
+  "extra": "Subtracting the blur removes the smooth parts and leaves only the fine detail.",
+  "tags": ["b05_image", "unsharp"],
+  "source": "Lecture 17 slide 10",
+  "yield": "high"
+ },
+ {
+  "text": "Unsharp masking then adds the edges back with \\(f_{UM} = {{c1::f + k \\cdot g}}\\). Raising \\(k\\) gives {{c2::stronger}} sharpening.",
+  "extra": "Typical \\(k\\) is about 0.2 to 0.7. With \\(k\\) above 1 it is sometimes called high-boost filtering.",
+  "tags": ["b05_image", "unsharp"],
+  "source": "Lecture 17 slide 11; M2 guide p.3",
+  "yield": "high"
+ },
+ {
+  "text": "A Gaussian filter weights each neighbour by \\(w(i,j) = {{c1::e^{-(i^2+j^2)/(2\\sigma^2)} }}\\). A larger \\(\\sigma\\) gives {{c2::more}} blur, because the weights spread farther from the centre.",
+  "extra": "The kernel usually reaches out about \\(3\\sigma\\) in each direction. It blurs the same amount in every direction.",
+  "tags": ["b05_image", "gaussian"],
+  "source": "Lecture 17 slide 28",
+  "yield": "high"
+ },
+ {
+  "text": "A median filter replaces each pixel with the {{c1::middle}} value of its neighbourhood after sorting. It removes {{c2::impulse}} noise as long as the bad pixels are less than half the neighbourhood.",
+  "extra": "It is not a weighted sum, so it is a nonlinear filter.",
+  "tags": ["b05_image", "median"],
+  "source": "Lecture 17 slide 35",
+  "yield": "high"
+ },
+ {
+  "text": "Mean and Gaussian filters reduce noise but {{c1::blur}} edges. A median filter keeps {{c2::sharp edges}} much better.",
+  "extra": "The downside of the median filter is that it also erases real thin lines that cover less than half the neighbourhood.",
+  "tags": ["b05_image", "median"],
+  "source": "Lecture 17 slide 38",
+  "yield": "high"
+ }
+]

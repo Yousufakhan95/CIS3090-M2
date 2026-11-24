@@ -1,0 +1,285 @@
+
+===== PAGE 1 =====
+CIS*3090
+Reduce in action (trapezoidal rule)
+Based on the CIS*3090 notes by David Calvert and the notes from An Introduction to Parallel Programming by Peter Pacheco and Matthew Malensek
+
+===== PAGE 2 =====
+Overview
+• Let's take a look at a specific example: computing area under the curve  
+• We will discuss the serial solution, as well as parallel ones using MPI
+
+===== PAGE 3 =====
+Computing integrals: area under the curve
+• As you know from calculus, the integral of a function on a given 
+interval (e.g. from 0 to 10) computes the area under the curve  
+• Computing the area under the curve has various applications in 
+computationally intensive areas, including machine learning, 
+simulating various natural processes, economics, statistics, etc.
+
+===== PAGE 4 =====
+Computing integrals: area under the curve
+• When computing this area in software, we approximate the area as a number of trapezoids 
+• The narrower the trapezoids, the better our approximation
+
+===== PAGE 5 =====
+• One trapezoid
+Computing integrals: area under the curve
+
+===== PAGE 6 =====
+Computing integrals: area under the curve
+• Area of one trapezoid: (h / 2) × (f(xi) + f(xi+1))
+
+===== PAGE 7 =====
+• Reminder:  
+•
+the function is convex on the interval if the line 
+segment between any two distinct points xi and 
+xi+1 lies above or on the graph between the 
+points xi and xi+1 
+•
+the function is concave if the line segment lies 
+below or on the graph between the points xi and 
+xi+1
+Computing integrals: area under the curve
+
+===== PAGE 8 =====
+• If the function is concave (e.g. figure on this 
+slide), the trapezoid is an underestimate 
+• If the function is convex, the trapezoid is an 
+overestimate
+Computing integrals: area under the curve
+
+===== PAGE 9 =====
+Computing integrals: area under the curve
+• For many trapezoids: 
+•
+h = (b - a) / n 
+•
+x0 = a, x1 = a+h, ... , xn-1 = a+(n-1)h, xn = b 
+• Sum of trapezoid areas:  
+h * [f(x0)/2 + f(x1) + ... + f(xn-1) + f(xn) / 2] 
+• As they get smaller, the over- and under-estimates of the 
+individual trapezoids "average out", giving us a value close to 
+the true area under the curve
+
+===== PAGE 10 =====
+Pseudo-code for a serial program 
+/* input: a, b, n */ 
+ 
+double estimate; 
+int k; 
+h = (b-a) / n; 
+estimate = (f(a) + f(b)) / 2.0; 
+for (k = 1; k <= n-1; k++) { 
+	
+estimate += f(a+k*h); 
+} 
+estimate = estimate*h; 
+return estimate;
+
+===== PAGE 11 =====
+Parallelizing the Trapezoidal Rule
+Parallelization steps revisited
+• Partition problem solution into tasks 
+• Identify communication channels between tasks 
+• Aggregate tasks into composite tasks 
+• Map composite tasks to cores 
+• The parallelized solution is always dependent on the hardware and software we use to 
+implement it, so we will explicitly target a distributed memory platform with MPI
+
+===== PAGE 12 =====
+Parallelizing the Trapezoidal Rule 
+Partition problem solution into tasks
+• Each process gets a section of indices between a and b, so we compute "local" a and b 
+• Each process computes its partial sum 
+• Partial sums are combined into the total sum
+
+===== PAGE 13 =====
+Parallelizing the Trapezoidal Rule 
+Identify communication channels between tasks
+• Each process needs to start with the same data: a, b, n 
+• If data is read from the user, process 0 must read it and send it to all other processes 
+• Partial sums must be added together at the end, so they will need to be sent somewhere (e.g. 
+to process 0) for this 
+• We do this using MPI tools
+
+===== PAGE 14 =====
+Parallelizing the Trapezoidal Rule 
+Aggregate tasks into composite tasks
+• One process does user I/O, trapezoidal rule computation, combines all partial sums, and 
+shows the user output 
+• All other processes just do trapezoidal rule computations and send the data to the one 
+process that will do the summing
+
+===== PAGE 15 =====
+Parallelizing the Trapezoidal Rule 
+Map composite tasks to cores
+• Process 0: does user I/O, trapezoidal rule computation, combines all partial sums, and 
+shows the user output 
+• Processes 1 to comm_sz - 1: do trapezoidal rule computations and send the data to 
+Process 0, which will do the summing
+
+===== PAGE 16 =====
+Parallelizing the Trapezoidal Rule 
+compute area 
+using trap() 0 1 2
+.
+.
+.
+comm_sz - 1
+add 
+areas
+
+===== PAGE 17 =====
+MPI Trapezoidal rule: main program
+	 Get_input(my_rank, comm_sz, &a, &b, &n); 
+   h = (b-a)/n;          /* h is the same for all processes */ 
+   local_n = n/comm_sz;  /* So is the number of trapezoids */ 
+   /* Length of each process' interval of integration = local_n*h.  So my interval 
+    * starts at: */ 
+   local_a = a + my_rank*local_n*h; 
+   local_b = local_a + local_n*h; 
+   local_int = Trap(local_a, local_b, local_n, h); 
+   /* Add up the integrals calculated by each process */ 
+   if (my_rank != 0) 
+      MPI_Send(&local_int, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD); 
+   else { 
+      total_int = local_int; 
+      for (source = 1; source < comm_sz; source++) { 
+         MPI_Recv(&local_int, 1, MPI_DOUBLE, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+         total_int += local_int; 
+      } 
+   }
+
+===== PAGE 18 =====
+	 Get_input(my_rank, comm_sz, &a, &b, &n); 
+   h = (b-a)/n;          /* h is the same for all processes */ 
+   local_n = n/comm_sz;  /* So is the number of trapezoids */ 
+   /* Length of each process' interval of integration = local_n*h.  So my interval 
+    * starts at: */ 
+   local_a = a + my_rank*local_n*h; 
+   local_b = local_a + local_n*h; 
+   local_int = Trap(local_a, local_b, local_n, h); 
+   /* Add up the integrals calculated by each process */ 
+   if (my_rank != 0) 
+      MPI_Send(&local_int, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD); 
+   else { 
+      total_int = local_int; 
+      for (source = 1; source < comm_sz; source++) { 
+         MPI_Recv(&local_int, 1, MPI_DOUBLE, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+         total_int += local_int; 
+      } 
+   }
+MPI Trapezoidal rule: main program
+In many of the code examples used in this course, we assume that data 
+size n divides evenly by comm_sz (or number of cores/threads in the 
+pthreads examples we saw earlier) 
+This is done to keep the code examples short and easier to fit on the slides. 
+We omit error handling in many of our examples for the same reason. 
+We have discussed the methods for even distribution of work early in the 
+course, and we assume that the full implementations use them - along with 
+full error handling, etc.
+
+===== PAGE 19 =====
+MPI Trapezoidal rule: computing the rule
+double Trap( 
+      double left_endpt  /* in */,  
+      double right_endpt /* in */,  
+      int    trap_count  /* in */,  
+      double base_len    /* in */) { 
+   double estimate, x;  
+   int i; 
+   estimate = (f(left_endpt) + f(right_endpt))/2.0; 
+   for (i = 1; i <= trap_count-1; i++) { 
+      x = left_endpt + i*base_len; 
+      estimate += f(x); 
+   } 
+   estimate = estimate*base_len; 
+   return estimate; 
+}
+
+===== PAGE 20 =====
+MPI Trapezoidal rule: collecting user input
+void Get_input(int my_rank, int comm_sz, double* a_p, double* b_p, 
+      int* n_p) { 
+   int dest; 
+   if (my_rank == 0) { 
+      printf("Enter a, b, and n\n"); 
+      scanf("%lf %lf %d", a_p, b_p, n_p); 
+      for (dest = 1; dest < comm_sz; dest++) { 
+         MPI_Send(a_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD); 
+         MPI_Send(b_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD); 
+         MPI_Send(n_p, 1, MPI_INT, dest, 0, MPI_COMM_WORLD); 
+      }  
+   } else { /* my_rank != 0 */ 
+      MPI_Recv(a_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+      MPI_Recv(b_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+      MPI_Recv(n_p, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+   }  
+}
+
+===== PAGE 21 =====
+Improving the parallelized Trapezoidal Rule
+Collective communication: send
+• Every process needs the same starting data - left endpoint, right endpoint, and the number of 
+trapezoids 
+• The initial solution: Process 0 loops and sends this data to all other processes 
+• This can be improved with an MPI_Bcast
+
+===== PAGE 22 =====
+Improving the parallelized Trapezoidal Rule
+Collective communication: send
+• Every process needs the same starting data - left endpoint, right endpoint, and the number of 
+trapezoids 
+• The initial solution: Process 0 loops and sends this data to all other processes 
+• This can be improved with an MPI_Bcast
+void Get_input(int my_rank, int comm_sz, double* a_p, double* b_p, int* n_p) { 
+   if (my_rank == 0) { 
+      printf("Enter a, b, and n\n"); 
+      scanf("%lf %lf %d", a_p, b_p, n_p); 
+   }  
+   MPI_Bcast(a_p, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+   MPI_Bcast(b_p, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+   MPI_Bcast(n_p, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+}  /* Get_input */ 
+
+===== PAGE 23 =====
+Improving the parallelized Trapezoidal Rule
+Collective communication: reduce
+• The linear summation at the end is inefficient - we can replace it with a reduction 
+• We only need to make some changes to the main program
+process
+0
+1
+2
+.
+.
+.
+comm_sz - 1
+process
+0
+process
+0
+process
+0
+
+===== PAGE 24 =====
+Using MPI_Reduce in our solution
+	 Get_input(my_rank, comm_sz, &a, &b, &n); 
+   h = (b-a)/n;          /* h is the same for all processes */ 
+   local_n = n/comm_sz;  /* So is the number of trapezoids  */ 
+   /* Length of each process' interval of 
+    * integration = local_n*h.  So my interval 
+    * starts at: */ 
+   local_a = a + my_rank*local_n*h; 
+   local_b = local_a + local_n*h; 
+   local_int = Trap(local_a, local_b, local_n, h); 
+   /* Add up the integrals calculated by each process */ 
+   MPI_Reduce(&local_int, &total_int, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+
+===== PAGE 25 =====
+MPI and Parallelized Trapezoidal Rule
+• See examples mpi_trap1.c - mpi_trap3.c from the Chapter 3 code 
+• mpi_trap4.c is also interesting, but it relies on MPI data types, which we have not 
+discussed so far 

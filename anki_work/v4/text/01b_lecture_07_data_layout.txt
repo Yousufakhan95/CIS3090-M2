@@ -1,0 +1,81 @@
+
+===== PAGE 1 =====
+Maximizing cache locality
+• Contiguous memory blocks are easier to cache - we get spatial locality for free 
+•
+adjacent elements in an array are adjacent in memory 
+•
+adjacent elements in a linked list can be far apart in memory 
+• Value types (e.g. structs) are easier to cache than reference type (e.g. pointers to structs, or 
+structs consisting of pointers) 
+• Contiguous data collections of value types are easier to cache than contiguous or linked data 
+structures of reference types
+
+===== PAGE 2 =====
+Contiguous data and performance
+• Contiguous data in general is much more efficient for the hardware to deal with 
+•
+It is easy to cache 
+•
+It is easy to transfer - you move N bytes starting from address M 
+• This is why, in code involving parallelism, we revert to more "old school", contiguous data 
+structures 
+•
+2D arrays are actually 1D arrays with fancy indexing 
+•
+Complex objects are represented as several 1D arrays
+
+===== PAGE 3 =====
+Contiguous data and performance
+• For example, a 3D model is a collection of: 
+•
+Vertices (3D or 4D) vectors 
+•
+Faces - Flat surfaces, usually triangles (defined as sequences of edges in a specific order) 
+•
+Normals (3D or 4D vectors, one per face or one per vertex) 
+•
+Textures (2D arrays) 
+•
+Possibly other stuff (bump maps, light maps, etc.) 
+• A high-level view of a 3D model is a complex object with several data collections consisting 
+of objects (arrays of Point3D or Vector 3D objects, etc.)
+
+===== PAGE 4 =====
+Contiguous data and performance
+• A low-level view (i.e. how it is actually stored) is a bunch of 1D arrays 
+•
+A vertex buffer with an unrolled 1D array of vertices 
+•
+An index buffer with an unrolled 1D array of faces (or edges) 
+•
+A texture buffer with an unrolled 1D array representing a 2D texture 
+•
+etc. 
+• This allows for more efficient transfer of data - e.g. large multi-megabyte 3D models in a 
+game engine - between the disk, the main memory, and the GPU memory
+
+===== PAGE 5 =====
+Data layouts in parallel programming
+• When we are writing parallel programs, performance is the single most important 
+consideration 
+•
+Otherwise we do not need create parallel code in the first place 
+• In shared memory programs, we do not need to transfer data very often 
+•
+But we still want to ensure cache locality 
+• In distributed memory programs, or in programs with heterogeneous hardware (e.g. CPU/
+GPU), we need to transfer large blocks of data  
+•
+Need to be as efficient as possible to minimize the overhead of parallelization 
+•
+Need to rely on simpler, lower-level data structures to do this 
+•
+And rely on fancy indexing to navigate our unrolled data structures
+
+===== PAGE 6 =====
+TL;DR
+Quick tips for maximizing contiguous memory
+• Structs instead of objects 
+• No pointers in structs 
+• Contiguous arrays instead of linked data

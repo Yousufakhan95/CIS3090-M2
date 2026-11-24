@@ -1,0 +1,153 @@
+[
+ {
+  "file": "01_ch02_hardware.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\01_ch02_hardware.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\01_ch02_hardware.txt",
+  "type": "pdf",
+  "pages": 11,
+  "chars": 29415,
+  "sparse_pages": [],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "01b_lecture_07_data_layout.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\01b_lecture_07_data_layout.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\01b_lecture_07_data_layout.txt",
+  "type": "pdf",
+  "pages": 6,
+  "chars": 2710,
+  "sparse_pages": [],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "01c_lecture_14_performance.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\01c_lecture_14_performance.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\01c_lecture_14_performance.txt",
+  "type": "pdf",
+  "pages": 50,
+  "chars": 14178,
+  "sparse_pages": [],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "02_ch02_performance_amdahl.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\02_ch02_performance_amdahl.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\02_ch02_performance_amdahl.txt",
+  "type": "pdf",
+  "pages": 6,
+  "chars": 12856,
+  "sparse_pages": [],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "03_ch03_mpi.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\03_ch03_mpi.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\03_ch03_mpi.txt",
+  "type": "pdf",
+  "pages": 32,
+  "chars": 62033,
+  "sparse_pages": [],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "03c_lecture_09_mpi_intro.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\03c_lecture_09_mpi_intro.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\03c_lecture_09_mpi_intro.txt",
+  "type": "pdf",
+  "pages": 42,
+  "chars": 19716,
+  "sparse_pages": [
+   26
+  ],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "03d_lecture_10_collectives.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\03d_lecture_10_collectives.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\03d_lecture_10_collectives.txt",
+  "type": "pdf",
+  "pages": 26,
+  "chars": 9403,
+  "sparse_pages": [],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "03e_lecture_11_trapezoid.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\03e_lecture_11_trapezoid.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\03e_lecture_11_trapezoid.txt",
+  "type": "pdf",
+  "pages": 25,
+  "chars": 9327,
+  "sparse_pages": [],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "04_lecture_15_gpgpu_warp.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\04_lecture_15_gpgpu_warp.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\04_lecture_15_gpgpu_warp.txt",
+  "type": "pdf",
+  "pages": 45,
+  "chars": 17552,
+  "sparse_pages": [
+   29
+  ],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "05a_lecture_16_image_basics.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\05a_lecture_16_image_basics.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\05a_lecture_16_image_basics.txt",
+  "type": "pdf",
+  "pages": 25,
+  "chars": 8111,
+  "sparse_pages": [
+   5
+  ],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "05b_lecture_17_image_filters.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\05b_lecture_17_image_filters.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\05b_lecture_17_image_filters.txt",
+  "type": "pdf",
+  "pages": 39,
+  "chars": 9424,
+  "sparse_pages": [
+   26,
+   31,
+   32,
+   37
+  ],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "06_lecture_18_warp_images.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\06_lecture_18_warp_images.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\06_lecture_18_warp_images.txt",
+  "type": "pdf",
+  "pages": 27,
+  "chars": 12648,
+  "sparse_pages": [],
+  "role_hint": "lecture"
+ },
+ {
+  "file": "07_m2_study_guide.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\07_m2_study_guide.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\07_m2_study_guide.txt",
+  "type": "pdf",
+  "pages": 5,
+  "chars": 9932,
+  "sparse_pages": [],
+  "role_hint": "assessment"
+ },
+ {
+  "file": "zz_course_outline.pdf",
+  "path": "C:\\github\\CIS3090-M2\\anki_work\\sources\\zz_course_outline.pdf",
+  "txt": "C:\\github\\CIS3090-M2\\anki_work\\v4\\text\\zz_course_outline.txt",
+  "type": "pdf",
+  "pages": 8,
+  "chars": 15913,
+  "sparse_pages": [],
+  "role_hint": "syllabus"
+ }
+]

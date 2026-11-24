@@ -1,0 +1,82 @@
+[
+  {
+    "text": "You timed serial and parallel. Speedup is \\({{c1::S(n,p) = \\frac{T_{\\mathrm{serial} }(n)}{T_{\\mathrm{parallel} }(n,p)} }}\\). Efficiency is \\({{c2::E(n,p) = S(n,p)/p }}\\). Linear speedup means \\(S = {{c3::p}}\\) (so \\(E = 1\\)).",
+    "extra": "In practice \\(S\\) is usually below \\(p\\) and \\(E\\) below 1. Mat-vec only got near-linear \\(S\\) for small \\(p\\) and large \\(n\\).",
+    "tags": [
+      "b04_mpi_performance",
+      "speedup_efficiency"
+    ],
+    "source": "04_ch03_mpi_performance.pdf p.7",
+    "yield": "high"
+  },
+  {
+    "text": "For parallel MPI timings, use {{c1::wall clock}} time via \\(\\mathrm{MPI\\_Wtime}\\), not CPU time. Wall clock includes {{c2::idle}} time, such as sitting blocked in \\(\\mathrm{MPI\\_Recv}\\).",
+    "extra": "C clock skips idle. Idle can dominate a parallel run, so speedup would be wrong without wall clock.",
+    "tags": [
+      "b04_mpi_performance",
+      "wall_clock_vs_cpu"
+    ],
+    "source": "04_ch03_mpi_performance.pdf p.3",
+    "yield": "high"
+  },
+  {
+    "text": "One parallel elapsed time: call {{c1::\\(\\mathrm{MPI\\_Barrier}\\)}} so processes start together, time with \\(\\mathrm{MPI\\_Wtime}\\), then {{c2::\\(\\mathrm{MPI\\_Reduce}\\)}} with {{c3::\\(\\mathrm{MPI\\_MAX}\\)}} on each local elapsed time.",
+    "extra": "Ideal parallel time is until the last process finishes. Barrier only approximates a simultaneous start.",
+    "tags": [
+      "b04_mpi_performance",
+      "mpi_timing_idiom"
+    ],
+    "source": "04_ch03_mpi_performance.pdf p.4",
+    "yield": "high"
+  },
+  {
+    "text": "Across repeated identical MPI runs, report the {{c1::minimum}} run-time. OS interaction almost never makes the program {{c2::faster}} than on a quiet system.",
+    "extra": "Mean or median mix in noise that only slows you. The min approximates the quiet-system time.",
+    "tags": [
+      "b04_mpi_performance",
+      "report_minimum"
+    ],
+    "source": "04_ch03_mpi_performance.pdf p.4",
+    "yield": "high"
+  },
+  {
+    "text": "Usual parallel model: \\(T_{\\mathrm{parallel} }(n,p) = {{c1::T_{\\mathrm{serial} }(n)/p + T_{\\mathrm{overhead} } }}\\). In MPI that overhead is typically {{c2::communication}}, like Allgather in mat-vec.",
+    "extra": "Local work falls by about \\(p\\). Communication can depend on both \\(n\\) and \\(p\\).",
+    "tags": [
+      "b04_mpi_performance",
+      "parallel_overhead_model"
+    ],
+    "source": "04_ch03_mpi_performance.pdf p.5",
+    "yield": "high"
+  },
+  {
+    "text": "In mat-vec MPI timings, {{c1::communication}} dominates for small \\(n\\) and large \\(p\\), so adding processes barely helps. For small \\(p\\) and large \\(n\\), local work {{c2::\\(T_{\\mathrm{serial} }/p\\)}} dominates and you get near-linear speedup.",
+    "extra": "Example: \\(n=1024\\), \\(p=8\\) to 16 left run-time unchanged. Worst speedup was 2.4 at \\(n=1024\\), \\(p=16\\).",
+    "tags": [
+      "b04_mpi_performance",
+      "overhead_dominates"
+    ],
+    "source": "04_ch03_mpi_performance.pdf p.7",
+    "yield": "high"
+  },
+  {
+    "text": "Practice: \\(T_{\\mathrm{serial} }=100\\) s, \\(T_4=40\\) s, \\(T_8=25\\) s. Speedups are {{c1::2.5 then 4}}. Efficiencies are {{c2::0.625 then 0.5}}. As \\(p\\) grows, \\(E\\) {{c3::drops}}.",
+    "extra": "\\(S_4=100/40=2.5\\), \\(E_4=2.5/4=0.625\\); \\(S_8=100/25=4\\), \\(E_8=4/8=0.5\\). Study-guide practice Q5 answer A.",
+    "tags": [
+      "b04_mpi_performance",
+      "speedup_efficiency_practice"
+    ],
+    "source": "08_m2_study_guide.pdf p.5",
+    "yield": "high"
+  },
+  {
+    "text": "Roughly, a parallel program is {{c1::scalable}} if you can grow the {{c2::problem size}} fast enough that {{c3::efficiency}} holds as the process count rises.",
+    "extra": "Mat-vec: fixing \\(n\\) and raising \\(p\\) drops \\(E\\). Doubling both \\(n\\) and \\(p\\) (for larger \\(p\\)) usually holds or raises \\(E\\).",
+    "tags": [
+      "b04_mpi_performance",
+      "scalability"
+    ],
+    "source": "04_ch03_mpi_performance.pdf p.8",
+    "yield": "high"
+  }
+]

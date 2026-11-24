@@ -1,0 +1,309 @@
+
+===== PAGE 1 =====
+1
+CIS*3090 Parallel Programming 
+Fall 2026 
+ 
+School of Computer Science 
+1 	 INSTRUCTIONAL SUPPORT 
+ 
+ 
+ 
+ 
+Section 01 
+Instructor: 	
+	
+Dr. Denis Nikitenko 
+Office: 	
+	
+See below 
+Email: 	
+	
+cis3090@socs.uoguelph.ca 
+Office hours: 	
+	
+By appointment only. Details will be posted on the course website. Note: Weekly 
+	
+	
+hours may vary during the semester to better accommodate student demand and  
+	
+	
+instructor availability. 
+Pre-requisites:	 	
+(CIS*2030 or ENGG*3640), CIS*3110   
+Credit Weight: 	0.5
+Teaching Assistants 
+Email:  	
+	
+cis3090@socs.uoguelph.ca 
+Office Hours: 	 	
+Regular lab times (see below)
+Timetable  
+Lectures: See WebAdvisor 
+ 
+Labs: See WebAdvisor 
+Delivery method: This is a in-person course. 
+The labs will be used for advising and consulting with the Teaching Assistants, which will be done online.  
+Students will be able to schedule one-on-one online meetings with the Teaching Assistants.  Additional TA 
+office hours may be scheduled based on the demand. Details will be announced in class.  
+Please note that, if necessary, the lab time may also be used for additional tutorials. These tutorials will be 
+announced in advance and done in person in the assigned classroom.
+
+===== PAGE 2 =====
+2
+2 	 LEARNING RESOURCES 
+2.1	 Course Website 
+Course material, news, announcements, and grades will be regularly posted to the CIS*3090 website which 
+can be found at https://moodle.socs.uoguelph.ca.  You are responsible for checking the site regularly.  
+•
+Lecture Information: Selected notes will be posted on the course website as instructors have time to make 
+them available. You are expected to take your own notes during lecture. 
+•
+Labs and Tutorials: Selected tutorial and lab materials will be available on the course website. 
+•
+Assignments: Assignment descriptions are found on the course website. Assignments are submitted via the 
+course website.  
+ 
+2.2	 Required Textbook 
+An Introduction to Parallel Programming, by P. Pacheco and M. Malensek, Morgan Kaufmann, 2nd ed. 2020. 
+($114) ISBN-10: 0128046058, ISBN-13: 978-0128046050 
+Campus bookstore link: https://bookstore.uoguelph.ca/p-43274-introduction-to-parallel-programming.aspx 
+ 
+2.3	 Calendar Description 
+This course examines the current techniques for design and development of parallel programs targeted for 
+platforms ranging from multicore computers to high-performance clusters, with and without shared memory. 
+It includes theoretical models for, and hardware effects on, parallel computation, the definitions of speedup, 
+scalability, and data- versus task-parallel approaches. The course will also examine strategies for achieving 
+speedup based on controlling granularity, resource contention, idle time, threading overhead, work allocation, 
+and data localization. 
+The Academic Calendars are the source of information about the University of Guelph’s procedures, policies 
+and regulations which apply to undergraduate, graduate and diploma programs: http://www.uoguelph.ca/
+registrar/calendars/index.cfm?index 
+2.4	 Course learning outcomes 
+- Describe architectures for large-scale parallel systems and explain techniques for achieving parallelism. 
+- Develop parallel programs for diverse platforms, including shared memory, message passing, and 
+heterogeneous systems. 
+- Design and optimize efficient parallel algorithms and applications. 
+- Evaluate performance and scalability of parallel programs through analysis and modeling. 
+ 
+ 
+
+===== PAGE 3 =====
+3
+3 	 ASSESSMENT 
+3.1	 Dates and Distribution 
+3.1.1 Final grade calculation 
+The final grade is the weighted sum of all assessments shown above, using the weights indicated in the list above. 
+ 
+3.2	 Course Grading Policies 
+Late assignments: All assignments are due at the date indicated in Section 3.1. Assignment due times will be 
+listed in the individual assignment descriptions when they are released. Late assignments will be accepted for 48 
+hours after the deadline and penalized at 2% per hour.  Assignments that are more than 48 hours late will not 
+be accepted and will automatically receive the grade of zero (0).  See below for compassionate exceptions. 
+Compiler errors/warnings: Program code which does not compile will not be accepted for marking and a 
+grade of zero (0) will be assigned.  Code that does not compile “clean” will lose marks for compiler warnings. 
+Code must compile and run on the platform specified in the assignment description. 
+Submission errors: Failure to submit assignments correctly (e.g., incorrect file names, faulty/missing build 
+scripts, etc.) will result in a mark penalty.  
+Regrades: Students may request a regrade of an assignment if the marker has made an error in grading.  The 
+original submission will be entirely regraded and a new mark will be assigned. It is possible for a mark to go 
+down, go up, or remain unchanged as a result of a regrade.  Students must request a regrade via the Regrade 
+dropbox on the course website within 5 calendar days of receiving the assignment grade. No other regrade 
+requests will be accepted.  If an assignment has been regraded, it will not be regraded again. 
+Accommodation: When You Cannot Meet a Course Requirement: If you are unable to meet an in-course 
+requirement due to medical, psychological, or compassionate reasons, contact the instructor using the course 
+email, as per the course communication policy discussed in Section 5.1. Please note that work commitments will 
+not constitute grounds for academic consideration. Academic consideration will also not be granted for reasons 
+related to deliverables in other courses.  
+ 
+Please note that all requests for academic consideration - including those made by students registered with the 
+SAS - must be made prior to the assessment (assignment/test/project/homework/etc.) due date and time. No 
+academic consideration requests will be accepted once the assessment due date and time have passed. This means 
+that no requests will be accepted during the late submission period (if the assessment has one) - they must be 
+Assessments
+Course learning outcomes
+Assignments (3, 18% each, 54% total)
+Assignment 1 (Oct. 23, before midnight)
+1-4
+Assignment 2 (Nov. 16, before midnight)
+1-4
+Assignment 3 (Dec. 4, before midnight)
+1-4
+Midterm exams (2, 23% each, 46% total)
+Midterm 1: Tuesday, October 20
+1-4
+Midterm 2: Thursday, November 26
+1-4
+
+===== PAGE 4 =====
+4
+made prior to the assessment deadline. 
+ 
+Please see below for specific details and consult the undergraduate calendar for information on regulations and 
+procedures for Academic Consideration: http://www.uoguelph.ca/registrar/calendars/undergraduate/current/
+c08/c08-ac.shtml 
+ 
+Missed Assessments: If you are unable to meet an in-course requirement due to medical, psychological, or 
+compassionate reasons, please make an appointment to meet your course instructor. Please see below for specific 
+details and consult the undergraduate calendar for information on regulations and procedures for Academic 
+Consideration: http://www.uoguelph.ca/registrar/calendars/undergraduate/current/c08/c08-ac.shtml 
+Accommodation of Religious Obligations: If you are unable to meet an in-course requirement due to 
+religious obligations, you must email the course email address within two weeks of the distribution of the course 
+outline to make alternate arrangements. See the undergraduate calendar for information on regulations and 
+procedures for Academic Accommodation of Religious Obligations:  
+http://www.uoguelph.ca/registrar/calendars/undergraduate/current/c08/c08-accomrelig.shtml 
+
+===== PAGE 5 =====
+5
+4 	 TEACHING AND LEARNING ACTIVITIES 
+ 
+4.1	Course calendar and detailed course description 
+Please note that the list of topics below is approximate and may be revised and updated as necessary to better fit 
+the flow of lectures and project modules. 
+ 
+ 
+4.4	
+Important Dates 
+Thursday, September 10: First day of CIS*3090 (no lectures this week) 
+Tuesday, September 15: First CIS*3090 lecture 
+Monday, October 12 and Tuesday, October 13 - NO CLASS 
+Friday, Dec 4: last day of CIS*3090 
+     
+Lectures
+Lecture Topics
+Tests
+Assignments
+Week 0 (Sept 7-13)
+No classes
+Week 1 (Sept 14-20)
+Basics of parallel programming
+Week 2 (Sept 21-27)
+Shared memory parallelism
+Week 3 (Sept 28-Oct 4)
+Shared memory parallelism, cont. 
+Thinking about performance
+A1 out
+Week 4 (Oct 5-11)
+Parallel hardware 
+Parallel simulation case study (shared 
+memory)
+Week 5 (Oct 12-18)
+Thanksgiving mini-break
+Week 6 (Oct 19-25)
+Distributed memory programming with MPI
+Midterm 1
+Assignment 1
+Week 7 (Oct 26-Nov 1)
+MPI communication patterns, MPI case 
+studies
+Week 8 (Nov 2-8)
+MPI case studies
+Week 9 (Nov 9-15)
+More on performance, GPGPU intro
+Week 10 (Nov 16-22)
+GPGPU with Warp
+Assignment 2
+Week 11 (Nov 23-29)
+GPGPU with Warp
+Midterm 2
+Week 12 (Nov 30-Dec 4)
+Special/advanced topics
+Assignment 3
+
+===== PAGE 6 =====
+6
+5  ROLES AND RESPONSIBILITIES 
+5.1	
+Communication & Email Policy 
+Please use lectures, lab sessions, and the website discussion forum as your main opportunities to ask 
+questions about the course. Questions that are specific to your particular situation may be emailed to 
+cis3090@socs.uoguelph.ca and will be answered by one of the instructional team. Extremely private 
+communication should be conducted by making an appointment with the course instructor. 
+All emails related to this course and all bookings must be made through your <mail.uoguelph.ca> e-mail. 
+Major announcements will be posted to the course website. It is your responsibility to check the course website 
+regularly. As per university regulations, all students are also required to check their <mail.uoguelph.ca> e-mail 
+account regularly: e-mail is the official route of communication between the University and its students. 
+Please note that the in-class discussions, course email, course forums, and the instructor / TA office hours are the 
+only means of communications for this course. Any other attempts at communication will not get a response. 
+5.2	 Recording of materials 
+Presentations which are made in relation to course work—including lectures—cannot be recorded or copied 
+without the permission of the presenter, whether the instructor, classmate or guest lecturer. Material 
+recorded with permission is restricted to use for that course and may not be posted on any public space 
+unless further permission is granted. 
+5.3	 Instructor’s Role and Responsibility to Students 
+The instructor’s role is to develop and deliver course material in ways that facilitate learning for a variety of 
+students.  Selected notes will be made available to students on the course website but are not intended to be 
+stand-alone. During lectures, the instructor will expand and explain the content of notes and provide example 
+problems that supplement posted notes. Scheduled classes will be the principal venue to provide information 
+and feedback for exams and assignments. 
+5.4	 Students’ Learning Responsibilities 
+Students are expected to take advantage of the learning opportunities provided during lectures, labs and help 
+sessions. Students, especially those having difficulty with the course content, should also make use of other 
+resources recommended by the instructor.  Students who fall behind due to illness, work, or extra-curricular 
+activities are advised to keep the instructor informed as early as possible.  This will allow the instructor to 
+recommend extra resources in a timely manner and/or provide consideration if appropriate. 
+5.5	 General course policies 
+Do not redistribute recorded interactive discussions that involve your classmates. This includes advising 
+times and question and answer sessions with the instructor. 
+Online activities such as advising times, question and answer sessions, and interactive lectures may be 
+recorded by the instructor or TAs and posted to the course website. By taking this course you are agreeing 
+that your participation in these activities can be used in this manner. If you do not wish to have your image or 
+voice recorded as part of these activities then either do not take this course or do not ask verbal questions 
+during these activities. 
+A reliable internet connection that is sufficient for online learning is necessary for this course. If you do not 
+have a sufficiently fast and reliable internet connection, then you may not be able to view or download 
+lectures or other course material. It may also not be possible to attend online advising with teaching 
+assistants or the instructor. 
+This course is offered in the eastern standard time zone (EST). While taking this course then you may be 
+required to attend online activities such as interactive lecture components, advising times, labs, and 
+assignment evaluation sessions between 8:30am and 5:00pm EST.  The lectures and labs are an integral par 
+of the corse, and you are expected to be available during the scheduled lecture times and lab times for 
+
+===== PAGE 7 =====
+7
+consultation with the instructor and TAs. 
+Keep copies of assignments which you have submitted. You may be asked to resubmit assignments at a later 
+time. 
+
+===== PAGE 8 =====
+8
+6   ACADEMIC INTEGRITY 
+The University of Guelph is committed to upholding the highest standards of academic integrity and it is the 
+responsibility of all members of the University community faculty, staff, and students to be aware of what 
+constitutes academic misconduct and to do as much as possible to prevent academic offences from occurring. 
+University of Guelph students have the responsibility of abiding by the University’s policy on academic 
+misconduct regardless of their location of study; faculty, staff and students have the responsibility of supporting 
+an environment that discourages misconduct.  All students who take a SOCS course must pass the Academic 
+Integrity Self Test. 
+ 
+For educational purposes, instructors impose conditions on assignments that may limit students' permission to 
+collaborate with others or to utilize external sources (including, but not limited to, software, data, images, text, 
+etc.).   Any permitted utilization must be done  with proper  references.   Aiding and abetting is a punishable 
+offence; students must be careful not to help others commit offences by giving out solutions or providing to 
+access computer accounts. Instructors may use automated tools to detect possible cases of academic 
+misconduct. 
+ 
+Please note: Whether or not a student intended to commit academic misconduct is not relevant for a finding of 
+guilt. Hurried or careless submission of assignments does not excuse students from responsibility for verifying 
+the academic integrity of their work before submitting it. Students who are in any doubt as to whether an action 
+on their part could be construed as an academic offence should consult with a faculty member. 
+ 
+The Academic Misconduct Policy is detailed in the Undergraduate Calendar: 
+http://www.uoguelph.ca/registrar/calendars/undergraduate/current/c08/
+c08-amisconduct.shtml 
+ 
+The SOCS Academic Integrity Unit: 
+http://moodle.socs.uoguelph.ca/course/view.php?id=2  Login with your central login credentials.  The 
+key to use is “imhonest”. 
+7   ACCESSIBILITY 
+The University promotes the full participation of students who experience disabilities in their academic programs.  
+To that end, the provision of academic accommodation is a shared responsibility between the University and the 
+student. 
+When accommodations are needed, the student is required to first register with Student Accessibility Services 
+(SAS).  Documentation to substantiate the existence of a disability is required, however, interim accommodations 
+may be possible while that process is underway. 
+Accommodations are available for both permanent and temporary disabilities. It should be noted that common 
+illnesses such as a cold or the flu do not constitute a disability. 
+Use of the SAS Exam Centre requires students to book their exams at least 7 days in advance, and not later than 
+the 40th Class Day. 
+More information: www.uoguelph.ca/sas

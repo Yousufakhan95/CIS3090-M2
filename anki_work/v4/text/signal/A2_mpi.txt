@@ -1,0 +1,348 @@
+
+===== PAGE 1 =====
+CIS*3090, Fall 2026 
+Assignment 2 
+Due date: Monday, November 16, 2026, 11:59pm 
+1. Overview 
+In this assignment, you will break a simple substitution cipher by brute force and use MPI to 
+spread the work across processes. The input is a batch of encrypted messages. Some 
+messages are cheap to break and some are very expensive, so you need to balance the load 
+and keep all the processes busy.
+You will write three programs:
+-encrypt: a serial program that encrypts one plaintext message (Section 2).
+-decryptSerial: a serial program that decrypts a batch of messages by brute force (Section 
+3). It is your prototype and your baseline for speedup.
+-decryptParallel: an MPI version of decryptSerial that hands out messages to worker 
+processes through a work queue (Section 4).
+2. Encryption 
+The cipher replaces each letter of a message with another letter from the same message. 
+Plaintext messages contain only lower-case letters and single spaces, with no leading or trailing 
+spaces.
+To encrypt a message:
+1.Build the letter set: list each distinct letter of the message in order of ﬁrst appearance. 
+Spaces do not count as letters. Each unique letter must appear only once in this list.
+2.Build the key: a random rearrangement of the letter set. How you randomize it is up to you, 
+but make sure the letters are thoroughly mixed.
+3.Replace each letter of the message with the key letter at the same position as that letter in 
+the letter set. Spaces pass through unchanged.
+Example:
+plaintext:   the cat
+letter set:  theca
+key:        cehat
+ciphertext:  ceh atc
+The letter t is at position 0 of the letter set, so it becomes c, the key letter at position 0. 
+Likewise, h becomes e, e becomes h, and so on.
+The encrypt program takes the plaintext as its only command-line argument and prints the 
+ciphertext to stdout, followed by a newline. 
+1
+
+===== PAGE 2 =====
+Since output goes to stdout, you can build a batch ﬁle one message at a time by appending 
+each new ciphertext to the end of the ﬁle with the shell’s output redirection operator, >>. Note 
+that >> appends, while the more familiar > would overwrite the ﬁle: 
+./encrypt "the cat" >> batch.txt 
+3. Decryption 
+The decryption program does not know the key, so it searches for it by brute force. For each 
+ciphertext message: 
+1.Build the ciphertext's letter set, in order of ﬁrst appearance. For ceh atc, it is cehat.
+2.Try every rearrangement of that letter set as a candidate key. To decode, replace each 
+ciphertext letter with the candidate letter at the same position as that letter in the ciphertext's 
+letter set.
+3.If every decoded word is in the word list, the decryption is valid.
+Example, for ciphertext letter set cehat:
+candidate ceaht:  ceh atc  ->  cea htc   (not words: rejected)
+candidate theca:  ceh atc  ->  the cat   (valid)
+A message with n distinct letters has n! candidate keys: 120 for the cat, over 3.6 million for 10 
+distinct letters, and almost 40 million for 11. You must try every candidate, because more than 
+one key can produce a valid decryption, and you must report all of them. Generate every 
+candidate key in full: do not skip keys based on a partial decryption. You may stop checking a 
+candidate at its ﬁrst invalid word.
+We provide the word list in the ﬁle words.txt, which contains lower-case words, one per line, 
+with no duplicates. Load it into memory once and look words up there. Do not call external 
+programs such as grep to check words: this would mess up your timings, since they would 
+measure process creation (starting grep) rather than decryption.
+3.1 Serial Version
+Start with decryptSerial. It lets you prototype and debug the search without MPI. It also 
+gives you a reference for checking decryptParallel, since both must produce the same 
+results for the same batch, and it is the baseline for your speedup measurements.
+ 
+4. Parallel Decryption Design 
+4.1 Overview
+The program decryptParallel runs in three phases: setup, work queue, wrap-up. Each 
+phase uses a different kind of MPI communication. At startup, the program loads the word list 
+ﬁle on rank 0 and shares it with all other ranks through explicit communication. Do not try to 
+2
+
+===== PAGE 3 =====
+read the word list directly from the disk on ranks other than 0. The manager on rank 0 reads all 
+the messages from the ciphertext and gives a message to each worker that asks for it. Once all 
+the workers in the communicator are busy, the manager waits. 
+As workers complete their tasks, they send decrypted plaintext messages back: either every 
+valid decryption, or a note that there was none. The manager gives new messages to free 
+workers. This continues until there are no messages left in the ciphertext ﬁle. 
+When the ﬁle is exhausted, the manager waits for the remaining results from the workers, then 
+tells each worker to stop. All ranks report their statistics to rank 0 (Section 4.4) before 
+terminating. Rank 0 terminates once it has received all the statistics.
+4.2 Setup
+Only rank 0 opens input ﬁles. On a real MPI cluster, you can’t assume that every node can see 
+the input ﬁles, so reading them on one rank and distributing the contents is the safe approach. 
+Rank 0 reads the word list and shares it with the workers using MPI_Bcast: ﬁrst the ﬁle size, 
+then the ﬁle contents exactly as read. Each worker then builds its own local lookup structure 
+from it.
+Rank 0 also reads the whole ciphertext ﬁle at startup and stores it in a statically allocated 2D 
+array (Section 5.2 gives the limits on message count and length). Once the ciphertext has been 
+read in, rank 0 starts sending the individual messages to the workers.
+4.3 Work Queue and Message Protocol
+Rank 0 serves as the manager and ranks 1 to p-1 are workers. The manager does no 
+decryption. A worker asks for a message, decrypts it, and returns its results with its next 
+request. When the batch is empty, the manager answers each request with a termination 
+message. The manager then prints all results (Section 5.3).
+Use the following four message types, each identiﬁed by its tag. Deﬁne the tags as named 
+constants. Their values are up to you. Use the tags in the messages to establish the purpose of 
+the message, while the data buffer carries the payload.
+Tag Sent by Contents
+TAG_REQUEST worker one int: the number of valid decryptions that follow
+TAG_RESULT worker one valid decryption, as char[256]
+TAG_WORK manager one ciphertext message, as char[256]
+TAG_STOP manager no data
+3
+
+===== PAGE 4 =====
+Rules:
+-A worker’s ﬁrst request for a message has a count of 0, with no results after it.
+-After decrypting a message, a worker sends a request with the number of valid decryptions it 
+found, followed by one TAG_RESULT message per decryption. A count of 0 means the 
+message had no valid decryption.
+-The manager receives a request from any worker, then receives that worker’s results from 
+that worker only.
+-The manager answers each request with either the next message (TAG_WORK) or, if the batch 
+is empty, TAG_STOP.
+-The manager is responsible for knowing which message each worker is working on.
+-The manager ﬁnishes once every worker has received TAG_STOP.
+References: Unlike the lecture examples, the manager doesn't know which rank it's waiting for 
+with its MPI_Recv. Check the textbook Section 3.1 on how to use MPI_Recv with 
+MPI_ANY_SOURCE and status.MPI_SOURCE. The use of tags in MPI communications is 
+described there as well.
+4.4 Wrap-up
+Once all the workers have ﬁnished, the manager collects the per-rank statistics with 
+MPI_Gather, one call per statistic. From the gathered busy times, the manager then ﬁnds the 
+minimum and maximum across the workers (ranks 1 to p-1).
+Timing: all ranks call MPI_Barrier before starting the clock, and use MPI_Reduce with 
+MPI_MAX on elapsed time.
+ 
+Every rank, including the manager, must reach these collective communication functions, or the 
+program may hang. 
+5. Deliverables and Speciﬁcations 
+5.1 Required Deliverables and Behaviour
+You will write encrypt.c, decryptSerial.c, decryptParallel.c, a Makefile, and your 
+test ciphertext ﬁles. Feel free to create additional .c and .h ﬁles for the code that might be 
+shared between serial and parallel implementations.
+5.2 Input Speciﬁcation
+Formats:
+-Plaintext: lower-case letters and single spaces, no leading or trailing spaces.
+-Input ciphertext ﬁle: one ciphertext message per line.
+4
+
+===== PAGE 5 =====
+-Word list: words.txt. The format is lower-case words, one per line, with no duplicates, as 
+stated in Section 3.
+Limits for our inputs: 
+-at most 11 distinct letters per message
+-255 characters per message
+-100 messages per batch
+-at most 1000 valid decryptions per message
+You can assume that all inputs will adhere to these limits. Just as with A1, while the ﬁle format is 
+ﬁxed, ﬁle contents are not. Do not hardcode any speciﬁc ciphertext or other values anywhere in 
+your program. However, you can assume that the 2D array containing read-in ciphertext in the 
+manager only needs to store no more than 100 messages that are 255 chars in length (be 
+careful with string terminators!).
+Each ciphertext must be fully loaded from an input ﬁle. Grading will use different input ﬁles than 
+the ones released to you. If you hardcode things, you will lose marks - up to and including 
+getting 0 on Assignment 2. 
+5.3 Output Speciﬁcation
+The executables decryptSerial and decryptParallel print their results to stdout, one 
+line per valid decryption:
+<msgIndex>: <plaintext>
+Where <msgIndex> is the message’s line number in the ciphertext ﬁle, starting at 1. A 
+message with more than one valid decryption prints one line for each. A message with no valid 
+decryption prints:
+<msgIndex>: NONE
+Lines may appear in any order. When grading A2, we will sort your output before comparing it 
+with ours.
+The executable decryptParallel prints one statistics line per rank, from rank 0, in rank 
+order:
+RANK: <r> MESSAGES: <m> KEYS: <k> BUSY: <seconds>
+-MESSAGES: the number of messages the rank decrypted.
+-KEYS: the number of candidate keys the rank tested. This can exceed the range of an int. 
+Use long instead, and MPI_LONG when gathering it.
+-BUSY: the time the rank spent decrypting, not counting time spent waiting for the manager.
+Rank 0’s line is all zeros. After the per-rank lines, rank 0 prints the minimum and maximum busy 
+time across the workers, followed by the elapsed time:
+5
+
+===== PAGE 6 =====
+BUSY_MIN: <seconds> 
+BUSY_MAX: <seconds> 
+TIME: <seconds> 
+The executable decryptSerial prints only the TIME: line to stderr. Print all times in seconds 
+using %.3f.
+Both executables must print statistics and timing to stderr, not stdout.
+The timed region starts after the input ﬁles have been read, and ends when all results have 
+been collected. For decryptParallel, this means the word-list broadcast is included in the 
+timing. Reading input ﬁles and printing results are excluded in both programs.
+DO NOT print anything to stdout or stderr apart from the output speciﬁed in Sections 2, 5.3, 
+and 5.4. Any additional output will be treated as incorrect output (Section 7).
+5.4 Execution Speciﬁcation
+Execution format
+./encrypt "<plaintext>" 
+./decryptSerial <batchFile> <wordList> 
+mpiexec -n <p> ./decryptParallel <batchFile> <wordList> 
+-<plaintext> is the message to encrypt (Section 5.2).
+-<batchFile> is the ciphertext ﬁle.
+-<wordList> is the word list ﬁle.
+-<p> is the number of MPI processes, at least 2: one manager and at least one worker.
+Your programs must check for invalid arguments (a missing argument, an unreadable ﬁle) and 
+exit with a nonzero exit code and an error message printed to stderr (not stdout). In addition, 
+decryptParallel must exit with an error if it is run with fewer than 2 processes.
+Your Makefile must produce three executables: encrypt, decryptSerial, and 
+decryptParallel. Running make must build all three executables.
+Sample execution/output
+The sample uses the ﬁle test11.txt, which is provided with this assignment. It runs in a few 
+seconds, so it also works as a quick correctness check.
+6
+
+===== PAGE 7 =====
+Execute:
+mpiexec -n 3 ./decryptParallel test11.txt words.txt
+Program output:
+RANK: 0 MESSAGES: 0 KEYS: 0 BUSY: 0.000 
+RANK: 1 MESSAGES: 7 KEYS: 7339682 BUSY: 0.536 
+RANK: 2 MESSAGES: 2 KEYS: 39916920 BUSY: 2.898 
+BUSY_MIN: 0.536 
+BUSY_MAX: 2.898 
+TIME: 2.905 
+1: the cat 
+1: the act 
+3: bipartite extrovert 
+4: remunerated underwriter 
+5: oftenest sworn 
+6: emus treetop 
+7: ease reran nerd 
+8: nosh spooks 
+9: NONE 
+2: adoption ladybird 
+ 
+Note: these numbers are just to illustrate the output format. Your actual TIME and BUSY values 
+will be different.
+6. Analysis and Report 
+Submit answers in a PDF ﬁle. Answers must be numbered to match the questions below. Keep 
+your answers precise and justify them - i.e. show how they are supported by the code/data (and, 
+where applicable, the theoretical concepts covered in this course).
+6.1 Required Measurements
+Use the experiment batch experiment.txt and the word list words.txt provided with this 
+assignment. Run decryptSerial 10 times, and decryptParallel 10 times at each of p = 
+2, 3, and 5.
+Do not use more processes than the number of CPUs available to you (in Docker, the CPU 
+count allocated to the container). If you have fewer than 5 CPUs (cores), use the largest p you 
+can instead of p = 5, and state this in your report.
+Report the mean and median TIME for each conﬁguration in a table. For decryptParallel, 
+keep the full stderr output (the per-rank statistics, BUSY_MIN, BUSY_MAX and TIME) from every 
+run. You will need it for Q3 and Q4.
+7
+to stderr
+to stdout
+
+===== PAGE 8 =====
+Keep all the individual run data. To save time, write a batch script that executes the runs and 
+collects their output. Don’t include the raw data in the PDF report, but include it in your A2 
+submission as a CSV ﬁle.
+Explicitly state your hardware details: CPU model, number of physical and logical cores, and the 
+CPU count allocated to Docker.
+6.2 Questions
+1.Compute the speedup S(p) for each p, compared to your decryptSerial time. State 
+whether you used the mean or the median, and why. Is the speedup close to ideal? Explain 
+how you determined this.
+2.Produce a plot of p vs. S(p) that shows variability across runs (e.g. error bars or per-p box 
+plots). Does the spread change or support your conclusion from Q1?
+3.Using the per-rank statistics from your runs at your largest p:
+3.1.Did the workers decrypt similar numbers of messages? Did they test similar numbers of 
+keys?
+3.2.Compare BUSY_MIN and BUSY_MAX. How evenly was the work spread across workers?
+3.3.Explain your ﬁndings, based on how the work queue assigns messages.
+4.What limits your speedup? Identify the factors, and support your answer with your per-rank 
+statistics and timing data.
+5.Describe how you tested your programs. List your test ciphertext ﬁles, what each one tests, 
+and how you veriﬁed that decryptParallel produces the same results as 
+decryptSerial.
+7. Grading 
+Your code must compile and run on the CIS*3090 Docker container provided to you. We will 
+compile and grade your code using the same Docker container. We will use our own input ﬁles 
+as well.
+Compilation: mpicc for decryptParallel, gcc for the other two. All of your programs will be 
+compiled with the ﬂags: -Wall -O2 -std=c11. 
+You need to provide all the necessary source code (C code and scripts), test cases, input ﬁles,  
+PDF report and CSV data as a Zip archive using Moodle. File name must be 
+A2FirstnameLastname.zip. Please do not use any other archive formats, or you will lose 
+marks.
+Late submissions: see course outline for late submission policies. 
+This assignment is individual work and is subject to the University Academic Misconduct 
+Policy.  See course outline for details.
+8
+
+===== PAGE 9 =====
+Grade breakdown:
+•Working code that implements the parallelized system described above: 	 70 marks 
+•Encrypt: 	 	 	 	 	 	 	 5 marks
+•Serial decryption:		 	 	 	 	 10 marks
+•Parallel decryption: 	 	 	 	 	 55 marks
+•Report with all the analysis: 	 	 	 	 	 	 	 30 marks 
+Deductions will include, but will not be limited to:
+•Compiler errors (code does not compile):	  	 	 -grade of 0 on the assignment 
+•Missing parallelization: -grade of 0 on the assignment
+•Compiler warnings: 		 	 	 	 	 -10 marks (one-time)
+•Incorrect run-time behaviour, including	 	 	 up to -70 marks
+•incorrect output
+•deviations from the input/output speciﬁcations
+•incorrect parallelization
+•etc.
+•Missing or incorrect report components, including up to -30 marks 
+•Missing answers
+•Incorrect answers / conclusions
+•Insuﬃcient data to support the conclusions
+•Analysis that does not match the presented data
+Note that if you submit only a serial version - or if your supposedly parallel version is not 
+parallelized with MPI - you will automatically get a grade of zero (0) on A2. The entire point of 
+A2 is for you to apply the techniques of parallel programming in a distributed memory 
+environment using MPI, collect the data on parallel program execution, and analyze it. 
+Submitting a serial solution achieves none of A2's learning goals.
+7.1 Output correctness: 
+Your programs will be run on grading ciphertext ﬁles supplied at runtime, which are different 
+from the ones released to you.
+-decryptSerial and decryptParallel (at p = 2 and p = 3) must produce exactly the 
+same set of stdout lines as the reference solution, including NONE lines. We sort both outputs 
+before comparing them, so line order does not matter.
+-decryptParallel’s stderr statistics must be consistent with its results: one RANK: line 
+per rank, MESSAGES summing to the number of messages in the batch, and KEYS summing 
+to the total number of candidate keys for the batch.
+-encrypt is checked by decrypting its output with the reference solution: the original plaintext 
+must be among the valid decryptions. The ciphertext must keep the plaintext’s length and 
+space positions.
+Every run has a time limit, set with generous margins from the reference solution’s run time. A 
+run that exceeds it, for example because of a deadlock, counts as incorrect output for that test.
+9
+
+===== PAGE 10 =====
+7.2 Implementation correctness
+Your parallel solution must show real parallelism, implemented with MPI as described in Section 
+4:
+-Only rank 0 opens input ﬁles, and the word list reaches the workers through MPI_Bcast.
+-Messages are handed out through the dynamic work queue in Section 4.3: the manager 
+receives requests with MPI_ANY_SOURCE, follows the message protocol, and does no 
+decryption itself.
+-Statistics are collected with MPI_Gather, and timing uses MPI_Barrier and MPI_Reduce, 
+as described in Section 4.4.
+-TIME must decrease as workers are added.
+7.3 Report Grading
+Your report is checked for completeness, correctness, and consistency with your own reported 
+data.
+10

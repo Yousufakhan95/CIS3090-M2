@@ -1,0 +1,130 @@
+[
+ {
+  "text": "You just touched one memory address. Spatial locality says the next touch is usually a {{c1::nearby}} address. Temporal locality says you will reuse the {{c2::same}} spot soon.",
+  "extra": "A walk through a contiguous array is the textbook spatial case: z[i] then z[i+1].",
+  "tags": [
+   "b01_hardware_flynn",
+   "spatial_temporal_locality"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.6",
+  "yield": "high"
+ },
+ {
+  "text": "Lay your data out as a flat contiguous array and you get strong {{c1::spatial locality}}, because successive elements sit next to each other and often share a cache line.",
+  "extra": "Pointer chasing jumps around memory, so the cache helps much less.",
+  "tags": [
+   "b01_hardware_flynn",
+   "contiguous_arrays"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "Need to ship a big buffer over MPI or copy it to a GPU? One contiguous block can move as {{c1::one}} message or copy. Scattered pointer data cannot.",
+  "extra": "That is why flat buffers matter for transfers, not only for cache hits.",
+  "tags": [
+   "b01_hardware_flynn",
+   "contiguous_transfers"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "C stores 2D arrays in {{c1::row-major}} order. For \\(y[i]+=A[i][j]*x[j]\\), nest with outer \\(i\\) and inner \\(j\\) and you get {{c2::far fewer}} cache misses than outer \\(j\\) inner \\(i\\).",
+  "extra": "Outer-i walks each row contiguously. Outer-j strides down a column and thrashing starts.",
+  "tags": [
+   "b01_hardware_flynn",
+   "row_major_loops"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.8",
+  "yield": "high",
+  "figure": {
+   "file": "01_ch02_hardware_flynn.pdf",
+   "page": 8
+  }
+ },
+ {
+  "text": "Flynn calls classical von Neumann {{c1::SISD}}: one instruction stream working on one data stream.",
+  "extra": "One instruction at a time, a few data items per instruction.",
+  "tags": [
+   "b01_hardware_flynn",
+   "flynn_sisd"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.15",
+  "yield": "high"
+ },
+ {
+  "text": "Flynn {{c1::SIMD}} means one control unit broadcasts the same instruction to many datapaths, each with its own data.",
+  "extra": "On a data-dependent if, lanes that fail the predicate sit idle while the others work.",
+  "tags": [
+   "b01_hardware_flynn",
+   "flynn_simd"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.15",
+  "yield": "high"
+ },
+ {
+  "text": "Flynn {{c1::MISD}} is multiple instruction streams on a single data stream. It is rare, but it fills out the taxonomy.",
+  "extra": "The four boxes you need for M2 are SISD, SIMD, MISD, and MIMD.",
+  "tags": [
+   "b01_hardware_flynn",
+   "flynn_misd"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.15",
+  "yield": "high"
+ },
+ {
+  "text": "Flynn {{c1::MIMD}} means multiple instruction streams and multiple data streams. Think independent cores that usually run asynchronously.",
+  "extra": "This is the usual multicore and cluster model.",
+  "tags": [
+   "b01_hardware_flynn",
+   "flynn_mimd"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.18",
+  "yield": "high"
+ },
+ {
+  "text": "A vector processor works on {{c1::vectors}} with vector registers and vector instructions. A conventional CPU works on {{c2::scalars}} one element at a time.",
+  "extra": "Same op applied elementwise, so it is SIMD-style. Systems also add interleaved memory, strided access, and scatter/gather.",
+  "tags": [
+   "b01_hardware_flynn",
+   "vector_processors"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.16",
+  "yield": "high"
+ },
+ {
+  "text": "Vector machines shine because {{c1::vectorizing compilers}} are strong, memory {{c2::bandwidth}} is very high, and every loaded item actually gets used.",
+  "extra": "Cache machines may pull a whole line and leave some words untouched. Vectors load what they need.",
+  "tags": [
+   "b01_hardware_flynn",
+   "vector_pros"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.17",
+  "yield": "high"
+ },
+ {
+  "text": "Vector machines struggle with {{c1::irregular}} data structures, hit a wall on {{c2::vector-length}} scaling, and need expensive custom long-vector hardware.",
+  "extra": "Real systems usually scale by adding more vector processors, not by making each vector longer.",
+  "tags": [
+   "b01_hardware_flynn",
+   "vector_cons"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.17",
+  "yield": "high"
+ },
+ {
+  "text": "Shared-memory MIMD: cores coordinate {{c1::implicitly}} by touching shared data. Distributed-memory MIMD: each core has private memory and coordinates {{c2::explicitly}} with messages.",
+  "extra": "Shared means every core can reach each location. Distributed means you talk over an interconnect.",
+  "tags": [
+   "b01_hardware_flynn",
+   "shared_vs_distributed"
+  ],
+  "source": "01_ch02_hardware_flynn.pdf p.19",
+  "yield": "high",
+  "figure": {
+   "file": "01_ch02_hardware_flynn.pdf",
+   "page": 19
+  }
+ }
+]

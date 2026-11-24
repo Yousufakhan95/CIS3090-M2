@@ -1,0 +1,338 @@
+
+===== PAGE 1 =====
+CIS*3090Image processing using Python and Warp
+
+===== PAGE 2 =====
+Image processing tools for this course
+•The Nvidia Warp API
+•The PIL image processing library - also called Pillow
+•https://pillow.readthedocs.io/en/stable/index.html
+•It will deal with reading / writing image ﬁles
+•The NumPy library - numerical processing in Python
+•We need it for intermediate representations when passing image data to / from Warp
+•The sys package for accessing command-line arguments
+
+===== PAGE 3 =====
+Using Warp for image processing
+•The general steps are:
+1.Load the image
+2.Get the image mode, so we know whether it's a greyscale image or a colour image
+3.Convert the PIL image into a NumPy array
+4.Convert a NumPy array into a Warp array
+5.Create a Warp array for the output image and initialize it to zero
+6.Launch the kernel - which needs to be written separately
+7.Convert the output Warp array to NumPy
+8.Create a PIL Image from a NumPy array
+9.Save the PIL image to disk
+
+===== PAGE 4 =====
+Setting the device
+•Warp initializes automatically the ﬁrst time you use it - there is no explicit setup call
+•You will see wp.init() in older examples and tutorials. It still works, but it is no longer 
+required
+•For running examples in Docker on your machine, set the device to CPU: 
+device = "cpu"
+•For running examples on an Nvidia GPU or Google Colab, use the GPU: 
+device = "cuda"
+
+===== PAGE 5 =====
+Loading the image and getting image mode
+•Image handling in PIL is very simple: 
+image = Image.open(fileName)
+•This will fail if the ﬁle could not be opened or contains an invalid image
+•Image mode is accessed as image.mode
+•Common image modes:
+•Greyscale: 1 × 8-bit unsigned integer per pixel (intensity)
+•RGB: 3 × 8-bit unsigned integers per pixel
+•RGBA: 4 × 8-bit unsigned integers per pixel
+
+===== PAGE 6 =====
+Converting the PIL image, step 1
+Convert Image to NumPy
+•This is also simple: 
+ 
+npInData = np.asarray(image, dtype=np.float32)
+•We need to grab the dimensions (shape) of the input image, so we can create an empty 
+output image:  
+ 
+npInData.shape
+
+===== PAGE 7 =====
+Image format and size
+•The shape will depend on the encoding of the original image:
+•Greyscale: n x m,
+•e.g. the image b17_g.png, which has the dimensions (284, 220)
+•RGB: n x m x 3 
+•e.g. the image citrus1.jpg, which has the dimensions (2000, 3008, 3)
+•RGBA: n x m x 4 
+•the image b17.png, which has the dimensions (284, 220, 4)
+•Filter only the colour channels (indices 0 to 2) and pass alpha (index 3) through unchanged
+
+===== PAGE 8 =====
+A note on getting dimensions
+•Diﬀerent functions return data dimensions in diﬀerent orders
+•Pillow's image.size returns (w, h) 
+•NumPy's np.asarray(image).shape returns
+•(h, w, c)  for colour  
+•(h, w) for greyscale - no channel axis
+•Be careful!
+•For image processing, we will add the missing channel axis ourselves, so that greyscale and 
+colour arrays have the same rank
+
+===== PAGE 9 =====
+Image format and image appearance
+•Note that b17_g.png and b17.png look the same, 
+even though they have diﬀerent encoding
+•An image you download (or pull from your phone, 
+camera, etc.) may be in any encoding
+•As a result, always check image format in your code 
+and write your code accordingly
+b17_g.png
+Uses greyscale format
+b17.png
+Uses RGBA format
+
+===== PAGE 10 =====
+One array shape for different modes
+Inputs for Warp
+•Greyscale arrays are 2D (h, w) and colour arrays are 3D (h, w, c)
+•c can be 3 (RGB) or 4 (RGBA)
+•Giving greyscale a channel axis of size 1 means one 3D kernel handles both 
+ 
+npInData = np.asarray(image, dtype=np.float32)  
+if npInData.ndim == 2:  
+ npInData = npInData[:, :, np.newaxis] #(h, w) -> (h, w, 1)
+•Launch with dim=npInData.shape. 
+•The kernel sees (h, w, 1), (h, w, 3) or (h, w, 4) and indexes all three the same way:  
+i, j, k = wp.tid()
+
+===== PAGE 11 =====
+One array shape for different modes
+Output from Warp
+•If you do this, you must remove the "dummy" axis again before saving as a greyscale image, 
+because PIL won’t build an image from (h, w, 1) 
+ 
+if image.mode == "L":  
+ npOutData = npOutData[:, :, 0]
+
+===== PAGE 12 =====
+Converting the PIL image, step 2
+Converting NumPy to Warp
+•Create a Warp data structure for the input image: 
+ 
+inWarpImage = wp.array(npInData, dtype=wp.float32, device=device) 
+•Create a Warp data structure for the output image: 
+ 
+outWarpImage = wp.zeros_like(inWarpImage) 
+•Same shape, dtype and device as the input
+•Initialized to zero
+
+===== PAGE 13 =====
+Passing constants to a kernel
+•A kernel needs more than image data: the neighbourhood size, the k for unsharp masking, the sigma for a Gaussian
+•Pass them as kernel arguments. Nothing special is required - just annotate the type: 
+@wp.kernel 
+def scaleArray(source: wp.array(dtype=wp.float32),dest: wp.array(dtype=wp.float32), 
+factor: float): 
+    i = wp.tid() 
+    dest[i] = factor * source[i] 
+ 
+wp.launch(scaleArray, dim=source.shape, 
+    inputs=[source, dest, 2.0], device=device)
+•The value is read at launch, and we can change it without recompiling anything.
+•You will also see closures in the Warp docs. They are for values that must be known when the kernel is compiled - 
+e.g. the length of a ﬁxed-size vector (we don't need them in our course).
+
+===== PAGE 14 =====
+Launch the kernel
+•Launch the kernel: 
+wp.launch(kernel=kernelName, dim= yourShape,  
+inputs=[inWarpData],outputs=[outWarpData],device=device) 
+•inputs is just the kernel's argument list
+•Warp concatenates inputs= and outputs= into the kernel's positional arguments in order
+•It does not check or enforce which arrays you write to
+•outputs= is documentation for whoever reads your code, not a guarantee from Warp.
+
+===== PAGE 15 =====
+Launch the kernel
+•Launch the kernel: 
+wp.launch(kernel=kernelName, dim= yourShape, #e.g. dim=npInData.shape 
+inputs=[inWarpData],outputs=[outWarpData],device=device) 
+•In general, arrays do not have to share a shape
+•However, for our ﬁlters they do, because each output pixel comes from the neighbourhood of 
+the same input pixel
+•A reduction - say, computing a histogram - would pass arrays of completely diﬀerent shapes.
+•dim is the launch grid, not the array shape
+•They coincide here because we chose dim=yourShape 
+•That's a decision for our example, not a rule.
+
+===== PAGE 16 =====
+Getting the output
+•Convert the output Warp array to NumPy: 
+npOutData = outWarpImage.numpy() 
+•Create a PIL image: 
+imageOut = Image.fromarray(np.uint8(np.clip(np.rint(npOutData), 0, 255)))
+•Why np.clip?
+•Unsharp masking guarantees overshoot above 255 and undershoot below 0 at every strong 
+edge
+•np.uint8 does not clamp
+•If you don't do this, you will see salt-and-pepper along edges
+•Save output image to disk: 
+imageOut.save(outFileName)
+
+===== PAGE 17 =====
+Writing a kernel
+•The kernel is a dedicated function / program that will run on the GPU
+•A Warp kernel is written in Python, but behind the scenes it will be converted to GPU kernel 
+and compiled prior to launch
+•The declaration of the kernel needs to specify each argument and its type, e.g. 
+@wp.kernel 
+def myFilter(inputImage: wp.array3d(dtype=wp.float32), 
+             outputImage: wp.array3d(dtype=wp.float32)): 
+•Every argument needs a type annotation
+•Warp compiles the kernel from them
+
+===== PAGE 18 =====
+Note on colour images
+RGB
+•We use a 3D array (height × width × channel), one thread per channel per pixel.
+•To simplify kernel writing, we will use the same data layout for greyscale images, with 
+channel set to 1, i.e. dim=(h, w, 1)
+•This way we use the same kernel for diﬀerent image types
+•The alternative is a 2D array of wp.vec3 - one thread per pixel, with each thread handling all 
+three channels
+•The choice depends on the algorithm you want to implement
+•The simple algorithms process each colour channel independently (as if you processed 3 
+greyscale images)
+•More sophisticated algorithms treat each colour as a whole
+
+===== PAGE 19 =====
+Note on colour images
+RGBA
+•The alpha channel can cause issues
+•An RGBA image gives shape (h, w, 4)
+•Your ﬁlter will blur or sharpen the transparency values, which is meaningless (or worse)
+•Nothing fails: shapes match, the code runs, the output is a valid image
+•If alpha is constant - as it is in any fully opaque image - the result looks correct, so you will not 
+catch this by eye
+•Solution: ﬁlter only the colour channels (k < 3) and copy alpha through unchanged
+•If you skip alpha, make sure the output's alpha is still copied from the input, not left at 0 - 
+otherwise you save a fully transparent image
+
+===== PAGE 20 =====
+Writing a kernel
+Getting the thread ID
+•Each thread's ID is its index into the launch grid set by dim
+•The grid is multi-dimensional, so the thread ID has one component per grid dimension
+•We use wp.tid()
+•1D data (ﬂat array): returns a scalar 
+i = wp.tid()
+•2D data: returns a tuple of indices (if you passed it as a 2D array, not a 3D array) 
+i, j = wp.tid() 
+•3D data (colour image): returns a tuple of indices (any of our images, including greyscale with its 
+channel axis) 
+i, j, k = wp.tid()
+
+===== PAGE 21 =====
+Writing a kernel
+Doing the work
+@wp.kernel 
+def blurGreyscale(inputImage: wp.array2d(dtype=wp.float32), 
+                  outputImage: wp.array2d(dtype=wp.float32)): 
+    i, j = wp.tid() 
+    height = inputImage.shape[0] 
+    width = inputImage.shape[1] 
+    # Border policy: copy edge pixels through unchanged (to keep the slide short) 
+    # A3 does not allow this - you must compute a value for every pixel, including the border 
+    if i == 0 or j == 0 or i == height - 1 or j == width - 1: 
+        outputImage[i, j] = inputImage[i, j] 
+        return 
+    acc = 0.2 * inputImage[i, j] 
+    acc += 0.2 * inputImage[i - 1, j] 
+    acc += 0.2 * inputImage[i + 1, j] 
+    acc += 0.2 * inputImage[i, j - 1] 
+    acc += 0.2 * inputImage[i, j + 1] 
+    outputImage[i, j] = acc
+-each thread writes exactly one cell of output  
+and reads only input
+-This allows it to run race-free without  
+any synchronization
+
+===== PAGE 22 =====
+Distributed memory in GPGPU
+Getting data to the kernel
+•wp.array(numpyData, device="cuda") copies host memory to device memory.
+•outputImage.numpy() copies it back.
+•Neither is free - a 3000x4000 RGB image as ﬂoat32 is 144 MB and must be transferred each 
+way.
+•Because GPU memory is separate from system memory.
+•The kernel cannot start until the upload ﬁnishes. You cannot save the ﬁle until the download 
+ﬁnishes.
+•We have encountered a similar problem with MPI
+•MPI ranks had to send messages
+•Here, the data has to cross a bus.
+
+===== PAGE 23 =====
+Getting meaningful and consistent timings
+Only applied if you are working on a GPU
+•CUDA launches are asynchronous: wp.launch returns before the work is done
+•A timer around wp.launch alone measures the launch, not the kernel.
+•.numpy() blocks until the kernel ﬁnishes, then copies
+•If your timer ends at .numpy(), the kernel's runtime hides inside what you are calling "download."
+•The ﬁrst launch of a module compiles it, which takes seconds, not milliseconds - run once before 
+timing (since it is not recompiled if the code is unchanged)
+•Use wp.ScopedTimer(name, synchronize=True).
+•Time upload, kernel, and download separately, or you cannot tell which one you are looking at.
+•The CPU is a shared VM on Colab. Report the median of several runs, not one number.
+
+===== PAGE 24 =====
+Example
+•Sample timings: 3000x4000 RGB image, 3x3 neighbourhood. Colab T4, medians of 3 runs:
+sharpen medianGaussian
+GPU kernel 9 ms 16 ms
+CPU kernel (1 thread)5.2 s 20 s
+kernel-only speedup ~555x~1270x
+GPU transfer (upload + 
+download)
+~132 
+ms ~135 ms
+GPU end-to-end ~141 ms ~151 ms
+end-to-end speedup ~37x ~134x
+
+===== PAGE 25 =====
+Example
+•The kernel-only speedup is ~555x
+•End-to-end it is ~37x - lots of data moving around.
+•Sharpen: GPU spends 94% of its time moving data 
+and 6% computing
+•The kernel is the cheap part.
+•CPU: no transfer - .numpy() took 0.08 ms, 
+because the data never left system memory
+•The CPU column is one thread, so parallelism 
+comes from one CPU thread against the T4's 2560 
+cores
+•2560 or more simultaneous threads)
+sharpen medianGaussian
+GPU kernel 9 ms 16 ms
+CPU kernel (1 thread)5.2 s 20 s
+kernel-only speedup ~555x~1270x
+GPU transfer (upload + 
+download)
+~132 
+ms ~135 ms
+GPU end-to-end ~141 ms ~151 ms
+end-to-end speedup ~37x ~134x
+
+===== PAGE 26 =====
+Example
+•Median gets a bigger end-to-end speedup than sharpen (~134x vs ~37x) even though it 
+moves the same 144 MB. It does more compute per byte, so the transfer is amortized over 
+more useful work - and the T4's spare compute gets used, where a 3x3 sharpen leaves it idle.
+•The rule: the more work you do per byte moved, the better the GPU looks. A ﬁlter that just 
+copies data across the bus to do nine additions is the GPU's worst case.
+
+===== PAGE 27 =====
+References
+•Warp documentation: https://nvidia.github.io/warp/stable/
+•PIL/Pillow documentation (Image module): https://pillow.readthedocs.io/en/stable/reference/
+Image.html 

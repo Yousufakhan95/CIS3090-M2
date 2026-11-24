@@ -1,0 +1,335 @@
+
+===== PAGE 1 =====
+CIS*3090Fundamental image processing algorithms: sharpening and 
+blurring
+Based in part on CIS*4720 image processing notes by Michael Wirth 
+
+===== PAGE 2 =====
+Fixing blurry images
+•Blur occurs when there is a lack of visual acuity (details are smoothed out) 
+•Out-of-focus optics, lens aberrations 
+•Atmospheric turbulence
+•Motion blur due to camera movement at longer exposures
+
+===== PAGE 3 =====
+Fixing blurry images
+•Original image (top)
+•Sharpened image (bottom)
+https://en.wikipedia.org/wiki/Image_editing#/media/File:Beach-Original_and_Clearer-png.png
+
+===== PAGE 4 =====
+Filters
+•Filtering is a fundamental operation that we will use
+•Low-pass ﬁlter (LPF): image smoothing (de-noising)
+•High-pass ﬁlter (HPF): diﬀerence between image and low-pass ﬁltering.
+•High-boost ﬁlter: part of high-pass added to image.
+•Low- and High- refer to ﬁlter action in frequency domain.
+•e.g. Low-pass means that we "pass" low-frequency components
+•So we can call it a "high-cut ﬁlter"
+•Large, sudden - i.e. closely spaced - ﬂuctuations in pixel intensity are removed
+•These can be undesirable (noise) or desirable (ﬁne detail) 
+
+===== PAGE 5 =====
+Image sharpening
+•Image sharpening relies on high-pass ﬁltering, which allows high spatial frequencies to 
+remain unchanged, but suppresses low frequencies
+•A high-pass ﬁlter has the eﬀect of preserving sudden variations in intensity, such as those 
+that occur at the boundaries of objects, but suppressing more gradual variations.
+
+===== PAGE 6 =====
+Simple sharpening
+•A HPF convolution kernel contains a mixture of positive and negative values
+•An omnidirectional high pass ﬁlter should have positive coeﬃcients near its centre and 
+negative coeﬃcients in the periphery of the kernel 
+ 
+ 
+ 
+ 
+ 
+ 
+•The sum of the coeﬃcients in this kernel is zero.
+[
+−1−1−1
+−18−1
+−1−1−1]
+
+===== PAGE 7 =====
+Simple sharpening
+•How it works:
+•When the kernel is over an area of constant or slow-changing intensity values the result of the 
+convolution is zero (or small).
+•When the intensity values vary rapidly within a neighbourhood, the result of the convolution is a 
+large number.
+•Caveats of sharpening
+•Image sharpening makes noise more prominent - noise has a strong high-frequency component
+•In practice, we often want to remove the noise before sharpening
+
+===== PAGE 8 =====
+Unsharp masking
+•Introduced by Schreiber in 1970 for improving the quality of wirephoto pictures for 
+newspapers. 
+•Based on the principle of photographic masking whereby a low-contrast positive 
+transparency is made of the original negative.
+•The mask is then “sandwiched” with the negative and the amalgam used to produce the ﬁnal 
+print.
+Schreiber, W.F., “Wirephoto quality improvement by unsharp masking”, Pattern Recognition, 1970, V.2, pp.117-121.
+
+===== PAGE 9 =====
+Unsharp masking
+•Unsharp masking relies on subtracting from an image a “blurred” version of that image 
+(thereby removing the low spatial frequencies).
+•A common way of sharpening an image.
+•Sometimes called a high-boost ﬁlter, if the parameter k (which we see later) is > 1.
+•Unlike most of the previously discussed methods, it is a multi-step approach
+
+===== PAGE 10 =====
+Unsharp masking
+•Unsharp masking produces an edge image  from the input image  
+ 
+
+•where  is a “blurred” version of the original image 
+g(x,y) f(x,y)
+g(x,y)=f(x,y)−S(f(x,y))
+S(f(x,y)) f(x,y)
+
+===== PAGE 11 =====
+Unsharp masking
+•The edge image can be used for sharpening if it is added back to the original image. 
+ 
+ 
+•where k is a scaling constant. 
+•Reasonable values for k vary between 0.2 and 0.7, with the larger values providing increasing 
+amounts of sharpening.
+fUM(x,y)=f(x,y)+kg(x,y)
+
+===== PAGE 12 =====
+Example: unsharp masking
+original blurred difference 
+“edge” image 
+light detail on back background  
+is really hard to see
+
+===== PAGE 13 =====
+Example: unsharp masking
+original blurred difference 
+“edge” image  
+- inverted for visibility
+
+===== PAGE 14 =====
+Example: unsharp masking
+UM sharpened image
+original blurred
+
+===== PAGE 15 =====
+Example: unsharp masking
+UM sharpened imageoriginal
+
+===== PAGE 16 =====
+UM: caveats
+•UM suﬀers from two inherent limitations: 
+•noise sensitivity
+•UM assigns an emphasis to the high-frequency components.
+•excessive overshoot on sharp details
+•Wide and abrupt luminance transitions in the image.
+
+===== PAGE 17 =====
+Example of unsharp masking: overshoot
+Notice how the square elements got brighter   
+compared to the original image
+UM sharpened imageoriginal
+
+===== PAGE 18 =====
+Example of unsharp masking: overshoot
+The UM makes the edge steeper - i.e. "sharper" - by making it taller. 
+This is a common trait of many sharpening algorithms.
+UM sharpened imageoriginal
+original 
+edge
+post-um 
+edge
+
+===== PAGE 19 =====
+Fixing noisy images
+•Noise in an image refers to artifacts introduced during the image acquisition process
+•Some of it is from the diﬀerence in photon intensity
+•Some of it is introduced by the sensor - read noise
+•Sensor noise can get worse as the temperature increases
+•Noise in an image gets worse as we need to increase the sensitivity of the sensor, i.e. in low 
+light
+
+===== PAGE 20 =====
+Fixing nosy images
+•Noisy low-light image (top)
+•Denoised image (bottom)
+
+
+===== PAGE 21 =====
+De-noising (noise suppression) algorithms
+•There are many diﬀerent types of noise suppression algorithms.
+•Generally, noise suppression ﬁlters are various types of smoothing (low-pass) ﬁlters
+•Two primary categories: mean-based and order-statistic based ﬁlters
+
+===== PAGE 22 =====
+Averaging = smoothing = noise suppression
+•The simplest way to get rid of noise is to perform some form of neighbourhood averaging. 
+•Image smoothing, or low-pass ﬁltering.
+•Known as mean, sliding mean, or box ﬁlter.
+•It has the eﬀect of smoothing or blurring the image, reducing noise but obscuring ﬁne detail
+•Essentially, it is the opposite of sharpening
+
+===== PAGE 23 =====
+Image smoothing
+•The ﬁlter replaces the value of every pixel in an image by the average of the intensity values in 
+the neighbourhood deﬁned by the kernel.
+•The resulting image has reduced “sharp” transitions in the intensity values.
+•Noise consists of sharp transitions ➾ noise reduction
+•Edges are also characterized by sharp transitions in intensities, so smoothing ﬁlters blur 
+edges.
+
+===== PAGE 24 =====
+Image smoothing
+•Below are two simple kernels where the 3×3 and 5×5 regions surrounding the central pixel 
+are summed, and the resulting values divided by 9 and 25 respectively. 
+ 
+ 
+ 
+ 
+  1 1 1
+1 1 1
+1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+
+===== PAGE 25 =====
+Image smoothing
+•Computing the mean intensity value over the neighbourhood deﬁned by the kernel:
+•Large kernels, or the repeated application of a small kernel produces more pronounced 
+smoothing.
+•Eﬀective against Gaussian noise.
+
+===== PAGE 26 =====
+Example: image smoothing
+5×5 kernel
+
+===== PAGE 27 =====
+Gaussian filtering
+•A smoothing ﬁlter with a nonuniform kernel, whose coeﬃcients are derived from a 2D 
+Gaussian function. 
+•The kernel coeﬃcients diminish in size with increasing distance from the kernels centre.
+
+===== PAGE 28 =====
+Gaussian filtering
+•for i, j = -[3σ],..., [3σ]
+•[3σ] denotes the “integer part” of 3σ
+•Limits of ±3σ are chosen because Gaussian weights are negligible beyond them.
+•The Gaussian kernels are symmetric
+•AKA isotropic - their response is independent of orientation
+w(i,j)=e
+−(i2+j2)
+2σ2
+
+===== PAGE 29 =====
+Gaussian filtering
+•If σ2 = 1 then the normalized Gaussian kernel is: 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+•Other common values: σ2=2 3,2
+w(i,j)=1 1000
+00 1 2 1 00
+0313221330
+113599759131
+2229715997222
+113599759131
+0313221330
+00 1 2 1 00
+
+===== PAGE 30 =====
+Gaussian filtering
+•Gaussian characteristics:
+•More weight is given to central pixels than to those in the periphery of the neighbourhood
+•Large values of σ produce a broader spread ➾ increased blurring
+•As σ increases the dimensions of the kernel also increase
+•The kernel is rotationally symmetric, so there is no directional bias in the amount of smoothing
+
+===== PAGE 31 =====
+Example of gaussian filtering
+σ=1.0
+
+
+===== PAGE 32 =====
+Gaussian filtering
+σ=1.0 σ=2.0
+
+===== PAGE 33 =====
+Gaussian filtering vs averaging
+Gaussian ﬁltering,  
+σ=1.0
+Gaussian ﬁltering,  
+σ=2.0Original image Smoothed image   (averaging kernel)
+
+===== PAGE 34 =====
+Rank filtering
+•Non-linear ﬁlters known collectively as order statistic ﬁlters or rank ﬁlters 
+•These include the median value, lower and upper quartiles, etc..
+•Compile a list of intensity values in the neighbourhood of a given pixel, sort this list into 
+ascending order
+•Then select a value from a particular position in the list to use as the new value for the pixel.
+
+===== PAGE 35 =====
+Median filtering
+•Select the middle-ranked value (median) from a neighbourhood to replace the pixel (i, j)
+•Used to eliminate impulse noise
+•Median ﬁltering removes impulse noise eﬀectively when the noisy pixels occupy less than half 
+the neighbourhood - the median then comes from the "clean" majority.
+•The same mechanism cuts both ways: genuine small features (thin lines, small objects) that 
+occupy less than half the neighbourhood are removed too, not just noise.
+•Median-ﬁltering is non-speciﬁc
+•Any structure that occupies less than half of the ﬁlter's neighbourhood will tend to be eliminated
+
+===== PAGE 36 =====
+Median filtering
+2327100104105
+1123105108109
+2145104103104
+2334106112110
+9 46879098
+9112123232327344546879098100103104104104105105106108109110112
+98
+median value
+
+===== PAGE 37 =====
+Median filtering
+3×3 kernel
+
+
+===== PAGE 38 =====
+Median filtering
+•Unlike averaging, the median ﬁlter doesn't compress the brightness range within the 
+neighbourhood, so it preserves sharp edge boundaries.
+•It also preserves straight edge boundaries.
+
+===== PAGE 39 =====
+Median filtering
+•Repeated application of the median ﬁlter can cause posterization (which can look cool): 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+7×7 kernel

@@ -1,0 +1,102 @@
+[
+ {
+  "text": "You time a serial run at \\(T_{\\mathrm{serial} }\\) and the parallel run at \\(T_{\\mathrm{parallel} }\\). Speedup is \\(S = {{c1::T_{\\mathrm{serial} }/T_{\\mathrm{parallel} } }}\\).",
+  "extra": "Ideal case with equal work and no overhead is linear speedup \\(S = p\\).",
+  "tags": [
+   "b02_performance_amdahl",
+   "speedup"
+  ],
+  "source": "02_ch02_performance_amdahl.pdf p.2",
+  "yield": "high"
+ },
+ {
+  "text": "You fire \\(p\\) cores, split the work evenly, and add no extra coordination. That dream run hits linear speedup: \\(S = {{c1::p}}\\).",
+  "extra": "Best possible: work split evenly and no parallel overhead.",
+  "tags": [
+   "b02_performance_amdahl",
+   "linear_speedup"
+  ],
+  "source": "02_ch02_performance_amdahl.pdf p.2",
+  "yield": "high"
+ },
+ {
+  "text": "Efficiency asks how much of the ideal you kept: \\(E = {{c1::S/p}} = {{c2::T_{\\mathrm{serial} }/(p \\cdot T_{\\mathrm{parallel} }) }}\\).",
+  "extra": "Read it as the average fraction of parallel run-time each core spends on the original problem.",
+  "tags": [
+   "b02_performance_amdahl",
+   "efficiency"
+  ],
+  "source": "02_ch02_performance_amdahl.pdf p.2",
+  "yield": "high"
+ },
+ {
+  "text": "Add more processes and efficiency \\(E = S/p\\) usually {{c1::falls}}, because you spend more time on coordination and messaging.",
+  "extra": "Typical overheads: critical sections, mutexes, network messages, thread management, file I/O. Those make \\(S\\) a smaller fraction of ideal \\(p\\).",
+  "tags": [
+   "b02_performance_amdahl",
+   "overhead_vs_p"
+  ],
+  "source": "02_ch02_performance_amdahl.pdf p.2",
+  "yield": "high"
+ },
+ {
+  "text": "Amdahl with serial fraction \\(a\\): the parallelizable chunk \\(1-a\\) scales by \\(p\\), so \\(S = {{c1::1/((1-a)/p + a) }}\\).",
+  "extra": "The textbook also writes the same serial fraction as \\(r\\). Perfect scaling of \\(1-a\\) is the assumption.",
+  "tags": [
+   "b02_performance_amdahl",
+   "amdahl_formula"
+  ],
+  "source": "02_ch02_performance_amdahl.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "Under Amdahl, pile on infinite cores and speedup still caps at \\(S \\to {{c1::1/a}}\\), where \\(a\\) is the serial fraction.",
+  "extra": "Extra cores cannot shrink the serial remainder. Same idea with textbook \\(r\\): \\(S \\le 1/r\\).",
+  "tags": [
+   "b02_performance_amdahl",
+   "amdahl_limit"
+  ],
+  "source": "02_ch02_performance_amdahl.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "You parallelize 90% of a program perfectly, so the serial fraction is \\(a = 0.1\\). Amdahl says speedup never beats {{c1::10}}.",
+  "extra": "Limit is \\(1/a = 10\\), even with thousands of cores.",
+  "tags": [
+   "b02_performance_amdahl",
+   "amdahl_example"
+  ],
+  "source": "02_ch02_performance_amdahl.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "Practice: serial time 100 s, parallel time 40 s on 4 cores. Then \\(S = {{c1::2.5}}\\) and \\(E = {{c2::0.625}}\\).",
+  "extra": "\\(S = 100/40 = 2.5\\), \\(E = 2.5/4 = 0.625\\). Study-guide practice Q5 at 4 cores.",
+  "tags": [
+   "b02_performance_amdahl",
+   "speedup_efficiency_calc"
+  ],
+  "source": "02_ch02_performance_amdahl.pdf p.2; 08_m2_study_guide.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "Practice: same 100 s serial job finishes in 25 s on 8 cores. Now \\(S = {{c1::4}}\\) and \\(E = {{c2::0.5}}\\).",
+  "extra": "Versus 4 cores (\\(S = 2.5\\), \\(E = 0.625\\)): speedup rose but efficiency fell. Classic overhead-with-\\(p\\) pattern from study-guide Q5.",
+  "tags": [
+   "b02_performance_amdahl",
+   "speedup_efficiency_calc"
+  ],
+  "source": "02_ch02_performance_amdahl.pdf p.2; 08_m2_study_guide.pdf p.5",
+  "yield": "high"
+ },
+ {
+  "text": "Split the work evenly, then add overhead, and the parallel time is \\(T_{\\mathrm{parallel} } = {{c1::T_{\\mathrm{serial} }/p + T_{\\mathrm{overhead} } }}\\).",
+  "extra": "Then \\(E\\) is the fraction of parallel run-time spent on the original problem. The rest is overhead.",
+  "tags": [
+   "b02_performance_amdahl",
+   "t_parallel_overhead"
+  ],
+  "source": "02_ch02_performance_amdahl.pdf p.3",
+  "yield": "high"
+ }
+]

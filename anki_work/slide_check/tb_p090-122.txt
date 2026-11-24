@@ -1,0 +1,1225 @@
+===== PRINTED PAGE 90 =====
+90 CHAPTER 3 Distributed memory programming with MPI
+FIGURE 3.2
+A shared memory system.
+learn about some “global” communication functions that can involve more than two
+processes. These functions are called collective communications. In the process of
+learning about all of these MPI functions, we’ll also learn about some of the fun-
+damental issues involved in writing message-passing programs—issues such as data
+partitioning and I/O in distributed-memory systems. We’ll also revisit the issue of
+parallel program performance.
+3.1 Getting started
+Perhaps the ﬁrst program that many of us saw was some variant of the “hello, world”
+program in Kernighan and Ritchie’s classic text [32]:
+# include < stdio . h >
+int main ( void ){
+printf ( "hello , world\n" );
+return 0;
+}
+Let’s write a program similar to “hello, world” that makes some use of MPI. Instead
+of having each process simply print a message, we’ll designate one process to do the
+output, and the other processes will send it messages, which it will print.
+In parallel programming, it’s common (one might say standard) for the processes
+to be identiﬁed by nonnegative integer ranks. So if there are p processes, the pro-
+===== PRINTED PAGE 91 =====
+3.1 Getting started 91
+cesses will have ranks 0, 1, 2,...,p− 1. For our parallel “hello, world,” let’s make
+process 0 the designated process, and the other processes will send it messages. See
+Program 3.1.
+1 #include <stdio .h>
+2 #include <string .h> / ∗ For s t r l e n ∗ /
+3 #include <mpi . h> / ∗ For MPI functions , etc ∗ /
+4
+5 const int MAX_STRING =100;
+6
+7 int main ( void ){
+8 char greeting [ MAX_STRING ];
+9 int comm_sz ; / ∗ Number of processes ∗ /
+10 int my_rank ; / ∗ My process rank ∗ /
+11
+12 MPI_Init ( NULL , NULL );
+13 MPI_Comm_size ( MPI_COMM_WORLD ,&comm_sz );
+14 MPI_Comm_rank ( MPI_COMM_WORLD ,&my_rank );
+15
+16 if ( my_rank != 0) {
+17 sprintf ( greeting , " G r e e t i n g s from process %d of %d!" ,
+18 my_rank , comm_sz );
+19 MPI_Send ( greeting , strlen ( greeting )+1 , MPI_CHAR ,0,0,
+20 MPI_COMM_WORLD );
+21 } else {
+22 printf ( "Greetings from process %d of %d!\n" ,
+23 my_rank , comm_sz );
+24 for ( int q =1;q < comm_sz ; q ++) {
+25 MPI_Recv ( greeting , MAX_STRING , MPI_CHAR , q ,
+26 0 , MPI_COMM_WORLD , MPI_STATUS_IGNORE );
+27 printf ( "%s\n" , greeting );
+28 }
+29 }
+30
+31 MPI_Finalize ();
+32 return 0;
+33 } / ∗ main ∗ /
+Program 3.1: MPI program that prints greetings from the processes.
+3.1.1 Compilation and execution
+The details of compiling and running the program depend on your system, so you
+may need to check with a local expert. However, recall that when we need to be
+explicit, we’ll assume that we’re using a text editor to write the program source, and
+===== PRINTED PAGE 92 =====
+92 CHAPTER 3 Distributed memory programming with MPI
+the command line to compile and run. Many systems use a command called mpicc for
+compilation1:
+$ mpicc −g −Wall −o mpi_hello mpi_hello . c
+Typically mpicc is a script that’s a wrapper for the C compiler. A wrapper script is
+a script whose main purpose is to run some program. In this case, the program is the
+C compiler. However, the wrapper simpliﬁes the running of the compiler by telling
+it where to ﬁnd the necessary header ﬁles, and which libraries to link with the object
+ﬁle.
+Many systems also support program startup with mpiexec:
+$ mpiexec −n < number of processes >./mpi_hello
+So to run the program with one process, we’d type
+$ mpiexec −n 1./mpi_hello
+and to run the program with four processes, we’d type
+$ mpiexec −n 4./mpi_hello
+With one process, the program’s output would be
+Greetings from process 0 of 1!
+and with four processes, the program’s output would be
+Greetings from process 0 of 4!
+Greetings from process 1 of 4!
+Greetings from process 2 of 4!
+Greetings from process 3 of 4!
+How do we get from invoking mpiexec to one or more lines of greetings? The
+mpiexec command tells the system to start <number of processes> instances of our
+<mpi_hello> program. It may also tell the system which core should run each instance
+of the program. After the processes are running, the MPI implementation takes care
+of making sure that the processes can communicate with each other.
+3.1.2 MPI programs
+Let’s take a closer look at the program.
+The ﬁrst thing to observe is that this is a C program. For example, it includes the
+standard C header ﬁles stdio.h and string.h. It also has a main function, just like any
+other C program. However, there are many parts of the program that are new. Line 3
+includes the mpi.h header ﬁle. This contains prototypes of MPI functions, macro def-
+initions, type deﬁnitions, and so on; it contains all the deﬁnitions and declarations
+needed for compiling an MPI program.
+1 Recall that the dollar sign ($) is the shell prompt—so it shouldn’t be typed in. Also recall that, for the
+sake of explicitness, we assume that we’re using the Gnu C compiler, gcc, and we always use the options
+-g, -Wall, and -o. See Section 2.9 for further information.
+===== PRINTED PAGE 93 =====
+3.1 Getting started 93
+The second thing to observe is that all of the identiﬁers deﬁned by MPI start with
+the string MPI_. The ﬁrst letter following the underscore is capitalized for function
+names and MPI-deﬁned types. All of the letters in MPI-deﬁned macros and constants
+are capitalized. So there’s no question about what is deﬁned by MPI and what’s de-
+ﬁned by the user program.
+3.1.3 MPI_Init and MPI_Finalize
+In Line 12, the call to MPI_Init tells the MPI system to do all of the necessary setup.
+For example, it might allocate storage for message buffers, and it might decide which
+process gets which rank. As a rule of thumb, no other MPI functions should be called
+before the program calls MPI_Init. Its syntax is
+int MPI_Init (
+int∗ argc_p / ∗ in / out ∗ / ,
+char∗∗∗ argv_p / ∗ in / out ∗ / );
+The arguments, argc_p and argv_p, are pointers to the arguments to main, argc and
+argv. However, when our program doesn’t use these arguments, we can just pass NULL
+for both. Like most MPI functions, MPI_Init returns an int error code. In most cases,
+we’ll ignore the error codes, since checking them tends to clutter the code and make
+it more difﬁcult to understand what it’s doing.2
+In Line 31, the call to MPI_Finalize tells the MPI system that we’re done using
+MPI, and that any resources allocated for MPI can be freed. The syntax is quite
+simple:
+int MPI_Finalize ( void );
+In general, no MPI functions should be called after the call to MPI_Finalize.
+Thus a typical MPI program has the following basic outline:
+...
+# include < mpi . h >
+...
+int main ( int argc , char∗ argv []) {
+...
+/ ∗ No MPI calls before this ∗ /
+MPI_Init(&argc ,&argv );
+...
+MPI_Finalize ();
+/ ∗ No MPI calls after this ∗ /
+...
+return 0;
+}
+2 Of course, when we’re debugging our programs, we may make extensive use of the MPI error codes.
+===== PRINTED PAGE 94 =====
+94 CHAPTER 3 Distributed memory programming with MPI
+However, we’ve already seen that it’s not necessary to pass pointers to argc and argv
+to MPI_Init. It’s also not necessary that the calls to MPI_Init and MPI_Finalize be in
+main.
+3.1.4 Communicators, MPI_Comm_size, and MPI_Comm_rank
+In MPI a communicator is a collection of processes that can send messages to each
+other. One of the purposes of MPI_Init is to deﬁne a communicator that consists of all
+of the processes started by the user when she started the program. This communicator
+is called MPI_COMM_WORLD. The function calls in Lines 13 and 14 are getting information
+about MPI_COMM_WORLD. Their syntax is
+int MPI_Comm_size (
+MPI_Comm comm / ∗ in ∗ / ,
+int∗ comm_sz_p / ∗ out ∗ / );
+int MPI_Comm_rank (
+MPI_Comm comm / ∗ in ∗ / ,
+int∗ my_rank_p / ∗ out ∗ / );
+For both functions, the ﬁrst argument is a communicator and has the special type
+deﬁned by MPI for communicators, MPI_Comm. MPI_Comm_size returns in its second
+argument the number of processes in the communicator, MPI_Comm_rank returns in its
+second argument the calling process’s rank in the communicator. We’ll often use
+the variable comm_sz for the number of processes in MPI_COMM_WORLD, and the variable
+my_rank for the process rank.
+3.1.5 SPMD programs
+Notice that we compiled a single program—we didn’t compile a different program
+for each process—and we did this in spite of the fact that process 0 is doing something
+fundamentally different from the other processes: it’s receiving a series of messages
+and printing them, while each of the other processes is creating and sending a mes-
+sage. This is quite common in parallel programming. In fact, most MPI programs are
+written in this way. That is, a single program is written so that different processes
+carry out different actions, and this can be achieved by simply having the processes
+branch on the basis of their process rank. Recall that this approach to parallel pro-
+gramming is called single program, multiple data or SPMD.The if −else statement
+in Lines 16–29 makes our program SPMD.
+Also notice that our program will, in principle, run with any number of processes.
+We saw a little while ago that it can be run with one process or four processes, but if
+our system has sufﬁcient resources, we could also run it with 1000 or even 100,000
+processes. Although MPI doesn’t require that programs have this property, it’s almost
+always the case that we try to write programs that will run with any number of pro-
+cesses, because we usually don’t know in advance the exact resources available to
+us. For example, we might have a 20-core system available today, but tomorrow we
+might have access to a 500-core system.
+===== PRINTED PAGE 95 =====
+3.1 Getting started 95
+3.1.6 Communication
+In Lines 17–18, each process, other than process 0, creates a message it will send
+to process 0. (The function sprintf is very similar to printf, except that instead
+of writing to stdout, it writes to a string.) Lines 19–20 actually send the mes-
+sage to process 0. Process 0, on the other hand, simply prints its message using
+printf, and then uses a for loop to receive and print the messages sent by pro-
+cesses 1, 2,...,comm_sz − 1. Lines 25–26 receive the message sent by process q,
+for q = 1, 2,...,comm_sz − 1.
+3.1.7 MPI_Send
+The sends executed by processes 1, 2,...,comm_sz − 1 are fairly complex, so let’s
+take a closer look at them. Each of the sends is carried out by a call to MPI_Send,
+whose syntax is
+int MPI_Send (
+void∗ msg_buf_p / ∗ in ∗ / ,
+int msg_size / ∗ in ∗ / ,
+MPI_Datatype msg_type / ∗ in ∗ / ,
+int dest / ∗ in ∗ / ,
+int tag / ∗ in ∗ / ,
+MPI_Comm communicator / ∗ in ∗ / );
+The ﬁrst three arguments, msg_buf_p, msg_size, and msg_type, determine the contents
+of the message. The remaining arguments, dest, tag, and communicator, determine the
+destination of the message.
+The ﬁrst argument, msg_buf_p, is a pointer to the block of memory containing the
+contents of the message. In our program, this is just the string containing the message,
+greeting. (Remember that in C an array, such as a string, is a pointer.) The second and
+third arguments, msg_size and msg_type, determine the amount of data to be sent. In
+our program, the msg_size argument is the number of characters in the message, plus
+one character for the ’\0’ character that terminates C strings. The msg_type argument
+is MPI_CHAR. These two arguments together tell the system that the message contains
+strlen(greeting)+1 chars.
+Since C types (int, char, etc.) can’t be passed as arguments to functions, MPI
+deﬁnes a special type, MPI_Datatype, that is used for the msg_type argument. MPI also
+deﬁnes a number of constant values for this type. The ones we’ll use (and a few
+others) are listed in Table 3.1.
+Notice that the size of the string greeting is not the same as the size of the message
+speciﬁed by the arguments msg_size and msg_type. For example, when we run the
+program with four processes, the length of each of the messages is 31 characters,
+while we’ve allocated storage for 100 characters in greetings. Of course, the size of
+the message sent should be less than or equal to the amount of storage in the buffer—
+in our case the string greeting.
+The fourth argument, dest, speciﬁes the rank of the process that should receive the
+message. The ﬁfth argument, tag, is a nonnegative int. It can be used to distinguish
+===== PRINTED PAGE 96 =====
+96 CHAPTER 3 Distributed memory programming with MPI
+Table 3.1 Some predeﬁned MPI datatypes.
+MPI datatype C datatype
+MPI_CHAR signed char
+MPI_SHORT signed short int
+MPI_INT signed int
+MPI_LONG signed long int
+MPI_LONG_LONG signed long long int
+MPI_UNSIGNED_CHAR unsigned char
+MPI_UNSIGNED_SHORT unsigned short int
+MPI_UNSIGNED unsigned int
+MPI_UNSIGNED_LONG unsigned long int
+MPI_FLOAT ﬂoat
+MPI_DOUBLE double
+MPI_LONG_DOUBLE long double
+MPI_BYTE
+MPI_PACKED
+messages that are otherwise identical. For example, suppose process 1 is sending
+ﬂoats to process 0. Some of the ﬂoats should be printed, while others should be used
+in a computation. Then the ﬁrst four arguments to MPI_Send provide no information
+regarding which ﬂoats should be printed and which should be used in a computation.
+So process 1 can use (say) a tag of 0 for the messages that should be printed and a
+tag of 1 for the messages that should be used in a computation.
+The ﬁnal argument to MPI_Send is a communicator. All MPI functions that involve
+communication have a communicator argument. One of the most important purposes
+of communicators is to specify communication universes; recall that a communicator
+is a collection of processes that can send messages to each other. Conversely, a mes-
+sage sent by a process using one communicator cannot be received by a process that’s
+using a different communicator. Since MPI provides functions for creating new com-
+municators, this feature can be used in complex programs to ensure that messages
+aren’t “accidentally received” in the wrong place.
+An example will clarify this. Suppose we’re studying global climate change, and
+we’ve been lucky enough to ﬁnd two libraries of functions, one for modeling the
+earth’s atmosphere and one for modeling the earth’s oceans. Of course, both libraries
+use MPI. These models were built independently, so they don’t communicate with
+each other, but they do communicate internally. It’s our job to write the interface code.
+One problem we need to solve is ensuring that the messages sent by one library won’t
+be accidentally received by the other. We might be able to work out some scheme
+with tags: the atmosphere library gets tags 0, 1,...,n− 1, and the ocean library gets
+tags n,n + 1,...,n+ m. Then each library can use the given range to ﬁgure out
+which tag it should use for which message. However, a much simpler solution is
+provided by communicators: we simply pass one communicator to the atmosphere
+library functions and a different communicator to the ocean library functions.
+===== PRINTED PAGE 97 =====
+3.1 Getting started 97
+3.1.8 MPI_Recv
+The ﬁrst six arguments to MPI_Recv correspond to the ﬁrst six arguments of MPI_Send:
+int MPI_Recv (
+void∗ msg_buf_p / ∗ out ∗ / ,
+int buf_size / ∗ in ∗ / ,
+MPI_Datatype buf_type / ∗ in ∗ / ,
+int source / ∗ in ∗ / ,
+int tag / ∗ in ∗ / ,
+MPI_Comm communicator / ∗ in ∗ / ,
+MPI_Status∗ status_p / ∗ out ∗ / );
+Thus the ﬁrst three arguments specify the memory available for receiving the mes-
+sage: msg_buf_p points to the block of memory, buf_size determines the number of
+objects that can be stored in the block, and buf_type indicates the type of the objects.
+The next three arguments identify the message. The source argument speciﬁes the
+process from which the message should be received. The tag argument should match
+the tag argument of the message being sent, and the communicator argument must
+match the communicator used by the sending process. We’ll talk about the status_p
+argument shortly. In many cases, it won’t be used by the calling function, and, as in
+our “greetings” program, the special MPI constant MPI_STATUS_IGNORE can be passed.
+3.1.9 Message matching
+Suppose process q calls MPI_Send with
+MPI_Send ( send_buf_p , send_buf_sz , send_type , dest , send_tag ,
+send_comm );
+Also suppose that process r calls MPI_Recv with
+MPI_Recv ( recv_buf_p , recv_buf_sz , recv_type , src , recv_tag ,
+recv_comm ,&status );
+Then the message sent by q with the above call to MPI_Send can be received by r with
+the call to MPI_Recv if
+ recv_comm = send_comm,
+ recv_tag = send_tag,
+ dest = r, and
+ src = q.
+These conditions aren’t quite enough for the message to be successfully re-
+ceived, however. The parameters speciﬁed by the ﬁrst three pairs of arguments,
+send_buf_p/recv_buf_p, send_buf_sz/recv_buf_sz, and send_type/recv_type, must spec-
+ify compatible buffers. For detailed rules, see the MPI-3 speciﬁcation [40]. Most of
+the time, the following rule will sufﬁce:
+Ifrecv_type = send_type and recv_buf_sz ≥ send_buf_sz, then the message sent by
+q can be successfully received by r.
+===== PRINTED PAGE 98 =====
+98 CHAPTER 3 Distributed memory programming with MPI
+Of course, it can happen that one process is receiving messages from multiple
+processes, and the receiving process doesn’t know the order in which the other pro-
+cesses will send the messages. For example, suppose process 0 is doling out work
+to processes 1, 2,...,comm_sz − 1, and processes 1, 2,...,comm_sz − 1, send their
+results back to process 0 when they ﬁnish the work. If the work assigned to each
+process takes an unpredictable amount of time, then 0 has no way of knowing the
+order in which the processes will ﬁnish. If process 0 simply receives the results in
+process rank order—ﬁrst the results from process 1, then the results from process 2,
+and so on—and if (say) process comm_sz−1 ﬁnishes ﬁrst, it could happen that process
+comm_sz−1 could sit and wait for the other processes to ﬁnish. To avoid this problem
+MPI provides a special constant MPI_ANY_SOURCE that can be passed to MPI_Recv. Then,
+if process 0 executes the following code, it can receive the results in the order in
+which the processes ﬁnish:
+for ( i =1;i < comm_sz ; i ++) {
+MPI_Recv ( result , result_sz , result_type , MPI_ANY_SOURCE ,
+result_tag , comm , MPI_STATUS_IGNORE );
+Process_result ( result );
+}
+Similarly, it’s possible that one process can be receiving multiple messages with
+different tags from another process, and the receiving process doesn’t know the order
+in which the messages will be sent. For this circumstance, MPI provides the special
+constant MPI_ANY_TAG that can be passed to the tag argument of MPI_Recv.
+A couple of points should be stressed in connection with these “wildcard” argu-
+ments:
+1. Only a receiver can use a wildcard argument. Senders must specify a process rank
+and a nonnegative tag. So MPI uses a “push” communication mechanism rather
+than a “pull” mechanism.
+2. There is no wildcard for communicator arguments; both senders and receivers
+must always specify communicators.
+3.1.10 The status_p argument
+If you think about these rules for a minute, you’ll notice that a receiver can receive a
+message without knowing
+1. the amount of data in the message,
+2. the sender of the message, or
+3. the tag of the message.
+So how can the receiver ﬁnd out these values? Recall that the last argument to
+MPI_Recv has type MPI_Status∗. The MPI type MPI_Status is a struct with at least the
+three members MPI_SOURCE, MPI_TAG, and MPI_ERROR. Suppose our program contains
+===== PRINTED PAGE 99 =====
+3.1 Getting started 99
+the deﬁnition
+MPI_Status status ;
+Then after a call to MPI_Recv, in which &status is passed as the last argument, we can
+determine the sender and tags by examining the two members:
+status . MPI_SOURCE
+status . MPI_TAG
+The amount of data that’s been received isn’t stored in a ﬁeld that’s directly
+accessible to the application program. However, it can be retrieved with a call to
+MPI_Get_count. For example, suppose that in our call to MPI_Recv, the type of the re-
+ceive buffer is recv_type and, once again, we passed in &status. Then the call
+MPI_Get_count(&status , recv_type ,&count )
+will return the number of elements received in the count argument. In general, the
+syntax of MPI_Get_count is
+int MPI_Get_count (
+MPI_Status∗ status_p / ∗ in ∗ / ,
+MPI_Datatype type / ∗ in ∗ / ,
+int∗ count_p / ∗ out ∗ / );
+Note that the count isn’t directly accessible as a member of the MPI_Status
+variable, simply because it depends on the type of the received data, and, conse-
+quently, determining it would probably require a calculation (e.g., (number of bytes
+received)/(bytes per object)). And if this information isn’t needed, we shouldn’t
+waste a calculation determining it.
+3.1.11 Semantics of MPI_Send and MPI_Recv
+What exactly happens when we send a message from one process to another? Many
+of the details depend on the particular system, but we can make a few generaliza-
+tions. The sending process will assemble the message. For example, it will add the
+“envelope” information to the actual data being transmitted—the destination process
+rank, the sending process rank, the tag, the communicator, and some information on
+the size of the message. Once the message has been assembled, recall from Chapter 2
+that there are essentially two possibilities: the sending process can buffer the mes-
+sage or it can block. If it buffers the message, the MPI system will place the message
+(data and envelope) into its own internal storage, and the call to MPI_Send will return.
+Alternatively, if the system blocks, it will wait until it can begin transmitting
+the message, and the call to MPI_Send may not return immediately. Thus if we use
+MPI_Send, when the function returns, we don’t actually know whether the message has
+been transmitted. We only know that the storage we used for the message, the send
+buffer, is available for reuse by our program. If we need to know that the message
+has been transmitted, or if we need for our call to MPI_Send to return immediately—
+regardless of whether the message has been sent—MPI provides alternative functions
+for sending. We’ll learn about one of these alternative functions later.
+===== PRINTED PAGE 100 =====
+100 CHAPTER 3 Distributed memory programming with MPI
+The exact behavior of MPI_Send is determined by the MPI implementation. How-
+ever, typical implementations have a default “cutoff” message size. If the size of
+a message is less than the cutoff, it will be buffered. If the size of the message is
+greater than the cutoff, MPI_Send will block.
+Unlike MPI_Send, MPI_Recv always blocks until a matching message has been re-
+ceived. So when a call to MPI_Recv returns, we know that there is a message stored
+in the receive buffer (unless there’s been an error). There is an alternate method for
+receiving a message, in which the system checks whether a matching message is
+available and returns, regardless of whether there is one.
+MPI requires that messages be non-overtaking. This means that if process q sends
+two messages to process r, then the ﬁrst message sent by q must be available to r
+before the second message. However, there is no restriction on the arrival of messages
+sent from different processes. That is, if q and t both send messages to r, then even
+if q sends its message before t sends its message, there is no requirement that q’s
+message become available to r before t’s message. This is essentially because MPI
+can’t impose performance on a network. For example, if q happens to be running
+on a machine on Mars, while r and t are both running on the same machine in San
+Francisco, and if q sends its message a nanosecond before t sends its message, it
+would be extremely unreasonable to require that q’s message arrive before t’s.
+3.1.12 Some potential pitfalls
+Note that the semantics of MPI_Recv suggests a potential pitfall in MPI programming:
+If a process tries to receive a message and there’s no matching send, then the process
+will block forever. That is, the process will hang. So when we design our programs,
+we need to be sure that every receive has a matching send. Perhaps even more im-
+portant, we need to be very careful when we’re coding that there are no inadvertent
+mistakes in our calls to MPI_Send and MPI_Recv. For example, if the tags don’t match,
+or if the rank of the destination process is the same as the rank of the source process,
+the receive won’t match the send, and either a process will hang, or, perhaps worse,
+the receive may match another send.
+Similarly, if a call to MPI_Send blocks and there’s no matching receive, then the
+sending process can hang. If, on the other hand, a call to MPI_Send is buffered and
+there’s no matching receive, then the message will be lost.
+3.2 The trapezoidal rule in MPI
+Printing messages from processes is all well and good, but we’re probably not taking
+the trouble to learn to write MPI programs just to print messages. So let’s take a
+look at a somewhat more useful program—let’s write a program that implements the
+trapezoidal rule for numerical integration.
+===== PRINTED PAGE 101 =====
+3.2 The trapezoidal rule in MPI 101
+FIGURE 3.3
+The trapezoidal rule: (a) area to be estimated and (b) approximate area using trapezoids.
+FIGURE 3.4
+One trapezoid.
+3.2.1 The trapezoidal rule
+Recall that we can use the trapezoidal rule to approximate the area between the graph
+of a function, y = f(x), two vertical lines, and the x-axis. (See Fig. 3.3.) The basic
+idea is to divide the interval on the x-axis into n equal subintervals. Then we approx-
+imate the area lying between the graph and each subinterval by a trapezoid, whose
+base is the subinterval, whose vertical sides are the vertical lines through the end-
+points of the subinterval, and whose fourth side is the secant line joining the points
+where the vertical lines cross the graph. (See Fig. 3.4.) If the endpoints of the subin-
+terval are xi and xi+1, then the length of the subinterval is h = xi+1 − xi. Also, if
+the lengths of the two vertical segments are f(xi) and f(xi+1), then the area of the
+trapezoid is
+Area of one trapezoid = h 2 [f(xi) + f(xi+1)].
+Since we chose the n subintervals so that they would all have the same length, we
+also know that if the vertical lines bounding the region are x = a and x = b, then
+===== PRINTED PAGE 102 =====
+102 CHAPTER 3 Distributed memory programming with MPI
+h = b − a n .
+Thus if we call the leftmost endpoint x0, and the rightmost endpoint xn, we have that
+x0 = a, x1 = a + h, x2 = a + 2h, ..., xn−1 = a + (n − 1)h, xn = b,
+and the sum of the areas of the trapezoids—our approximation to the total area—is
+Sum of trapezoid areas = h[f(x0)/2 + f(x1) + f(x2) +···+f(xn−1) + f(xn)/2].
+Thus, pseudocode for a serial program might look something like this:
+/ ∗ Input : a, b, n ∗ /
+h =(b−a )/n ;
+approx =(f ( a )+f ( b ))/2.0;
+for ( i =1;i <= n −1; i ++) {
+x_i = a + i ∗ h ;
+approx += f ( x_i );
+}
+approx = h ∗ approx ;
+3.2.2 Parallelizing the trapezoidal rule
+It is not the most attractive word, but, as we noted in Chapter 1, people who write
+parallel programs do use the verb “parallelize” to describe the process of converting
+a serial program or algorithm into a parallel program.
+Recall that we can design a parallel program by using four basic steps:
+1. Partition the problem solution into tasks.
+2. Identify communication channels between the tasks.
+3. Aggregate tasks into composite tasks.
+4. Map composite tasks to cores.
+In the partitioning phase, we usually try to identify as many tasks as possible. For the
+trapezoidal rule, we might identify two types of tasks: one type is ﬁnding the area
+of a single trapezoid, and the other is computing the sum of these areas. Then the
+communication channels will join each of the tasks of the ﬁrst type to the single task
+of the second type. (See Fig. 3.5.)
+So how can we aggregate the tasks and map them to the cores? Our intuition tells
+us that the more trapezoids we use, the more accurate our estimate will be. That is,
+we should use many trapezoids, and we will use many more trapezoids than cores.
+Thus we need to aggregate the computation of the areas of the trapezoids into groups.
+A natural way to do this is to split the interval [a,b] up into comm_sz subintervals. If
+comm_sz evenly divides n, the number of trapezoids, we can simply apply the trape-
+zoidal rule with n/comm_sz trapezoids to each of the comm_sz subintervals. To ﬁnish,
+we can have one of the processes, say process 0, add the estimates.
+===== PRINTED PAGE 103 =====
+3.2 The trapezoidal rule in MPI 103
+FIGURE 3.5
+Tasks and communications for the trapezoidal rule.
+Let’s make the simplifying assumption that comm_sz evenly divides n. Then pseu-
+docode for the program might look something like the following:
+1 Get a , b , n ;
+2 h =(b−a )/n ;
+3 local_n = n / comm_sz ;
+4 local_a = a + my_rank∗ local_n∗h ;
+5 local_b = local_a + local_n∗h ;
+6 local_integral = Trap ( local_a , local_b , local_n , h );
+7 if ( my_rank != 0)
+8 Send local_integral to process 0;
+9 else / ∗ my_rank == 0 ∗ /
+10 total_integral = local_integral ;
+11 for ( proc =1;proc < comm_sz ; proc ++) {
+12 Receive local_integral from proc ;
+13 total_integral += local_integral ;
+14 }
+15 }
+16 if ( my_rank == 0)
+17 print result ;
+Let’s defer, for the moment, the issue of input and just “hardwire” the values for a,
+b, and n. When we do this, we get the MPI program shown in Program 3.2.TheTrap
+function is just an implementation of the serial trapezoidal rule. See Program 3.3.
+Notice that in our choice of identiﬁers, we try to differentiate between local and
+global variables. Local variables are variables whose contents are signiﬁcant only
+on the process that’s using them. Some examples from the trapezoidal rule program
+are local_a, local_b, and local_n. Variables whose contents are signiﬁcant to all the
+processes are sometimes called global variables. Some examples from the trapezoidal
+rule are a, b, and n. Note that this usage is different from the usage you learned in your
+introductory programming class, where local variables are private to a single function
+and global variables are accessible to all the functions. However, no confusion should
+arise, since the context should make the meaning clear.
+===== PRINTED PAGE 104 =====
+104 CHAPTER 3 Distributed memory programming with MPI
+1 int main ( void ){
+2 int my_rank , comm_sz , n = 1024, local_n ;
+3 double a =0.0,b =3.0,h , local_a , local_b ;
+4 double local_int , total_int ;
+5 int source ;
+6
+7 MPI_Init ( NULL , NULL );
+8 MPI_Comm_rank ( MPI_COMM_WORLD ,&my_rank );
+9 MPI_Comm_size ( MPI_COMM_WORLD ,&comm_sz );
+10
+11 h =(b−a )/n ; / ∗ h is the same for all processes ∗ /
+12 local_n = n / comm_sz ; / ∗ So i s the number of trapezoids ∗ /
+13
+14 local_a = a + my_rank∗ local_n∗h ;
+15 local_b = local_a + local_n∗h ;
+16 local_int = Trap ( local_a , local_b , local_n , h );
+17
+18 if ( my_rank != 0) {
+19 MPI_Send(&local_int ,1,MPI_DOUBLE ,0,0,
+20 MPI_COMM_WORLD );
+21 } else {
+22 total_int = local_int ;
+23 for ( source =1;source < comm_sz ; source ++) {
+24 MPI_Recv(&local_int ,1,MPI_DOUBLE , source ,0,
+25 MPI_COMM_WORLD , MPI_STATUS_IGNORE );
+26 total_int += local_int ;
+27 }
+28 }
+29
+30 if ( my_rank == 0) {
+31 printf ( "With n = %d trapezoids , our estimate\n" , n );
+32 printf ( "of the integral from %f to %f = %.15e\n" ,
+33 a , b , total_int );
+34 }
+35 MPI_Finalize ();
+36 return 0;
+37 } / ∗ main ∗ /
+Program 3.2: First version of MPI trapezoidal rule.
+3.3 Dealing with I/O
+Of course, the current version of the parallel trapezoidal rule has a serious deﬁciency:
+it will only compute the integral over the interval [0, 3] using 1024 trapezoids. We
+can edit the code and recompile, but this is quite a bit of work compared to simply
+typing in three new numbers. We need to address the problem of getting input from
+===== PRINTED PAGE 105 =====
+3.3 Dealing with I/O 105
+1 double Trap (
+2 double left_endpt / ∗ in ∗ / ,
+3 double right_endpt / ∗ in ∗ / ,
+4 int trap_count / ∗ in ∗ / ,
+5 double base_len / ∗ in ∗ / ){
+6 double estimate , x ;
+7 int i ;
+8
+9 estimate =(f ( left_endpt )+f ( right_endpt ))/2.0;
+10 for ( i =1;i <= trap_count −1; i ++) {
+11 x = left_endpt + i ∗ base_len ;
+12 estimate += f ( x );
+13 }
+14 estimate = estimate∗ base_len ;
+15
+16 return estimate ;
+17 } / ∗ Trap ∗ /
+Program 3.3: Trap function in MPI trapezoidal rule.
+the user. While we’re talking about input to parallel programs, it might be a good
+idea to also take a look at output. We discussed these two issues in Chapter 2.Soif
+you remember the discussion of nondeterminism and output, you can skip ahead to
+Section 3.3.2.
+3.3.1 Output
+In both the “greetings” program and the trapezoidal rule program, we’ve assumed
+that process 0 can write to stdout, i.e., its calls to printf behave as we might expect.
+Although the MPI standard doesn’t specify which processes have access to which I/O
+devices, virtually all MPI implementations allow all the processes in MPI_COMM_WORLD
+full access to stdout and stderr. So most MPI implementations allow all processes
+to execute printf and fprintf(stderr, ...) .
+However, most MPI implementations don’t provide any automatic scheduling of
+access to these devices. That is, if multiple processes are attempting to write to, say,
+stdout, the order in which the processes’ output appears will be unpredictable. In-
+deed, it can even happen that the output of one process will be interrupted by the
+output of another process.
+For example, suppose we try to run an MPI program in which each process simply
+prints a message. (See Program 3.4.) On our cluster, if we run the program with ﬁve
+processes, it often produces the “expected” output:
+Proc 0 of 5>Does anyone have a toothpick ?
+Proc 1 of 5>Does anyone have a toothpick ?
+Proc 2 of 5>Does anyone have a toothpick ?
+===== PRINTED PAGE 106 =====
+106 CHAPTER 3 Distributed memory programming with MPI
+#include <stdio .h>
+#include <mpi . h>
+int main ( void ){
+int my_rank , comm_sz ;
+MPI_Init ( NULL , NULL );
+MPI_Comm_size ( MPI_COMM_WORLD ,&comm_sz );
+MPI_Comm_rank ( MPI_COMM_WORLD ,&my_rank );
+printf ( "Proc %d of %d > Does anyone have a toothpick ?\n" ,
+my_rank , comm_sz );
+MPI_Finalize ();
+return 0;
+} / ∗ main ∗ /
+Program 3.4: Each process just prints a message.
+Proc 3 of 5>Does anyone have a toothpick ?
+Proc 4 of 5>Does anyone have a toothpick ?
+However, when we run it with six processes, the order of the output lines is unpre-
+dictable:
+Proc 0 of 6>Does anyone have a toothpick ?
+Proc 1 of 6>Does anyone have a toothpick ?
+Proc 2 of 6>Does anyone have a toothpick ?
+Proc 5 of 6>Does anyone have a toothpick ?
+Proc 3 of 6>Does anyone have a toothpick ?
+Proc 4 of 6>Does anyone have a toothpick ?
+or
+Proc 0 of 6>Does anyone have a toothpick ?
+Proc 1 of 6>Does anyone have a toothpick ?
+Proc 2 of 6>Does anyone have a toothpick ?
+Proc 4 of 6>Does anyone have a toothpick ?
+Proc 3 of 6>Does anyone have a toothpick ?
+Proc 5 of 6>Does anyone have a toothpick ?
+The reason this happens is that the MPI processes are “competing” for access to
+the shared output device, stdout, and it’s impossible to predict the order in which the
+processes’ output will be queued up. Such a competition results in nondeterminism.
+That is, the actual output will vary from one run to the next.
+In any case, if we don’t want output from different processes to appear in a random
+order, it’s up to us to modify our program accordingly. For example, we can have each
+===== PRINTED PAGE 107 =====
+3.3 Dealing with I/O 107
+process other than 0 send its output to process 0, and process 0 can print the output
+in process rank order. This is exactly what we did in the “greetings” program.
+3.3.2 Input
+Unlike output, most MPI implementations only allow process 0 in MPI_COMM_WORLD
+access to stdin. This makes sense: If multiple processes have access to stdin, which
+process should get which parts of the input data? Should process 0 get the ﬁrst line?
+process 1 get the second? Or should process 0 get the ﬁrst character?
+So, to write MPI programs that can use scanf, we need to branch on process rank,
+with process 0 reading in the data, and then sending it to the other processes. For
+example, we might write the Get_input function shown in Program 3.5 for our par-
+allel trapezoidal rule program. In this function, process 0 simply reads in the values
+1 void Get_input (
+2 int my_rank / ∗ in ∗ / ,
+3 int comm_sz / ∗ in ∗ / ,
+4 double∗ a_p / ∗ out ∗ / ,
+5 double∗ b_p / ∗ out ∗ / ,
+6 int∗ n_p / ∗ out ∗ / ){
+7 int dest ;
+8
+9 if ( my_rank == 0) {
+10 printf ( "Enter a, b, and n\n" );
+11 scanf ( "%lf %lf %d" , a_p , b_p , n_p );
+12 for ( dest =1;dest < comm_sz ; dest ++) {
+13 MPI_Send ( a_p ,1,MPI_DOUBLE , dest ,0,MPI_COMM_WORLD );
+14 MPI_Send ( b_p ,1,MPI_DOUBLE , dest ,0,MPI_COMM_WORLD );
+15 MPI_Send ( n_p ,1,MPI_INT , dest ,0,MPI_COMM_WORLD );
+16 }
+17 } else { / ∗ my_rank != 0 ∗ /
+18 MPI_Recv ( a_p ,1,MPI_DOUBLE ,0,0,MPI_COMM_WORLD ,
+19 MPI_STATUS_IGNORE );
+20 MPI_Recv ( b_p ,1,MPI_DOUBLE ,0,0,MPI_COMM_WORLD ,
+21 MPI_STATUS_IGNORE );
+22 MPI_Recv ( n_p ,1,MPI_INT ,0,0,MPI_COMM_WORLD ,
+23 MPI_STATUS_IGNORE );
+24 }
+25 } / ∗ Get_input ∗ /
+Program 3.5: A function for reading user input.
+for a, b, and n, and sends all three values to each process. So this function uses
+the same basic communication structure as the “greetings” program, except that now
+process 0 is sending to each process, while the other processes are receiving.
+===== PRINTED PAGE 108 =====
+108 CHAPTER 3 Distributed memory programming with MPI
+To use this function, we can simply insert a call to it inside our main function,
+being careful to put it after we’ve initialized my_rank and comm_sz:
+...
+MPI_Comm_rank ( MPI_COMM_WORLD ,&my_rank );
+MPI_Comm_size ( MPI_COMM_WORLD ,&comm_sz );
+Get_input ( my_rank , comm_sz ,&a ,&b ,&n );
+h =(b−a )/n ;
+...
+3.4 Collective communication
+If we pause for a moment and think about our trapezoidal rule program, we can ﬁnd
+several things that we might be able to improve on. One of the most obvious is the
+“global sum” after each process has computed its part of the integral. If we hire eight
+workers to, say, build a house, we might feel that we weren’t getting our money’s
+worth if seven of the workers told the ﬁrst what to do, and then the seven collected
+their pay and went home. But this is very similar to what we’re doing in our global
+sum. Each process with rank greater than 0 is “telling process 0 what to do” and then
+quitting. That is, each process with rank greater than 0 is, in effect, saying “add this
+number into the total.” Process 0 is doing nearly all the work in computing the global
+sum, while the other processes are doing almost nothing. Sometimes it does happen
+that this is the best we can do in a parallel program, but if we imagine that we have
+eight students, each of whom has a number and we want to ﬁnd the sum of all eight
+numbers, we can certainly come up with a more equitable distribution of the work
+than having seven of the eight give their numbers to one of the students and having
+the ﬁrst do the addition.
+3.4.1 Tree-structured communication
+As we already saw in Chapter 1, we might use a “binary tree structure,” like that
+illustrated in Fig. 3.6. In this diagram, initially students or processes 1, 3, 5, and 7
+send their values to processes 0, 2, 4, and 6, respectively. Then processes 0, 2, 4, and
+6 add the received values to their original values, and the process is repeated twice:
+1. a. Processes 2 and 6 send their new values to processes 0 and 4, respectively.
+b. Processes 0 and 4 add the received values into their new values.
+2. a. Process 4 sends its newest value to process 0.
+b. Process 0 adds the received value to its newest value.
+This solution may not seem ideal, since half the processes (1, 3, 5, and 7) are
+doing the same amount of work that they did in the original scheme. However, if
+===== PRINTED PAGE 109 =====
+3.4 Collective communication 109
+FIGURE 3.6
+A tree-structured global sum.
+you think about it, the original scheme required comm_sz − 1 = seven receives and
+seven adds by process 0, while the new scheme only requires three, and all the other
+processes do no more than two receives and adds. Furthermore, the new scheme has
+the property that a lot of the work is done concurrently by different processes. For
+example, in the ﬁrst phase, the receives and adds by processes 0, 2, 4, and 6 can all
+take place simultaneously. So, if the processes start at roughly the same time, the total
+time required to compute the global sum will be the time required by process 0, i.e.,
+three receives and three additions. So we’ve reduced the overall time by more than
+50%. Furthermore, if we use more processes, we can do even better. For example, if
+comm_sz = 1024, then the original scheme requires process 0 to do 1023 receives and
+additions, while it can be shown (Exercise 3.5) that the new scheme requires process
+0 to do only 10 receives and additions. This improves the original scheme by more
+than a factor of 100!
+You may be thinking to yourself, this is all well and good, but coding this tree-
+structured global sum looks like it would take a quite a bit of work, and you’d be
+right. (See Programming Assignment 3.3.) In fact, the problem may be even harder.
+For example, it’s perfectly feasible to construct a tree-structured global sum that uses
+different “process-pairings.” For example, we might pair 0 and 4, 1 and 5, 2 and 6, and
+3 and 7 in the ﬁrst phase. Then we could pair 0 and 2, and 1 and 3 in the second, and
+0 and 1 in the ﬁnal. (See Fig. 3.7.) Of course, there are many other possibilities. How
+can we decide which is the best? Do we need to code each alternative and evaluate
+their performance? If we do, is it possible that one method works best for “small”
+===== PRINTED PAGE 110 =====
+110 CHAPTER 3 Distributed memory programming with MPI
+FIGURE 3.7
+An alternative tree-structured global sum.
+trees, while another works best for “large” trees? Even worse, one approach might
+work best on system A, while another might work best on system B.
+3.4.2 MPI_Reduce
+With virtually limitless possibilities, it’s unreasonable to expect each MPI program-
+mer to write an optimal global-sum function, so MPI speciﬁcally protects program-
+mers against this trap of endless optimization by requiring that MPI implementations
+include implementations of global sums. This places the burden of optimization on
+the developer of the MPI implementation, rather than the application developer. The
+assumption here is that the developer of the MPI implementation should know enough
+about both the hardware and the system software so that she can make better deci-
+sions about implementation details.
+Now a “global-sum function” will obviously require communication. However,
+unlike the MPI_Send-MPI_Recv pair, the global-sum function may involve more than
+two processes. In fact, in our trapezoidal rule program it will involve all the processes
+in MPI_COMM_WORLD. In MPI parlance, communication functions that involve all the
+processes in a communicator are called collective communications. To distinguish
+between collective communications and functions, such as MPI_Send and MPI_Recv,
+MPI_Send and MPI_Recv are often called point-to-point communications.
+In fact, global-sum is just a special case of an entire class of collective communi-
+cations. For example, it might happen that instead of ﬁnding the sum of a collection
+of comm_sz numbers distributed among the processes, we want to ﬁnd the maximum or
+the minimum or the product, or any one of many other possibilities. So MPI general-
+===== PRINTED PAGE 111 =====
+3.4 Collective communication 111
+Table 3.2 Predeﬁned Reduction Operators in MPI.
+Operation Value Meaning
+MPI_MAX Maximum
+MPI_MIN Minimum
+MPI_SUM Sum
+MPI_PROD Product
+MPI_LAND Logical and
+MPI_BAND Bitwise and
+MPI_LOR Logical or
+MPI_BOR Bitwise or
+MPI_LXOR Logical exclusive or
+MPI_BXOR Bitwise exclusive or
+MPI_MAXLOC Maximum and location of maximum
+MPI_MINLOC Minimum and location of minimum
+ized the global-sum function so that any one of these possibilities can be implemented
+with a single function:
+int MPI_Reduce (
+void∗ input_data_p / ∗ in ∗ / ,
+void∗ output_data_p / ∗ out ∗ / ,
+int count / ∗ in ∗ / ,
+MPI_Datatype datatype / ∗ in ∗ / ,
+MPI_Op operator / ∗ in ∗ / ,
+int dest_process / ∗ in ∗ / ,
+MPI_Comm comm / ∗ in ∗ / );
+The key to the generalization is the ﬁfth argument, operator. It has type MPI_Op, which
+is a predeﬁned MPI type—like MPI_Datatype and MPI_Comm. There are a number of
+predeﬁned values in this type—see Table 3.2. It’s also possible to deﬁne your own
+operators—for details, see the MPI-3 Standard [40].
+The operator we want is MPI_SUM. Using this value for the operator argument, we
+can replace the code in Lines 18–28 of Program 3.2 with the single function call
+MPI_Reduce(&local_int ,&total_int ,1,MPI_DOUBLE , MPI_SUM ,
+0, MPI_COMM_WORLD );
+One point worth noting is that by using a count argument greater than 1,
+MPI_Reduce can operate on arrays instead of scalars. So the following code could be
+used to add a collection of N-dimensional vectors, one per process:
+double local_x [ N ], sum [ N ];
+...
+MPI_Reduce ( local_x , sum , N , MPI_DOUBLE , MPI_SUM ,0,
+MPI_COMM_WORLD );
+===== PRINTED PAGE 112 =====
+112 CHAPTER 3 Distributed memory programming with MPI
+Table 3.3 Multiple Calls to MPI_Reduce.
+Time Process 0 Process 1 Process 2
+0 a=1;c=2 a=1;c=2 a=1;c=2
+1 MPI_Reduce(&a, &b, ...) MPI_Reduce(&c, &d, ...) MPI_Reduce(&a, &b, ...)
+2 MPI_Reduce(&c, &d, ...) MPI_Reduce(&a, &b, ...) MPI_Reduce(&c, &d, ...)
+3.4.3 Collective vs. point-to-point communications
+It’s important to remember that collective communications differ in several ways
+from point-to-point communications:
+1. All the processes in the communicator must call the same collective function. For
+example, a program that attempts to match a call to MPI_Reduce on one process
+with a call to MPI_Recv on another process is erroneous, and, in all likelihood, the
+program will hang or crash.
+2. The arguments passed by each process to an MPI collective communication must
+be “compatible.” For example, if one process passes in 0 as the dest_process and
+another passes in 1, then the outcome of a call to MPI_Reduce is erroneous, and,
+once again, the program is likely to hang or crash.
+3. The output_data_p argument is only used on dest_process. However, all of the
+processes still need to pass in an actual argument corresponding to output_data_p,
+even if it’s just NULL.
+4. Point-to-point communications are matched on the basis of tags and communica-
+tors. Collective communications don’t use tags. So they’re matched solely on the
+basis of the communicator and the order in which they’re called. As an example,
+consider the calls to MPI_Reduce shown in Table 3.3. Suppose that each process
+calls MPI_Reduce with operator MPI_SUM, and destination process 0. At ﬁrst glance,
+it might seem that after the two calls to MPI_Reduce,thevalueofb will be 3, and the
+value of d will be 6. However, the names of the memory locations are irrelevant to
+the matching of the calls to MPI_Reduce.Theorder of the calls will determine the
+matching, so the value stored in b will be 1 + 2 + 1 = 4, and the value stored in d
+will be 2 + 1 + 2 = 5.
+A ﬁnal caveat: it might be tempting to call MPI_Reduce using the same buffer for
+both input and output. For example, if we wanted to form the global sum of x on each
+process and store the result in x on process 0, we might try calling
+MPI_Reduce(&x ,&x ,1,MPI_DOUBLE , MPI_SUM ,0,comm );
+However, this call is illegal in MPI. So its result will be unpredictable: it might pro-
+duce an incorrect result, it might cause the program to crash; it might even produce
+a correct result. It’s illegal, because it involves aliasing of an output argument. Two
+===== PRINTED PAGE 113 =====
+3.4 Collective communication 113
+arguments are aliased if they refer to the same block of memory, and MPI prohibits
+aliasing of arguments if one of them is an output or input/output argument. This is
+because the MPI Forum wanted to make the Fortran and C versions of MPI as similar
+as possible, and Fortran prohibits aliasing. In some instances MPI provides an alter-
+native construction that effectively avoids this restriction. See Subsection 7.1.9 for an
+example.
+3.4.4 MPI_Allreduce
+In our trapezoidal rule program, we just print the result. So it’s perfectly natural for
+only one process to get the result of the global sum. However, it’s not difﬁcult to
+imagine a situation in which all of the processes need the result of a global sum to
+complete some larger computation. In this situation, we encounter some of the same
+problems we encountered with our original global sum. For example, if we use a tree
+to compute a global sum, we might “reverse” the branches to distribute the global
+sum (see Fig. 3.8). Alternatively, we might have the processes exchange partial re-
+sults instead of using one-way communications. Such a communication pattern is
+sometimes called a butterﬂy. (See Fig. 3.9.) Once again, we don’t want to have to
+decide on which structure to use, or how to code it for optimal performance. For-
+tunately, MPI provides a variant of MPI_Reduce that will store the result on all the
+processes in the communicator:
+int MPI_Allreduce (
+void∗ input_data_p / ∗ in ∗ / ,
+void∗ output_data_p / ∗ out ∗ / ,
+int count / ∗ in ∗ / ,
+MPI_Datatype datatype / ∗ in ∗ / ,
+MPI_Op operator / ∗ in ∗ / ,
+MPI_Comm comm / ∗ in ∗ / );
+The argument list is identical to that for MPI_Reduce, except that there is no
+dest_process since all the processes should get the result.
+3.4.5 Broadcast
+If we can improve the performance of the global sum in our trapezoidal rule program
+by replacing a loop of receives on process 0 with a tree structured communication,
+we ought to be able to do something similar with the distribution of the input data. In
+fact, if we simply “reverse” the communications in the tree-structured global sum in
+Fig. 3.6, we obtain the tree-structured communication shown in Fig. 3.10, and we can
+use this structure to distribute the input data. A collective communication in which
+data belonging to a single process is sent to all of the processes in the communicator
+is called a broadcast, and you’ve probably guessed that MPI provides a broadcast
+function:
+===== PRINTED PAGE 114 =====
+114 CHAPTER 3 Distributed memory programming with MPI
+FIGURE 3.8
+A global sum followed by distribution of the result.
+int MPI_Bcast (
+void∗ data_p / ∗ in / out ∗ / ,
+int count / ∗ in ∗ / ,
+MPI_Datatype datatype / ∗ in ∗ / ,
+int source_proc / ∗ in ∗ / ,
+MPI_Comm comm / ∗ in ∗ / );
+The process with rank source_proc sends the contents of the memory referenced by
+data_p to all the processes in the communicator comm.
+===== PRINTED PAGE 115 =====
+3.4 Collective communication 115
+FIGURE 3.9
+A butterﬂy-structured global sum.
+FIGURE 3.10
+A tree-structured broadcast.
+Program 3.6 shows how to modify the Get_input function shown in Program 3.5
+so that it uses MPI_Bcast, instead of MPI_Send and MPI_Recv.
+===== PRINTED PAGE 116 =====
+116 CHAPTER 3 Distributed memory programming with MPI
+1 void Get_input (
+2 int my_rank / ∗ in ∗ / ,
+3 int comm_sz / ∗ in ∗ / ,
+4 double∗ a_p / ∗ out ∗ / ,
+5 double∗ b_p / ∗ out ∗ / ,
+6 int∗ n_p / ∗ out ∗ / ){
+7
+8 if ( my_rank == 0) {
+9 printf ( "Enter a, b, and n\n" );
+10 scanf ( "%lf %lf %d" , a_p , b_p , n_p );
+11 }
+12 MPI_Bcast ( a_p ,1,MPI_DOUBLE ,0,MPI_COMM_WORLD );
+13 MPI_Bcast ( b_p ,1,MPI_DOUBLE ,0,MPI_COMM_WORLD );
+14 MPI_Bcast ( n_p ,1,MPI_INT ,0,MPI_COMM_WORLD );
+15 } / ∗ Get_input ∗ /
+Program 3.6: A version of Get_input that uses MPI_Bcast.
+Recall that in serial programs an in/out argument is one whose value is both used
+and changed by the function. For MPI_Bcast, however, the data_p argument is an input
+argument on the process with rank source_proc and an output argument on the other
+processes. Thus when an argument to a collective communication is labeled in/out,
+it’s possible that it’s an input argument on some processes and an output argument on
+other processes.
+3.4.6 Data distributions
+Suppose we want to write a function that computes a vector sum:
+x + y = (x0,x1,...,xn−1) + (y0,y1,...,yn−1)
+= (x0 + y0,x1 + y1,...,xn−1 + yn−1)
+= (z0,z1,...,zn−1)
+= z
+If we implement the vectors as arrays of, say, doubles, we could implement serial
+vector addition with the code shown in Program 3.7.
+How could we implement this using MPI? The work consists of adding the in-
+dividual components of the vectors, so we might specify that the tasks are just the
+additions of corresponding components. Then there is no communication between
+the tasks, and the problem of parallelizing vector addition boils down to aggregating
+the tasks and assigning them to the cores. If the number of components is n and we
+have comm_sz cores or processes, let’s assume that n is evenly divisible by comm_sz and
+deﬁne local_n = n/comm_sz. Then we can simply assign blocks of local_n consec-
+utive components to each process. The four columns on the left of Table 3.4 show an
+===== PRINTED PAGE 117 =====
+3.4 Collective communication 117
+1 void Vector_sum ( double x [] , double y [] , double z [] , int n ){
+2 int i ;
+3
+4 for ( i =0;i < n ; i ++)
+5 z [ i ]=x [ i ]+y [ i ];
+6} / ∗ Vector_sum ∗ /
+Program 3.7: A serial implementation of vector addition.
+Table 3.4 Different partitions of a 12-component vector among 3 processes.
+Components
+Block-cyclic
+Process Block Cyclic Blocksize = 2
+0 0 1 2 3 0 3 6 9 0 1 6 7
+1 4 5 6 7 1 4 7 10 2 3 8 9
+2 8 9 10 11 2 5 8 11 4 5 10 11
+example when n = 12 and comm_sz = 3. This is often called a block partition of the
+vector.
+An alternative to a block partition is a cyclic partition. In a cyclic partition, we
+assign the components in a round-robin fashion. The four columns in the middle
+of Table 3.4 show an example when n = 12 and comm_sz = 3. So process 0 gets
+component 0, process 1 gets component 1, process 2 gets component 2, process 0
+gets component 3, and so on.
+A third alternative is a block-cyclic partition. The idea here is that instead of
+using a cyclic distribution of individual components, we use a cyclic distribution of
+blocks of components. So a block-cyclic distribution isn’t fully speciﬁed until we
+decide how large the blocks are. If comm_sz = 3, n = 12, and the blocksize b = 2, an
+example is shown in the four columns on the right of Table 3.4.
+Once we’ve decided how to partition the vectors, it’s easy to write a parallel vector
+addition function: each process simply adds its assigned components. Furthermore,
+regardless of the partition, each process will have local_n components of the vec-
+tor, and, to save on storage, we can just store these on each process as an array of
+local_n elements. Thus each process will execute the function shown in Program 3.8.
+Although the names of the variables have been changed to emphasize the fact that
+the function is operating on only the process’s portion of the vector, this function is
+virtually identical to the original serial function.
+3.4.7 Scatter
+Now suppose we want to test our vector addition function. It would be convenient to
+be able to read the dimension of the vectors and then read in the vectors x and y.We
+already know how to read in the dimension of the vectors: process 0 can prompt the
+===== PRINTED PAGE 118 =====
+118 CHAPTER 3 Distributed memory programming with MPI
+1 void Parallel_vector_sum (
+2 double local_x [] / ∗ in ∗ / ,
+3 double local_y [] / ∗ in ∗ / ,
+4 double local_z [] / ∗ out ∗ / ,
+5 int local_n / ∗ in ∗ / ){
+6 int local_i ;
+7
+8 for ( local_i =0;local_i < local_n ; local_i ++)
+9 local_z [ local_i ]=local_x [ local_i ]+local_y [ local_i ];
+10 } / ∗ Parallel_vector_sum ∗ /
+Program 3.8: A parallel implementation of vector addition.
+user, read in the value, and broadcast the value to the other processes. We might try
+something similar with the vectors: process 0 could read them in and broadcast them
+to the other processes. However, this could be very wasteful. If there are 10 processes
+and the vectors have 10,000 components, then each process will need to allocate
+storage for vectors with 10,000 components, when it is only operating on subvectors
+with 1000 components. If, for example, we use a block distribution, it would be better
+if process 0 sent only components 1000 to 1999 to process 1, components 2000 to
+2999 to process 2, etc. Using this approach processes 1 to 9 would only need to
+allocate storage for the components they’re actually using.
+Thus we might try writing a function that reads in an entire vector on process 0,
+but only sends the needed components to each of the other processes. For the com-
+munication MPI provides just such a function:
+int MPI_Scatter (
+void∗ send_buf_p / ∗ in ∗ / ,
+int send_count / ∗ in ∗ / ,
+MPI_Datatype send_type / ∗ in ∗ / ,
+void∗ recv_buf_p / ∗ out ∗ / ,
+int recv_count / ∗ in ∗ / ,
+MPI_Datatype recv_type / ∗ in ∗ / ,
+int src_proc / ∗ in ∗ / ,
+MPI_Comm comm / ∗ in ∗ / );
+If the communicator comm contains comm_sz processes, then MPI_Scatter divides the
+data referenced by send_buf_p into comm_sz pieces—the ﬁrst piece goes to process 0,
+the second to process 1, the third to process 2, and so on. For example, suppose we’re
+using a block distribution and process 0 has read in all of an n-component vector
+into send_buf_p. Then process 0 will get the ﬁrst local_n = n/comm_sz components,
+process 1 will get the next local_n components, and so on. Each process should pass
+its local vector as the recv_buf_p argument, and the recv_count argument should be
+local_n.Bothsend_type and recv_type should be MPI_DOUBLE, and src_proc should
+be 0. Perhaps surprisingly, send_count should also be local_n—send_count is the
+===== PRINTED PAGE 119 =====
+3.4 Collective communication 119
+amount of data going to each process; it’s not the amount of data in the memory
+referred to by send_buf_p. If we use a block distribution and MPI_Scatter, we can read
+in a vector using the function Read_vector shown in Program 3.9.
+1 void Read_vector (
+2 double local_a [] / ∗ out ∗ / ,
+3 int local_n / ∗ in ∗ / ,
+4 int n / ∗ in ∗ / ,
+5 char vec_name [] / ∗ in ∗ / ,
+6 int my_rank / ∗ in ∗ / ,
+7 MPI_Comm comm / ∗ in ∗ / ){
+8
+9 double∗ a = NULL ;
+10 int i ;
+11
+12 if ( my_rank == 0) {
+13 a = malloc ( n ∗ sizeof ( double ));
+14 printf ( "Enter the vector %s\n" , vec_name );
+15 for ( i =0;i < n ; i ++)
+16 scanf ( "%lf" ,&a [ i ]);
+17 MPI_Scatter ( a , local_n , MPI_DOUBLE , local_a , local_n ,
+18 MPI_DOUBLE ,0,comm );
+19 free ( a );
+20 } else {
+21 MPI_Scatter ( a , local_n , MPI_DOUBLE , local_a , local_n ,
+22 MPI_DOUBLE ,0,comm );
+23 }
+24 } / ∗ Read_vector ∗ /
+Program 3.9: A function for reading and distributing a vector.
+One point to note here is that MPI_Scatter sends the ﬁrst block of send_count
+objects to process 0, the next block of send_count objects to process 1, and so on.
+So this approach to reading and distributing the input vectors will only be suitable if
+we’re using a block distribution and n, the number of components in the vectors, is
+evenly divisible by comm_sz. We’ll discuss how we might deal with a cyclic or block
+cyclic distribution in Section 3.5, and we’ll look at dealing with the case in which n
+is not evenly divisible by comm_sz in Exercise 3.13.
+3.4.8 Gather
+Of course, our test program will be useless unless we can see the result of our vector
+addition. So we need to write a function for printing out a distributed vector. Our
+function can collect all of the components of the vector onto process 0, and then
+process 0 can print all of the components. The communication in this function can be
+carried out by MPI_Gather:
+===== PRINTED PAGE 120 =====
+120 CHAPTER 3 Distributed memory programming with MPI
+int MPI_Gather (
+void∗ send_buf_p / ∗ in ∗ / ,
+int send_count / ∗ in ∗ / ,
+MPI_Datatype send_type / ∗ in ∗ / ,
+void∗ recv_buf_p / ∗ out ∗ / ,
+int recv_count / ∗ in ∗ / ,
+MPI_Datatype recv_type / ∗ in ∗ / ,
+int dest_proc / ∗ in ∗ / ,
+MPI_Comm comm / ∗ in ∗ / );
+The data stored in the memory referred to by send_buf_p on process 0 is stored in
+the ﬁrst block in recv_buf_p, the data stored in the memory referred to by send_buf_p
+on process 1 is stored in the second block referred to by recv_buf_p, and so on. So,
+if we’re using a block distribution, we can implement our distributed vector print
+function, as shown in Program 3.10. Note that recv_count is the number of data items
+received from each process, not the total number of data items received.
+1 void Print_vector (
+2 double local_b [] / ∗ in ∗ / ,
+3 int local_n / ∗ in ∗ / ,
+4 int n / ∗ in ∗ / ,
+5 char title [] / ∗ in ∗ / ,
+6 int my_rank / ∗ in ∗ / ,
+7 MPI_Comm comm / ∗ in ∗ / ){
+8
+9 double∗ b = NULL ;
+10 int i ;
+11
+12 if ( my_rank == 0) {
+13 b = malloc ( n ∗ sizeof ( double ));
+14 MPI_Gather ( local_b , local_n , MPI_DOUBLE , b , local_n ,
+15 MPI_DOUBLE ,0,comm );
+16 printf ( "%s\n" , title );
+17 for ( i =0;i < n ; i ++)
+18 printf ( "%f " , b [ i ]);
+19 printf ( "\n" );
+20 free ( b );
+21 } else {
+22 MPI_Gather ( local_b , local_n , MPI_DOUBLE , b , local_n ,
+23 MPI_DOUBLE ,0,comm );
+24 }
+25 } / ∗ Print_vector ∗ /
+Program 3.10: A function for printing a distributed vector.
+===== PRINTED PAGE 121 =====
+3.4 Collective communication 121
+a00 a01 ··· a0,n−1
+a10 a11 ··· a1,n−1
+... ... ...
+ai0 ai1 ··· ai,n−1
+... ... ...
+am−1,0 am−1,1 ··· am−1,n−1
+x0
+x1
+...
+xn−1
+=
+y0
+y1
+...
+yi = ai0x0 + ai1x1 +···ai,n−1xn−1
+...
+ym−1
+FIGURE 3.11
+Matrix-vector multiplication.
+The restrictions on the use of MPI_Gather aresimilartothoseontheuseof
+MPI_Scatter: our print function will only work correctly with vectors using a block
+distribution in which each block has the same size.
+3.4.9 Allgather
+As a ﬁnal example, let’s look at how we might write an MPI function that multiplies
+a matrix by a vector. Recall that if A = (aij ) is an m×n matrix and x is a vector with
+n components, then y = Ax is a vector with m components, and we can ﬁnd the ith
+component of y by forming the dot product of the ith row of A with x:
+yi = ai0x0 + ai1x1 + ai2x2 +···ai,n−1xn−1.
+(See Fig. 3.11.)
+So we might write pseudocode for serial matrix multiplication as follows:
+/ ∗ For each row of A ∗ /
+for ( i =0;i < m ; i ++) {
+/ ∗ Form dot product of ith row with x ∗ /
+y [ i ] = 0.0;
+for ( j =0;j < n ; j ++)
+y [ i ]+=A [ i ][j ]∗ x [ j ];
+}
+In fact, this could be actual C code. However, there are some peculiarities in the
+way that C programs deal with two-dimensional arrays (see Exercise 3.14). So C
+programmers frequently use one-dimensional arrays to “simulate” two-dimensional
+arrays. The most common way to do this is to list the rows one after another. For
+example, the two-dimensional array
+⎛
+⎝
+01 2 3
+45 6 7
+8 9 10 11
+⎞
+⎠
+===== PRINTED PAGE 122 =====
+122 CHAPTER 3 Distributed memory programming with MPI
+would be stored as the one-dimensional array
+01234567891011.
+In this example, if we start counting rows and columns from 0, then the element
+stored in row 2 and column 1—the 9—in the two-dimensional array is located in
+position 2 × 4 + 1 = 9 in the one-dimensional array. More generally, if our array has
+n columns, when we use this scheme, we see that the element stored in row i and
+column j is located in position i × n + j in the one-dimensional array.
+Using this one-dimensional scheme, we get the C function shown in Pro-
+gram 3.11.
+1 void Mat_vect_mult (
+2 double A [] / ∗ in ∗ / ,
+3 double x [] / ∗ in ∗ / ,
+4 double y [] / ∗ out ∗ / ,
+5 int m / ∗ in ∗ / ,
+6 int n / ∗ in ∗ / ){
+7 int i , j ;
+8
+9 for ( i =0;i < m ; i ++) {
+10 y [ i ] = 0.0;
+11 for ( j =0;j < n ; j ++)
+12 y [ i ]+=A [ i ∗n+j ]∗ x [ j ];
+13 }
+14 } / ∗ Mat_vect_mult ∗ /
+Program 3.11: Serial matrix-vector multiplication.
+Now let’s see how we might parallelize this function. An individual task can be
+the multiplication of an element of A by a component of x and the addition of this
+product into a component of y. That is, each execution of the statement
+y [ i ]+=A [ i ∗n+j ]∗ x [ j ];
+is a task, so we see that if y[i] is assigned to process q, then it would be convenient
+to also assign row i of A to process q. This suggests that we partition A by rows.We
+could partition the rows using a block distribution, a cyclic distribution, or a block-
+cyclic distribution. In MPI it’s easiest to use a block distribution. So let’s use a block
+distribution of the rows of A, and, as usual, assume that comm_sz evenly divides m,the
+number of rows.
+We are distributing A by rows so that the computation of y[i] will have all of the
+needed elements of A, so we should distribute y by blocks. That is, if the ith row of
+A is assigned to process q, then the ith component of y should also be assigned to
+process q.

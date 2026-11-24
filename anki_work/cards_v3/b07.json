@@ -1,0 +1,37 @@
+[
+ {
+  "text": "Pthreads share one {{c1::address space}} and sync with mutexes. MPI runs {{c2::separate processes}} that pass messages. Warp keeps {{c3::host and device}} memory apart, so data gets copied to the GPU first.",
+  "extra": "This is the memory and communication row of the study guide's comparison table.",
+  "tags": ["b07_m2_compare", "memory_model"],
+  "source": "M2 guide p.3",
+  "yield": "high"
+ },
+ {
+  "text": "Pthreads run threads on one {{c1::shared-memory}} machine. MPI runs processes across {{c2::one or more nodes}}. Warp pairs a CPU host with an {{c3::Nvidia GPU}}, or falls back to the CPU.",
+  "extra": "This is the execution target row of the comparison table.",
+  "tags": ["b07_m2_compare", "execution_target"],
+  "source": "M2 guide p.3",
+  "yield": "high"
+ },
+ {
+  "text": "Pthreads give you {{c1::barriers}}, and you write reductions yourself. MPI ships {{c2::collectives}} like Bcast, Reduce, and Allreduce. Warp gives you {{c3::kernel launches}} over \\(N\\) elements.",
+  "extra": "Pthreads has no collectives at all. That gap is one reason MPI suits big distributed jobs.",
+  "tags": ["b07_m2_compare", "built_ins"],
+  "source": "M2 guide p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Use Pthreads for {{c1::fine-grained}} updates to shared state. Use MPI for {{c2::large independent chunks}} with modest messaging between steps. Use Warp for large {{c3::data-parallel}} maps with uniform work that pays for the copies.",
+  "extra": "Pick the model by how often the workers need to talk and how big each piece of work is.",
+  "tags": ["b07_m2_compare", "best_fit"],
+  "source": "M2 guide p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Pthreads code breaks from {{c1::data races}}, deadlocks, and oversubscription. MPI code breaks from {{c2::mismatched tags}} or ranks and from many small messages. Warp code slows down from {{c3::too many host-device copies}} and problems too small to pay for them.",
+  "extra": "Non-contiguous data is another Warp pitfall on the table.",
+  "tags": ["b07_m2_compare", "pitfalls"],
+  "source": "M2 guide p.4",
+  "yield": "high"
+ }
+]

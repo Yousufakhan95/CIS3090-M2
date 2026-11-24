@@ -1,0 +1,256 @@
+
+===== PAGE 1 =====
+CIS3090 Fall 2026 Midterm 2 
+Study Guide 
+Date: Thursday, November 26, 2026 
+Total: 27 questions. Predominantly single-answer multiple choice, with some clearly marked 
+“Select all that apply” (SAA). A few lightweight formula items that you are expected to know - 
+e.g., linear speedup, efficiency, Amdahl’s law. 
+Allowed aids: none 
+Scoring: no penalty for a wrong answer on single-answer questions. On SAA questions, you 
+get partial credit for selecting some of the correct answers, but any incorrect selection scores 0 
+for that question. 
+Quick overview of important concepts 
+•
+Performance (L14): speedup S = T_serial/T_parallel, linear speedup S = p, efficiency E = 
+S/p, overheads that grow with p, Amdahl’s law and its limit 1/a, Flynn’s taxonomy, vector 
+processors. 
+•
+Data layout (L7): flat, contiguous arrays - spatial locality, and moving data in one block (MPI 
+messages, copies to the GPU). 
+•
+MPI (L9-11): init/size/rank, message matching (communicator, source, tag), 
+MPI_ANY_SOURCE and status.MPI_SOURCE, per-sender ordering, blocking pitfalls, 
+stdin/stdout conventions, collectives (Bcast, Reduce, Allreduce). 
+•
+Warp (L15, L18): @wp.kernel and static typing, wp.tid(), wp.launch, device="cpu" 
+vs “cuda”, GPGPU as heterogeneous computing, the cost of copying data to the GPU, 
+constants as typed kernel arguments, PIL -> NumPy -> Warp pipeline, RGBA images. 
+•
+Image basics (L16-17): discrete convolution, smoothing (kernel sums to 1), border 
+strategies (copy, truncation, reflection), unsharp masking f + k*g, Gaussian and median 
+filtering. 
+•
+Compare/contrast: Pthreads vs MPI vs Warp - memory/communication, execution targets, 
+built-ins, best-fit workloads, pitfalls. 
+•
+L12-13 (odd-even sort and heat distribution with MPI) won't be on the midterm. 
+Performance analysis: Lecture 14 
+•
+Speedup and efficiency: S = T_serial/T_parallel, E = S/p. Linear speedup S = p is ideal, 
+and real results are usually worse. 
+1
+
+===== PAGE 2 =====
+•
+Overheads that grow with the number of threads or processes: managing threads, critical 
+sections, mutex functions, network I/O, file I/O. They’re why efficiency usually drops as p 
+grows. 
+•
+Amdahl’s law: with serial fraction a, S = 1 / ((1 - a)/p + a). As p grows, S approaches 1/a, no 
+matter how many cores you add. Use it to understand the upper bound of the payoff and 
+choose p sensibly. 
+Parallel hardware and data layout: Lectures 7 and 14 
+•
+Locality: contiguous arrays vs pointer-chasing. Looping over a flat array touches 
+neighbouring addresses, which gives good spatial locality. 
+•
+Transfers: one large contiguous block can be moved in one piece, as an MPI message or a 
+copy to the GPU. 
+•
+Flynn’s taxonomy - SISD, SIMD, MISD, MIMD. 
+•
+Vector processors: how they work, and their benefits and drawbacks. 
+Distributed memory programming with MPI (practicalities & patterns): 
+Lectures 9-11 
+•
+Initialization and understanding the computing environment: MPI_Init, MPI_Comm_size, 
+MPI_Comm_rank. 
+•
+Matching: communicator, source, and tag must all agree. Use tags to distinguish message 
+types, as in A2. 
+•
+After a receive with MPI_ANY_SOURCE, use status.MPI_SOURCE and status.MPI_TAG 
+to learn the sender and the tag, and MPI_Get_count for the number of elements received 
+(A2, Pacheco 3.1). 
+•
+Ordering: nonovertaking for the same sender, no global order across different senders. 
+•
+Blocking pitfalls: a missing or mismatched send/recv can hang. If the source, tag, or 
+communicator doesn’t match, the receive never completes. 
+•
+I/O: assume only rank 0 reads stdin. Printing from multiple ranks is not ordered. 
+•
+Collective communication: which ranks call a collective, and where the result ends up for 
+Bcast, Reduce, and Allreduce. Typical pattern: broadcast parameters once, compute 
+locally, combine with one Reduce/Allreduce. Classic send/gather pattern from our basic 
+examples. 
+GPGPU with Warp: Lectures 15 and 18 
+•
+GPGPU: heterogeneous computing (host and device), and the cost of copying data to and 
+from the GPU. 
+•
+Design: flat, contiguous buffers, uniform work per thread, minimize CPU-GPU transfers. 
+•
+@wp.kernel: static types, no return - write outputs to arrays. 
+2
+
+===== PAGE 3 =====
+•
+Indexing: wp.tid() gives the per-thread element index. 
+•
+Launching: wp.launch(kernel, dim=N, inputs=[...], device=...). The device 
+is optional and defaults to Warp’s default device. 
+•
+Devices: device="cpu" (serial for portability) vs device="cuda" (GPU parallel on Nvidia 
+hardware). 
+•
+Data prep: wp.array(host_array, dtype=..., device=...), allocate outputs with 
+wp.zeros(...) or wp.zeros_like(...). 
+•
+Constants: how to pass values such as k or a filter radius to a kernel. 
+•
+Images: PIL Image.open -> NumPy (float32) -> Warp arrays -> kernel -> NumPy -> 
+Image.fromarray. 
+•
+Image modes (L, RGB, RGBA), and what to do with the alpha channel. 
+Image processing basics: Lectures 16 and 17 
+•
+Discrete convolution: weighted sum over an n x n neighbourhood around each pixel. 
+•
+Smoothing: kernel typically normalized (sum of all kernel weights = 1) to preserve mean 
+intensity. It blurs edges while reducing noise. 
+•
+Gaussian and median filtering give you more fine-grained control over which high-
+frequency detail is preserved. 
+•
+Unsharp masking: f_UM = f + k*g, where g is the edge image (the original minus a blurred 
+version). k controls sharpening strength. 
+•
+Borders: copy of input pixels, truncation of the image, reflection, truncation of the kernel - 
+know what each one does to the output’s size and its border pixels. 
+•
+Implementation habits: 2D-as-1D storage, contiguous arrays, avoid unnecessary copies. 
+Analysis of different parallel programming approaches: Pthreads vs 
+MPI vs Warp 
+Memory/communication model: 
+•
+Pthreads: shared address space; synchronize with mutexes/conds/atomics. 
+•
+MPI: separate processes; message passing (point-to-point, collectives). 
+•
+Warp: separate host and device memory. Data is copied to the device, and kernels 
+operate on GPU device memory. 
+Execution targets: 
+•
+Pthreads: threads on a shared-memory machine. 
+•
+MPI: processes across one or more nodes (CPUs). 
+•
+Warp: heterogeneous CPU host + NVIDIA GPU (or CPU fallback). 
+3
+
+===== PAGE 4 =====
+Built-in facilities: 
+•
+Pthreads: barriers (pthread_barrier_wait), DIY reductions (no collectives). 
+•
+MPI: rich collectives (Bcast, Reduce, Allreduce, Gather, …). 
+•
+Warp: kernel launches over N elements. 
+Best-fit workloads: 
+•
+Pthreads: fine-grained shared state updates (with careful synchronization). 
+•
+MPI: large independent chunks; modest communication between steps. 
+•
+Warp: large, data-parallel maps, uniform work, enough work per element to pay for the 
+copies. 
+Common pitfalls: 
+•
+Pthreads: data races, deadlocks, oversubscription. 
+•
+MPI: mismatched tags/ranks, deadlocks, frequent small messages between machines. 
+•
+Warp: excessive host-device copies, non-contiguous data, problems too small to pay 
+for the copies. 
+Mini practice set (all single-answer) 
+1.
+A program uses MPI on p processes to compute the sum of g(a[i]) over a large array. The 
+processes run on different machines connected by a slow network, so every message is 
+expensive. Which design is the best fit? 
+•
+A. Rank 0 sends each element to a worker, and the worker sends that element’s result 
+straight back. 
+•
+B. Every rank reads the whole array from stdin and computes the full sum itself, so no 
+messages are needed. 
+•
+C. Each rank works on its own block and calls MPI_Allreduce after every element to 
+keep a running total. 
+•
+D. Each rank computes a local sum over its own block, and one MPI_Reduce combines 
+the local sums on rank 0. 
+2.
+A manager process receives a result from any worker with 
+MPI_Recv(buf, 256, MPI_CHAR, MPI_ANY_SOURCE, TAG_RESULT, MPI_COMM_WORLD, 
+&status); 
+The result may be shorter than 256 characters. How does the manager find out which 
+worker sent it, and how many characters it contains? 
+•
+A. It reads status.MPI_SOURCE, and calls MPI_Get_count(&status, MPI_CHAR, &n) for 
+the number of characters. 
+•
+B. MPI_Recv returns the number of characters, and MPI overwrites the source 
+argument with the sender’s rank. 
+•
+C. It reads status.MPI_TAG, which MPI sets to the sender’s rank, and uses sizeof(buf) 
+for the number of characters. 
+4
+
+===== PAGE 5 =====
+•
+D. It cannot find the sender, so each worker must include its rank in the message, and 
+sizeof(buf) gives the count. 
+3.
+A Warp kernel needs to run over an array of N elements on an Nvidia GPU. What do you 
+pass to wp.launch? 
+•
+A. Only the kernel, because Warp works out the number of threads, the arguments, and 
+the device on its own. 
+•
+B. The kernel, its arguments, and the number of GPU cores to use, since Warp splits 
+the array among them. 
+•
+C. The kernel, dim=N, the kernel’s arguments (in inputs=, in order), and device="cuda". 
+•
+D. The kernel’s arguments and the device, since Warp finds the right kernel from the 
+arguments’ types. 
+4.
+A student writes a 3 x 3 mean filter but forgets to divide by 9, so every kernel weight is 1 
+instead of 1/9. What happens when this filter is applied to an 8-bit greyscale image, and the 
+output is clipped to 0-255? 
+•
+A. The image is blurred exactly as before, because only the relative sizes of the weights 
+matter. 
+•
+B. The image becomes about nine times brighter, so most of it ends up at 255 after 
+clipping. 
+•
+C. The image is sharpened instead of blurred, because the larger weights emphasize 
+the edges. 
+•
+D. Only the border pixels change, because the interior pixels are averaged either way. 
+5.
+A program takes 100 s on one core, 40 s on 4 cores, and 25 s on 8 cores. Which statement 
+about its speedup and efficiency is correct? 
+•
+A.  Speedup grows from 2.5 to 4, and efficiency drops from 0.625 to 0.5. 
+•
+B. Speedup grows from 2.5 to 4, and efficiency rises from 0.5 to 0.625. 
+•
+C. Speedup grows from 2.5 to 4, and efficiency drops from 0.4 to 0.25. 
+•
+D. Speedup grows from 2.5 to 4, which is linear, so efficiency stays at 1. 
+Answers: 1 D, 2 A, 3 C, 4 B, 5 A
+5

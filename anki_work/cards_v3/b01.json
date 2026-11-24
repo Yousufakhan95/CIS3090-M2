@@ -1,0 +1,129 @@
+[
+ {
+  "text": "Your loop just read z[i]. Spatial locality says the next read is probably a {{c1::nearby}} address, like z[i+1]. Temporal locality says you will read the {{c2::same}} address again soon.",
+  "extra": "The cache loads a whole block around each miss, so both habits turn into cache hits.",
+  "tags": ["b01_hardware", "locality"],
+  "source": "Textbook p.22; Lecture 7 slide 9",
+  "yield": "high"
+ },
+ {
+  "text": "Walk a plain array and each element sits right after the last one in memory, so you get spatial locality for {{c1::free}}. Walk a linked list and the next node can be {{c2::far away}} in memory.",
+  "extra": "That is why parallel code goes back to contiguous arrays instead of linked data.",
+  "tags": ["b01_hardware", "contiguous_arrays"],
+  "source": "Lecture 7 slide 11",
+  "yield": "high"
+ },
+ {
+  "text": "Lecture 7's quick rules for cache-friendly data are structs instead of objects, {{c1::no pointers}} inside structs, and {{c2::contiguous arrays}} instead of linked data.",
+  "extra": "A pointer sends the CPU to some other address, and that breaks spatial locality.",
+  "tags": ["b01_hardware", "data_layout_rules"],
+  "source": "Lecture 7 slides 11 and 16",
+  "yield": "high"
+ },
+ {
+  "text": "Contiguous data is easy to transfer because you just move {{c1::N bytes starting at address M}}. That is how one big array goes out as a single MPI message or a single copy to the GPU.",
+  "extra": "MPI programs and CPU plus GPU programs move large blocks all the time, so the layout decides how much transfer overhead you pay.",
+  "tags": ["b01_hardware", "contiguous_transfers"],
+  "source": "Lecture 7 slides 12 and 15",
+  "yield": "high"
+ },
+ {
+  "text": "In parallel code a 2D array is really a {{c1::1D}} array with index math. With \\(n\\) columns, row \\(i\\) and column \\(j\\) sit at position {{c2::\\(i \\cdot n + j\\)}}.",
+  "extra": "Rows are stored one after another, so the whole grid stays one contiguous block.",
+  "tags": ["b01_hardware", "flat_2d_arrays"],
+  "source": "Lecture 7 slide 12; M2 guide p.3",
+  "yield": "high"
+ },
+ {
+  "text": "Your old single-core computer is {{c1::SISD}}. It runs one instruction on one piece of data at a time, which is the classic von Neumann machine.",
+  "extra": "Flynn's taxonomy counts instruction streams and data streams. The four types are SISD, SIMD, MISD, and MIMD.",
+  "tags": ["b01_hardware", "flynn_sisd"],
+  "source": "Lecture 14 slides 3 and 4; Textbook p.31",
+  "yield": "high"
+ },
+ {
+  "text": "Picture one control unit driving several ALUs, each running the same instruction on its own data. That is {{c1::SIMD}}, and with \\(m\\) ALUs the arithmetic runs up to {{c2::\\(m\\)}} times faster.",
+  "extra": "Classic SIMD suits simple loops over big arrays. It helps with data parallelism and not much else.",
+  "tags": ["b01_hardware", "flynn_simd"],
+  "source": "Lecture 14 slides 5 and 6; Textbook p.31",
+  "yield": "high"
+ },
+ {
+  "text": "Several instruction streams working on one data stream is {{c1::MISD}}. Hardly any real systems work this way.",
+  "extra": "It mostly exists to complete the four boxes of the taxonomy.",
+  "tags": ["b01_hardware", "flynn_misd"],
+  "source": "Lecture 14 slide 11",
+  "yield": "high"
+ },
+ {
+  "text": "{{c1::MIMD}} is the general-purpose parallel machine. Each core has its own ALU and runs {{c2::asynchronously}}, at its own pace.",
+  "extra": "A MIMD machine can be shared memory or distributed memory. Your multicore laptop and an MPI cluster are both MIMD.",
+  "tags": ["b01_hardware", "flynn_mimd"],
+  "source": "Lecture 14 slide 9; Textbook p.34",
+  "yield": "high"
+ },
+ {
+  "text": "A vector processor is a kind of SIMD machine. It loads arrays into {{c1::vector registers}} and applies the {{c2::same}} operation to every element at once.",
+  "extra": "Vector length is fixed per system, usually between 4 and 256 elements of 64 bits each.",
+  "tags": ["b01_hardware", "vector_processors"],
+  "source": "Lecture 14 slide 7; Textbook p.32",
+  "yield": "high"
+ },
+ {
+  "text": "Vector processors are fast and easy to use because compilers are good at {{c1::vectorizing}} loops. They also have high memory bandwidth, and {{c2::all}} the data they load gets used.",
+  "extra": "A cache line can bring in words your code never touches. A vector load brings in only the elements the operation uses.",
+  "tags": ["b01_hardware", "vector_pros"],
+  "source": "Lecture 14 slide 8; Textbook p.33",
+  "yield": "high"
+ },
+ {
+  "text": "Vector processors struggle with {{c1::irregular}} data structures, meaning anything that is not an array. They are also hard to scale, because {{c2::longer}} vectors do not help much.",
+  "extra": "These are the two drawbacks on the Lecture 14 slide.",
+  "tags": ["b01_hardware", "vector_cons"],
+  "source": "Lecture 14 slide 8; Textbook p.33",
+  "yield": "high"
+ },
+ {
+  "text": "In shared-memory MIMD, cores communicate {{c1::implicitly}} by reading and writing shared data. In distributed-memory MIMD, each core has private memory and communicates {{c2::explicitly}} by sending messages.",
+  "extra": "Pthreads is the shared-memory model. MPI is the distributed-memory model.",
+  "tags": ["b01_hardware", "shared_vs_distributed"],
+  "source": "Textbook p.35; Lecture 14 slide 10",
+  "yield": "high",
+  "figure": {"file": "01_ch02_hardware.pdf", "page": 8}
+ },
+ {
+  "text": "In a {{c1::UMA}} system, every core reaches every memory location in the same time. That makes it {{c2::easier to program}}, because you never worry about where the data lives.",
+  "extra": "UMA stands for uniform memory access. The memory is one big chunk on a shared bus.",
+  "tags": ["b01_hardware", "uma"],
+  "source": "Lecture 14 slides 12 to 14; Textbook p.36",
+  "yield": "high"
+ },
+ {
+  "text": "In a {{c1::NUMA}} system, each chip has its own block of memory. A core reads its own chip's memory {{c2::faster}} than another chip's. In exchange you get room for {{c3::more memory}} than UMA.",
+  "extra": "NUMA stands for nonuniform memory access. Access time depends on which chip owns the address.",
+  "tags": ["b01_hardware", "numa"],
+  "source": "Lecture 14 slides 15 to 18; Textbook p.36",
+  "yield": "high"
+ },
+ {
+  "text": "A cluster is a set of ordinary computers joined by a commodity network like {{c1::Ethernet}}. Each node is usually a shared-memory machine itself, so people call it a {{c2::hybrid}} system.",
+  "extra": "A grid spreads several clusters over a large area. Its nodes are often heterogeneous, meaning they run different hardware and operating systems.",
+  "tags": ["b01_hardware", "clusters_grids"],
+  "source": "Lecture 14 slide 19; Textbook p.37",
+  "yield": "high"
+ },
+ {
+  "text": "A {{c1::bus}} is the cheap, flexible way to connect cores and memory, but every device shares the same wires. Add more processors and they spend more time {{c2::waiting}} for memory.",
+  "extra": "This contention is why large shared-memory systems moved to switched interconnects.",
+  "tags": ["b01_hardware", "bus"],
+  "source": "Lecture 14 slide 20; Textbook p.37",
+  "yield": "high"
+ },
+ {
+  "text": "A crossbar switch gives each CPU its own path to a memory module, so it is {{c1::faster}} than a bus. Two CPUs only conflict when they use the {{c2::same}} memory module. The catch is that crossbars are {{c3::expensive}}.",
+  "extra": "With four CPUs and four memory modules, all four CPUs can read or write at the same time without blocking each other.",
+  "tags": ["b01_hardware", "crossbar"],
+  "source": "Lecture 14 slides 21 to 24; Textbook p.38",
+  "yield": "high"
+ }
+]

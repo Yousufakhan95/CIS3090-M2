@@ -1,0 +1,521 @@
+===== SLIDE 1 =====
+CIS*3090Overview of distributed memory systems and MPI
+Based on the CIS*3090 notes by David Calvert and the notes from An Introduction to Parallel Programming by Peter Pacheco and Matthew Malensek
+===== SLIDE 2 =====
+Outline
+•Pthreads is a low-level, OS-speciﬁc API that assumes shared memory
+•In the next few lectures, we will look at alternative APIs:
+•MPI - Message Passing Interface - a system-independent, distributed memory approach
+•GPGPU with Warp - heterogeneous parallel programming, with computations being done on 
+the CPU and the GPU
+•CPU code can "see" main memory
+•GPU code can "see" GPU memory
+•They require explicit memory transfers to work with each other
+2
+===== SLIDE 3 =====
+Shared memory systems
+•The shared memory systems discussed in the last class used the system bus as the 
+interconnect. 
+•Shared memory system passes information through memory. 
+3
+Arithmetic and Logic Unit 
+(ALU) registers
+Control  
+registers
+Bus (Interconnect)
+Main Memory
+===== SLIDE 4 =====
+Distributed memory systems
+•By contrast, distributed memory systems use the network as the interconnect
+•The Message Passing Interface (MPI) is a distributed memory system designed to help you 
+parallelize code in such an environment
+4
+CPU &  
+memory
+Interconnect - Network
+CPU &  
+memory
+CPU &  
+memory
+===== SLIDE 5 =====
+Distributed memory systems 
+•Because the machines connected by a network are physically separated, sharing data 
+between them takes time - whereas data sharing between threads is nearly instantaneous
+•As a result, distributed memory systems in general - are best suited for tasks where the 
+computations are long
+•They only make sense in situations where the machines spend more time computing than 
+communicating
+•Sending data and synchronization messages over the network can take a lot of time
+•Therefore, computing has to take even longer - otherwise we won't get much of a speedup
+•This is a particularly good ﬁt for data-parallel problems
+5
+===== SLIDE 6 =====
+Applications of distributed memory systems
+•E.g. a render farm:
+•You need to create high-quality 3D animation
+•Each animation might take a long time - e.g. a minute for a scene with a very high poly count, 
+complex realistic lighting, and high resolution
+•Each frame gets rendered on a separate physical machine
+•3D scene data for each new frame get transferred to each machine after it ﬁnished rendering an 
+old frame
+•We could also batch this to optimize communications overhead, and send a set of frames to 
+each physical machine
+•The frames get stitched into a video once (or as) they are completed
+6
+===== SLIDE 7 =====
+MPI 
+•The MPI - Message Passing Interface - library is used for writing parallel code on distributed 
+memory systems. 
+•It allows you to send and receive messages between processes
+•MPI has historically been used with network-connected clusters of computers - each with its 
+own cores and memory
+•E.g. various supercomputing clusters
+•The processes can be on diﬀerent physical machines, or on the same one, or even a 
+combination of both - MPI abstracts that away for us
+•E.g. 100 networked workstations with 8 cores each, capable of running 800 processes in 
+parallel
+7
+===== SLIDE 8 =====
+MPI vs pthreads
+•Pthreads 
+•assumes shared memory
+•works with threads
+•designed for concurrency, rather than parallel computations, so does not have any tools for 
+helping parallel computations - we do everything ourselves, manually
+•MPI 
+•assumes distributed memory 
+•works with processes
+•designed with parallel computation in mind
+•We will review MPI examples and in the process learn how it can help us do parallel 
+computations
+8
+===== SLIDE 9 =====
+MPI - the Message Passing Interface
+•MPI is, as its name suggests, designed around passing of messages as the means of inter-
+process communication
+•All processes are running the same code
+•No sharing, so the data that each process has to work on must be explicitly sent to the process
+•If you are 100% certain that all the processes work on the same physical machine, they have 
+access to the shared disk
+•However, for real-world systems that use MPI, this is not the case - they are separate systems on 
+the same local network
+•This imposes a high data transfer cost on the parallelized code, which didn't exist in the shared 
+memory examples with Pthreads
+9
+===== SLIDE 10 =====
+MPI - the Message Passing Interface
+Basic 1-to-1 communication
+•Basic 1-to-1 message passing operations
+•MPI_Send 
+•MPI_Recv 
+•Similar to low-level ﬁle I/O functions, e.g. read() and write() on *nix
+•Require the destination descriptor, buﬀer pointer, buﬀer length, and various additional options
+•Blocking imposes synchronization
+•Non-blocking versions exist, but we will not use them in our course
+•Message passing requires unique IDs for each process, which MPI maintains
+•Similar to PIDs for processes, but system-independent
+10
+===== SLIDE 11 =====
+MPI - the Message Passing Interface
+Communication between multiple entities
+•Additional operations exist for 1-to-N, N-to-1, and N-to-N communications
+•Broadcast - send the same data to multiple processes (1-to-N)
+•Reduction - send the individual data from multiple processes to one, possibly combining 
+data using the speciﬁed operation (N-to-1) 
+•Butterﬂy reduce, which MPI calls "all reduce" (N-to-N)
+•send the individual data from multiple processes to one, possibly combining data using the 
+speciﬁed operation (N-to-1)
+•send the combined result back to all the processes  (1-to-N)
+11
+===== SLIDE 12 =====
+MPI - the Message Passing Interface
+Communication channel
+•MPI also introduces a notion of a communicator - a group of related processes
+•Think of them as radio channels that processes "listen" on
+•This helps create specialized communication channels, especially if we have some sort of task 
+parallelism
+•E.g. we have 100 networked systems running MPI
+•50 can get assigned to Communicator 1
+•50 can get assigned to Communicator 2
+•the broadcast/reduce/butterﬂy-reduce (all-reduce) commands can be conﬁgured to
+•work only for C1
+•work only for C2
+•work for all processes
+12
+===== SLIDE 13 =====
+MPI example 
+•Example 3.1 in the text is an MPI Hello World program (mpi_hello.c).
+•Include the MPI header 
+ 
+#include <mpi.h> 
+•In the main() function, declare variables which will store the total number of processes and the 
+current process rank (similar to process id). 
+ 
+int main(void) {  
+ char int int  
+ greeting[MAX_STRING]; /* String storing message */  
+ comm_sz; /* Number of processes */  
+ my_rank; /* My process rank */ 
+13
+===== SLIDE 14 =====
+MPI example - initialization code
+•After the variable declarations we call the functions which initialize MPI. 
+•We then retrieve the number of processes and each process’s rank
+•The rank plays the role of a process / thread ID 
+ 
+/* Start up MPI */  
+MPI_Init(NULL, NULL);  
+ 
+/* Get the number of processes */  
+MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);  
+ 
+/* Get my rank among all the processes */  
+MPI_Comm_rank(MPI_COMM_WORLD, &my_rank); 
+14
+===== SLIDE 15 =====
+MPI example 
+•After initializing MPI and determining the number of processes and the rank (id) for each 
+process we can start sending and receiving messages between processes. 
+•In this program: 
+•Process 0 (where rank == 0) will ﬁrst print a greeting message (to stdout). It will then loop and 
+read messages (receive) from the other processes and print them.  
+•If not process 0 (rank != 0) then it will create a message in the greeting[] string using 
+sprintf(). It will then send the message string to process 0.  
+•In other words, Process 0 is the consumer and all other processes are producers
+15
+===== SLIDE 16 =====
+MPI example - producer code
+•The code for the processes that are not rank 0 (producers - i.e. the ones that send the 
+messages):  
+ 
+if (my_rank != 0) { 
+/* Create message */ 
+sprintf(greeting, "Greetings from process %d of %d!", my_rank, 
+comm_sz);  
+ 
+/* Send message to process 0 */ 
+MPI_Send(greeting, strlen(greeting)+1, MPI_CHAR, 0, 
+0,MPI_COMM_WORLD); } else { 
+16
+===== SLIDE 17 =====
+MPI example - producer code
+•The code for the processes that are not rank 0 (producers - i.e. the ones which send the 
+messages):  
+ 
+if (my_rank != 0) { 
+/* Create message */ 
+sprintf(greeting, "Greetings from process %d of %d!", my_rank, 
+comm_sz);  
+ 
+/* Send message to process 0 */ 
+MPI_Send(greeting, strlen(greeting)+1, MPI_CHAR, 0, 
+0,MPI_COMM_WORLD); } else { 
+17
+===== SLIDE 18 =====
+MPI example - consumer code
+•The code for process 0 prints its own message and then receives and prints (consumes) messages from 
+the other processes.  
+} else { 
+ /* Print my message */ 
+ printf("Process %d of %d is ready to receive\n\n", my_rank, comm_sz); 
+ 
+ for (int q = 1; q < comm_sz; q++) { 
+  /* Receive message from process q */  
+  MPI_Recv(greeting, MAX_STRING, MPI_CHAR, q,  
+   0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  /* Print message from process q */  
+  printf("%s\n", greeting);  
+ }  
+} 
+18
+===== SLIDE 19 =====
+MPI example - consumer code
+•The code for process 0 prints its own message and then receives and prints (consumes) messages from 
+the other processes.  
+} else { 
+ /* Print my message */ 
+ printf("Process %d of %d is ready to receive\n\n", my_rank, comm_sz); 
+ 
+ for (int q = 1; q < comm_sz; q++) { 
+  /* Receive message from process q */  
+  MPI_Recv(greeting, MAX_STRING, MPI_CHAR, q,  
+   0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  /* Print message from process q */  
+  printf("%s\n", greeting);  
+ }  
+} 
+19
+===== SLIDE 20 =====
+MPI example - consumer code
+•The code for process 0 prints its own message and then receives and prints (consumes) messages from 
+the other processes.  
+} else { 
+ /* Print my message */ 
+ printf("Process %d of %d is ready to receive\n\n", my_rank, comm_sz);  
+ 
+ for (int q = 1; q < comm_sz; q++) { 
+  /* Receive message from process q */  
+  MPI_Recv(greeting, MAX_STRING, MPI_CHAR, q,  
+   0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  /* Print message from process q */  
+  printf("%s\n", greeting);  
+ }  
+} 
+20
+===== SLIDE 21 =====
+MPI example - cleanup code
+•After all of the messages have been sent and received, MPI is shut down. 
+•This frees any resources that the MPI system was using.  
+ /* Shut down MPI */  
+ MPI_Finalize();  
+ return 0; 
+} /*main*/ 
+21
+===== SLIDE 22 =====
+MPI example - output
+•The output of the program should look like this:  
+ 
+Process 0 of 4 is ready to receive 
+ 
+Greetings from process 1 of 4!  
+Greetings from process 2 of 4!  
+Greetings from process 3 of 4! 
+22
+===== SLIDE 23 =====
+MPI example - additional notes
+•The number of sends and receives must be equal (why?) 
+•The if-statement deﬁnes the actions of each process. 
+•A single program performs diﬀerent actions based on its rank. 
+•This means the same program is run on each processor but it behaves diﬀerently based upon 
+its rank. 
+•This should be very familiar, since this is how processes work on Unix with fork()
+•Running MPI code over networked systems assumes a properly conﬁgured environment
+•MPI installed and running on all systems
+•Background MPI messages to initialize/shut down everything, maintain the communicators, etc.
+23
+===== SLIDE 24 =====
+MPI example - additional notes
+•The hello world program was written to work with any number of processes (there were no 
+hard coded limits in the code). 
+•You don’t always know in advance how the program will be run or how many processes will 
+be used. 
+•It is good practice to write your code to run with any number of processes.
+•Same thing applies to any platform-independent parallel code - it must automatically adapt to 
+the number of "parallel execution units" available to it at run-time
+24
+===== SLIDE 25 =====
+Using MPI 
+•MPI programs are compiled using a wrapper script.  
+ 
+mpicc mpi_hello.c -o mpi_hello  
+•MPI programs are also executed using a script.  
+ 
+mpiexec -n 4 ./mpi_hello  
+•the -n 4 tells the system to run using four processes. 
+25
+===== SLIDE 26 =====
+Basics of MPI communication 
+===== SLIDE 27 =====
+Overview
+•The main tool in the MPI toolbox is the underlying communications functionality
+•This lecture will go over the tools for the various communication patterns
+•1-to-1
+•1-to-N
+•N-to-1
+•N-to-N
+•We will start with the basics
+27
+===== SLIDE 28 =====
+MPI components 
+•A communicator is a set of processes that send messages to each other. In the previous 
+example the communicator was MPI_COMM_WORLD. 
+•The communicator lets you access information about the set of processes - think of it as a 
+communication channel
+•Complex programs use communicators to control which processes can interact. 
+•They limit which processes can communicate so unnecessary messages aren’t received and to 
+prevent messages from being accidentally received. 
+•Processes are identiﬁed by rank (think of it as a relative process ID)
+•Processes send and receive messages to other processes in the same communicator, using 
+the rank to identify the expected receiver or sender in 1-to-1 communications
+28
+===== SLIDE 29 =====
+MPI_Send() 
+Basic function for synchronous sends
+•MPI_Send(const void* buf, int count, MPI_Datatype datatype,  
+     int dest, int tag, MPI_Comm comm);  
+•buf is the pointer to memory (array) containing the message
+•count is the length of the message - the number of things 
+•datatype is the macro indicating the type being sent
+•dest is the rank of the process destination (the receiver of the message). 
+•tag is a non-negative int which is used to distinguish between messages. 
+•comm is the communicator -  identiﬁes which processes should be able to access the message
+•See textbook and online MPI docs for more details
+29
+===== SLIDE 30 =====
+MPI_Send() example
+Sending a string to process 0
+30
+MPI_Send(greeting, strlen(greeting)+1, MPI_CHAR, 0, 0, MPI_COMM_WORLD); 
+===== SLIDE 31 =====
+MPI_Recv() 
+Basic function for synchronous receive
+•int MPI_Recv(void* buf, int count, MPI_Datatype datatype,  
+              int source, int tag, MPI_Comm comm, MPI_Status* status) 
+•The ﬁrst six arguments of MPI_Recv() are the same as MPI_Send(). 
+•All parameters are speciﬁed by the caller in the MPI_Recv() call, except &status
+•In other words, you need to know the size, type, source, and communicator for the message 
+being received - which might be a bit unexpected
+•This means that the message passing patterns in MPI applications must be carefully thought 
+through
+•status is information about the message. Can be stored in a pointer or ignored
+•See textbook and online MPI docs for more details
+31
+===== SLIDE 32 =====
+MPI_Recv() example
+Sending a string to process 0
+32
+MPI_Recv(greeting, MAX_STRING, MPI_CHAR, q, 0, MPI_COMM_WORLD,  
+     MPI_STATUS_IGNORE); 
+===== SLIDE 33 =====
+Return values
+•Both MPI_Send and MPI_Recv return error values
+•MPI_SUCCESS on success
+•Otherwise, the return value is an error code
+33
+===== SLIDE 34 =====
+MPI send and receive operations
+•MPI_Send() can either:
+•buﬀer the message - store the message to be transmitted and return to the program 
+•block - wait until the message is sent to return to the program 
+•With buﬀering, you don’t know if the message has been transmitted after a send. 
+•This behaviour is implementation dependent.
+34
+===== SLIDE 35 =====
+MPI send and receive operations
+•MPI_Recv() always blocks until a message is received.
+•There are diﬀerent send and receive functions which are non-blocking: MPI_Isend() and 
+MPI_Irecv() 
+•Messages are nonovertaking. 
+•This means the order that messages are sent from one process will not change.
+•The order of messages from multiple processes is not enforced. 
+35
+===== SLIDE 36 =====
+Problems due to blocking
+•A receive with no send will hang (block forever) 
+•If tags or ranks do not match then the receive will not match the send
+•In this case the process may hang or may match the wrong send 
+•If a send blocks waiting for a receive then it can hang
+•If a send buﬀers and there is no receive then the message is lost 
+36
+===== SLIDE 37 =====
+MPI input and output
+•The MPI standard does not describe access to I/O devices.
+•Most implementations allow all processes to write to stdout and stderr. 
+•The order of output is unpredictable.
+•Multiple process outputs can appear in any order or interrupt each other. 
+•Output is nondeterministic. 
+37
+===== SLIDE 38 =====
+MPI input and output
+•Only process 0 in MPI_COMM_WORLD can access stdin.
+•If data is read from stdin then process 0 must send it to other processes. 
+•Sample program 3.5 from the text (ﬁle mpi_trap2.c) demonstrates process 0 reading input 
+and sending it to other processes. 
+•Rank 0 contains a scanf() to read the data and uses MPI_Send() to send it to other 
+processes. 
+•Ranks other than 0 use MPI_Recv() to receive the sent data.
+•We will discuss the parallel problem from this example in more detail in an upcoming lecture 
+38
+===== SLIDE 39 =====
+MPI sample program - reading from stdin
+39
+void Get_input(int my_rank, int comm_sz, double* a_p, double* b_p, int* n_p) {  
+ int dest;  
+ if (my_rank == 0) {  
+  printf("Enter a, b, and n\n"); 
+  scanf("%lf %lf %d", a_p, b_p, n_p); 
+ 
+  for (dest = 1; dest < comm_sz; dest++) {  
+   MPI_Send(a_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);  
+   MPI_Send(b_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);  
+   MPI_Send(n_p, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);  
+  } 
+ 
+ } else { /* my_rank != 0 */  
+  MPI_Recv(a_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  MPI_Recv(b_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  MPI_Recv(n_p, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+ } 
+} /* Get_input */  
+Process 0 reads two doubles and an int from stdin 
+===== SLIDE 40 =====
+void Get_input(int my_rank, int comm_sz, double* a_p, double* b_p, int* n_p) {  
+ int dest;  
+ if (my_rank == 0) {  
+  printf("Enter a, b, and n\n"); 
+  scanf("%lf %lf %d", a_p, b_p, n_p); 
+ 
+  for (dest = 1; dest < comm_sz; dest++) {  
+   MPI_Send(a_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);  
+   MPI_Send(b_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);  
+   MPI_Send(n_p, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);  
+  } 
+ 
+ } else { /* my_rank != 0 */  
+  MPI_Recv(a_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  MPI_Recv(b_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  MPI_Recv(n_p, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+ } 
+} /* Get_input */  
+MPI sample program - reading from stdin
+40
+Process 0 then sends each value 
+it read to the other processes. 
+===== SLIDE 41 =====
+MPI sample program - reading from stdin
+41
+void Get_input(int my_rank, int comm_sz, double* a_p, double* b_p, int* n_p) {  
+ int dest;  
+ if (my_rank == 0) {  
+  printf("Enter a, b, and n\n"); 
+  scanf("%lf %lf %d", a_p, b_p, n_p); 
+ 
+  for (dest = 1; dest < comm_sz; dest++) {  
+   MPI_Send(a_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);  
+   MPI_Send(b_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);  
+   MPI_Send(n_p, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);  
+  } 
+ 
+ } else { /* my_rank != 0 */  
+  MPI_Recv(a_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  MPI_Recv(b_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  MPI_Recv(n_p, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+ } 
+} /* Get_input */  
+The loop counts through the processes with 
+a rank greater than 0 and calls a MPI_Send() 
+for each other process. 
+===== SLIDE 42 =====
+void Get_input(int my_rank, int comm_sz, double* a_p, double* b_p, int* n_p) {  
+ int dest;  
+ if (my_rank == 0) {  
+  printf("Enter a, b, and n\n"); 
+  scanf("%lf %lf %d", a_p, b_p, n_p); 
+ 
+  for (dest = 1; dest < comm_sz; dest++) {  
+   MPI_Send(a_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);  
+   MPI_Send(b_p, 1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);  
+   MPI_Send(n_p, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);  
+  } 
+ 
+ } else { /* my_rank != 0 */  
+  MPI_Recv(a_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  MPI_Recv(b_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+  MPI_Recv(n_p, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
+ } 
+} /* Get_input */  
+MPI sample program - reading from stdin
+42
+All of the other processes 
+receive the values that are sent 
+by process 0 

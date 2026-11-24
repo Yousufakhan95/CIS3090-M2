@@ -1,0 +1,186 @@
+[
+ {
+  "text": "A collective communication involves {{c1::all the processes in a communicator}}. Point-to-point calls such as \\(\\mathrm{MPI\\_Send}\\) and \\(\\mathrm{MPI\\_Recv}\\) involve {{c2::two processes}}.",
+  "extra": "The study guide asks which ranks call a collective. Every rank in the communicator calls it, rank 0 included.",
+  "tags": [
+   "b03_mpi",
+   "collective_basics"
+  ],
+  "source": "03d_lecture_10_collectives.pdf p.10, 03_ch03_mpi.pdf p.21",
+  "yield": "high"
+ },
+ {
+  "text": "Rank 0 calls \\(\\mathrm{MPI\\_Reduce}\\) and rank 1 tries to match it with \\(\\mathrm{MPI\\_Recv}\\). This program is erroneous, because every process must call {{c1::the same collective function}}.",
+  "extra": "Pacheco says a program like this will likely hang or crash.",
+  "tags": [
+   "b03_mpi",
+   "collective_rules"
+  ],
+  "source": "03_ch03_mpi.pdf p.23",
+  "yield": "high"
+ },
+ {
+  "text": "After \\(\\mathrm{MPI\\_Reduce}\\), the combined result is stored only on {{c1::the destination process}}. After \\(\\mathrm{MPI\\_Allreduce}\\), it is stored on {{c2::every process in the communicator}}.",
+  "extra": "Use Allreduce when every process needs the total to continue its own computation.",
+  "tags": [
+   "b03_mpi",
+   "reduce_vs_allreduce"
+  ],
+  "source": "03d_lecture_10_collectives.pdf p.13, 03_ch03_mpi.pdf p.24",
+  "yield": "high"
+ },
+ {
+  "text": "\\(\\mathrm{MPI\\_Allreduce}\\) takes the same arguments as \\(\\mathrm{MPI\\_Reduce}\\) without {{c1::the destination process}}, because every process gets the result.",
+  "extra": "Lecture 10's example passes &tmpVal, &sum, 1, \\(\\mathrm{MPI\\_DOUBLE}\\), \\(\\mathrm{MPI\\_SUM}\\) and the communicator, with no rank argument.",
+  "tags": [
+   "b03_mpi",
+   "reduce_vs_allreduce"
+  ],
+  "source": "03d_lecture_10_collectives.pdf p.15",
+  "yield": "high"
+ },
+ {
+  "text": "Lecture 10 calls \\(\\mathrm{MPI\\_Allreduce}\\) a {{c1::butterfly}} reduction. In a butterfly, the processes {{c2::exchange}} partial results, so every process ends with the full sum.",
+  "extra": "The Lecture 10 diagram draws a tree reduce to process 0 and then a reversed tree back out, which Pacheco Fig 3.8 calls a global sum followed by distribution. Pacheco keeps the name butterfly for the exchange pattern in Fig 3.9.",
+  "tags": [
+   "b03_mpi",
+   "reduce_vs_allreduce"
+  ],
+  "source": "03d_lecture_10_collectives.pdf p.13, 03_ch03_mpi.pdf p.24",
+  "yield": "high"
+ },
+ {
+  "text": "The \\(\\mathrm{data\\_p}\\) argument of \\(\\mathrm{MPI\\_Bcast}\\) is an {{c1::input}} on the source process and an {{c2::output}} on every other process.",
+  "extra": "The source sends the contents of that buffer, and every other process receives into its own copy of it.",
+  "tags": [
+   "b03_mpi",
+   "bcast"
+  ],
+  "source": "03_ch03_mpi.pdf p.27, 03d_lecture_10_collectives.pdf p.17",
+  "yield": "high"
+ },
+ {
+  "text": "In \\(\\mathrm{Get\\_input}\\), only rank 0 reads a, b and n with scanf. The \\(\\mathrm{MPI\\_Bcast}\\) calls are {{c1::outside}} the \\(\\mathrm{my\\_rank} == 0\\) test, so {{c2::every rank}} calls them.",
+  "extra": "Rank 0 sends as the source, and the other ranks receive. If only rank 0 called \\(\\mathrm{MPI\\_Bcast}\\), the other ranks would never get the values.",
+  "tags": [
+   "b03_mpi",
+   "bcast"
+  ],
+  "source": "03d_lecture_10_collectives.pdf p.18, 03e_lecture_11_trapezoid.pdf p.22",
+  "yield": "high"
+ },
+ {
+  "text": "\\(\\mathrm{MPI\\_Bcast}\\) sends {{c1::the same data}} to every process. \\(\\mathrm{MPI\\_Scatter}\\) sends each process {{c2::a different chunk}} of one array.",
+  "extra": "Pacheco's example is a 10,000-component vector on 10 processes. Broadcasting it makes every process store all 10,000 components when it only works on 1000.",
+  "tags": [
+   "b03_mpi",
+   "bcast_scatter_gather"
+  ],
+  "source": "03d_lecture_10_collectives.pdf p.21, 03_ch03_mpi.pdf p.29",
+  "yield": "high"
+ },
+ {
+  "text": "Ranks on machines joined by a slow network must sum \\(g(a[i])\\) over a large array. The best design has each rank sum {{c1::its own block}}, then {{c2::one \\(\\mathrm{MPI\\_Reduce}\\) call}} combines the local sums on rank 0.",
+  "extra": "This is study guide practice question 1, answer D. Sending every element, or calling \\(\\mathrm{MPI\\_Allreduce}\\) after every element, sends one message per element over the slow network.",
+  "tags": [
+   "b03_mpi",
+   "collective_design"
+  ],
+  "source": "07_m2_study_guide.pdf p.4",
+  "yield": "high"
+ },
+ {
+  "text": "Lecture 11 improves the MPI trapezoid program twice. Rank 0's loop of sends of a, b and n becomes {{c1::\\(\\mathrm{MPI\\_Bcast}\\)}}, and the linear receive-and-add loop on rank 0 becomes {{c2::\\(\\mathrm{MPI\\_Reduce}\\)}}.",
+  "extra": "The study guide calls this the typical collective pattern. Broadcast the parameters once, compute locally, then combine with one Reduce or Allreduce.",
+  "tags": [
+   "b03_mpi",
+   "trapezoid_mpi"
+  ],
+  "source": "03e_lecture_11_trapezoid.pdf p.21, 03e_lecture_11_trapezoid.pdf p.23",
+  "yield": "high"
+ },
+ {
+  "text": "With 8 processes, a linear global sum makes rank 0 do {{c1::7}} receives and adds. A tree-structured sum reduces rank 0's work to {{c2::3}} receives and adds.",
+  "extra": "In the tree, the pairs in each phase add at the same time, and no other process does more than 2 receives and adds.",
+  "tags": [
+   "b03_mpi",
+   "tree_reduction"
+  ],
+  "source": "03d_lecture_10_collectives.pdf p.11, 03_ch03_mpi.pdf p.20",
+  "yield": "high",
+  "figure": {
+   "file": "03d_lecture_10_collectives.pdf",
+   "page": 11
+  }
+ },
+ {
+  "text": "With a count greater than 1, \\(\\mathrm{MPI\\_Reduce}\\) combines arrays {{c1::element by element}}, so one vector per process adds up into one vector on the destination process.",
+  "extra": "Lecture 10 says a count of 1 sends a single variable from each process, and a larger count sends an array.",
+  "tags": [
+   "b03_mpi",
+   "reduce_args"
+  ],
+  "source": "03_ch03_mpi.pdf p.22, 03d_lecture_10_collectives.pdf p.7",
+  "yield": "high"
+ },
+ {
+  "text": "Collective calls don't use {{c1::tags}}. MPI matches them only by the communicator and {{c2::the order in which each process makes the calls}}.",
+  "extra": "Point-to-point calls match on communicator, source and tag.",
+  "tags": [
+   "b03_mpi",
+   "collective_rules"
+  ],
+  "source": "03_ch03_mpi.pdf p.23",
+  "yield": "high"
+ },
+ {
+  "text": "Every rank must pass the same {{c1::\\(\\mathrm{dest\\_process}\\)}} to \\(\\mathrm{MPI\\_Reduce}\\). If rank 0 passes 0 and rank 1 passes 1, the program is erroneous and will likely hang or crash.",
+  "extra": "Pacheco's rule is that the arguments each process passes to a collective must be compatible.",
+  "tags": [
+   "b03_mpi",
+   "collective_rules"
+  ],
+  "source": "03_ch03_mpi.pdf p.23",
+  "yield": "high"
+ },
+ {
+  "text": "In \\(\\mathrm{MPI\\_Scatter}\\), \\(\\mathrm{send\\_count}\\) is the number of items sent to {{c1::each process}}, not the size of the whole array. For a block split of n items it is {{c2::\\(n/\\mathrm{comm\\_sz}\\)}}.",
+  "extra": "The first piece goes to process 0, the source included, the next to process 1, and so on. Pacheco notes this simple version needs n to divide evenly by \\(\\mathrm{comm\\_sz}\\).",
+  "tags": [
+   "b03_mpi",
+   "bcast_scatter_gather"
+  ],
+  "source": "03_ch03_mpi.pdf p.29, 03_ch03_mpi.pdf p.30",
+  "yield": "high"
+ },
+ {
+  "text": "In \\(\\mathrm{MPI\\_Gather}\\), every process sends its chunk, and only {{c1::the destination process}} ends up with the assembled array. The \\(\\mathrm{recv\\_count}\\) argument is the number of items from {{c2::each process}}.",
+  "extra": "Gather is the reverse of scatter, with the same argument shape. A common use is assembling results on rank 0 for printing.",
+  "tags": [
+   "b03_mpi",
+   "bcast_scatter_gather"
+  ],
+  "source": "03d_lecture_10_collectives.pdf p.24, 03_ch03_mpi.pdf p.31",
+  "yield": "high"
+ },
+ {
+  "text": "The trapezoidal rule splits \\([a, b]\\) into n trapezoids of equal base width \\(h = {{c1::\\frac{b-a}{n} }}\\).",
+  "extra": "Narrower trapezoids give a better approximation, because their over- and under-estimates average out.",
+  "tags": [
+   "b03_mpi",
+   "trapezoid_rule"
+  ],
+  "source": "03e_lecture_11_trapezoid.pdf p.9",
+  "yield": "high"
+ },
+ {
+  "text": "Each rank integrates \\(\\mathrm{local\\_n} = {{c1::n/\\mathrm{comm\\_sz} }}\\) trapezoids, starting at \\(\\mathrm{local\\_a} = {{c2::a + \\mathrm{my\\_rank} \\cdot \\mathrm{local\\_n} \\cdot h}}\\).",
+  "extra": "It ends at \\(\\mathrm{local\\_b} = \\mathrm{local\\_a} + \\mathrm{local\\_n} \\cdot h\\). The slides assume n divides evenly by \\(\\mathrm{comm\\_sz}\\) to keep the code short.",
+  "tags": [
+   "b03_mpi",
+   "trapezoid_mpi"
+  ],
+  "source": "03e_lecture_11_trapezoid.pdf p.17, 03e_lecture_11_trapezoid.pdf p.18",
+  "yield": "high"
+ }
+]

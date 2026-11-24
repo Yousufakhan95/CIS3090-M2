@@ -1,0 +1,629 @@
+===== PRINTED PAGE 84 =====
+84 CHAPTER 2 Parallel hardware and parallel software
+communication among the tasks, agglomeration or aggregation to group tasks, and
+mapping to assign aggregate tasks to processes/threads.
+2.10.7 Assumptions
+We’ll be looking at the development of parallel programs for shared- and distributed-
+memory homogeneous MIMD systems and heterogeneous CPU-GPU systems. We’ll
+be writing SPMD programs. On homogeneous systems we’ll usually use static pro-
+cesses or threads—processes/threads that are created when the program begins exe-
+cution, and are not shut down until the program terminates. On these systems, we’ll
+also assume that we run at most one process or thread on each core of the system. On
+heterogeneous CPU-GPU systems, we’ll start the program on the CPU, and the CPU
+will start threads on the GPU and wait for them to terminate.
+2.11 Exercises
+2.1 When we were discussing ﬂoating point addition, we made the simplifying
+assumption that each of the functional units took the same amount of time.
+Suppose that fetch and store each take 2 nanoseconds and the remaining oper-
+ations each take 1 nanosecond.
+a. How long does a ﬂoating point addition take with these assumptions?
+b. How long will an unpipelined addition of 1000 pairs of ﬂoats take with
+these assumptions?
+c. How long will a pipelined addition of 1000 pairs of ﬂoats take with these
+assumptions?
+d. The time required for fetch and store may vary considerably if the
+operands/results are stored in different levels of the memory hierarchy.
+Suppose that a fetch from a level 1 cache takes 2 nanoseconds, while a
+fetch from a level 2 cache takes 5 nanoseconds, and a fetch from main
+memory takes 50 nanoseconds. What happens to the pipeline when there
+is a level 1 miss and a level 2 hit on a fetch of one of the operands? What
+happens when there is a level 1 and a level 2 miss?
+2.2 Explain how a queue, implemented in hardware in the CPU, could be used to
+improve the performance of a write-through cache.
+2.3 Recall the example involving cache reads of a two-dimensional array (p. 24).
+How do a larger matrix and a larger cache affect the performance of the two
+pairs of nested loops? What happens if MAX =8and the cache can store four
+lines? How many misses occur in the reads of A in the ﬁrst pair of nested
+loops? How many misses occur in the second pair?
+2.4 In Table 2.2, virtual addresses consist of a byte offset of 12 bits and a virtual
+page number of 20 bits. How many pages can a program have if it’s run on a
+system with this page size and this virtual address size?
+===== PRINTED PAGE 85 =====
+2.11 Exercises 85
+2.5 Does the addition of cache and virtual memory to a von Neumann system
+change its designation as a SISD system? What about the addition of pipelin-
+ing? Multiple issue? Hardware multithreading?
+2.6 Suppose that a vector processor has a memory system in which it takes 10
+cycles to load a single 64-bit word from memory. How many memory banks
+are needed so that a stream of loads can, on average, require only one cycle
+per load?
+2.7 Discuss the differences in how a GPU and a vector processor might execute
+the following code:
+sum =0.0;
+for ( i =0;i < n ; i ++) {
+y [ i ]+=a ∗x [ i ];
+sum += z [ i ]∗ z [ i ];
+}
+2.8 Consider the following pseudocode:
+for ( i =0;i < n ; i ++) {
+if ( my_rank == 0) {
+A (&args1 , i );
+B (&args2 , i );
+} else if ( my_rank == 1) {
+C (&args3 , i );
+D (&args4 , i );
+} else if ( my_rank == 2) {
+E (&args5 , i );
+F (&args6 , i );
+}
+Suppose each of the tests my_rank == . . . and each of the functions A, B, ...,
+F require 1 unit of time to execute.
+a. Suppose the code is being executed on a SIMD system by three threads.
+Construct a table showing the execution of a single iteration of the body of
+the for statement. The table should show when each thread is executing
+and what it’s executing, and when each thread is idle.
+b. Now suppose the code is being executed on a MIMD system by three
+threads. Construct a table showing the execution of a single iteration of
+the body of the for statement.
+2.9 Explain why the performance of a hardware multithreaded processing core
+might degrade if it had large caches and it ran many threads.
+2.10 In our discussion of parallel hardware, we used Flynn’s taxonomy to identify
+three types of parallel systems: SISD, SIMD, and MIMD. None of our systems
+were identiﬁed as multiple instruction, single data, or MISD. How would a
+MISD system work? Give an example.
+===== PRINTED PAGE 86 =====
+86 CHAPTER 2 Parallel hardware and parallel software
+2.11 Suppose a program must execute 1012 instructions to solve a particular prob-
+lem. Suppose also that a single processor system can solve the problem in 106
+seconds (about 11.6 days). So, on average, the single processor system exe-
+cutes 106 or a million instructions per second. Now suppose that the program
+has been parallelized for execution on a distributed-memory system. Suppose
+also that if the parallel program uses p processors, each processor will exe-
+cute 1012/p instructions and each processor must send 109(p − 1) messages.
+Finally, suppose that there is no additional overhead in executing the parallel
+program. That is, the program will complete after each processor has executed
+all of its instructions and sent all of its messages, and there won’t be any delays
+due to issues such as waiting for messages.
+a. Suppose it takes 10−9 seconds to send a message. How long will it take
+the program to run with 1000 processors if each processor is as fast as the
+single processor on which the serial program was run?
+b. Suppose it takes 10−3 seconds to send a message. How long will it take
+the program to run with 1000 processors?
+2.12 Derive formulas for the total number of links in the various distributed-
+memory interconnects.
+2.13 a. A planar mesh is just like a toroidal mesh, except that it doesn’t have the
+“wraparound” links. What is the bisection width of a square planar mesh?
+b. A three-dimensional mesh is similar to a planar mesh, except that it also
+has depth. What is the bisection width of a three-dimensional mesh?
+2.14 a. Sketch a four-dimensional hypercube.
+b. Use the inductive deﬁnition of a hypercube to explain why the bisection
+width of a hypercube is p/2.
+2.15 a. Suppose the run-time of a serial program is given by Tserial = n2, where
+the units of the run-time are in microseconds. Suppose that a paralleliza-
+tion of this program has run-time Tparallel = n2/p + log2(p). Write a
+program that ﬁnds the speedups and efﬁciencies of this program for var-
+ious values of n and p. Run your program with n = 10, 20, 40,...,320,
+and p = 1, 2, 4,...,128. What happens to the speedups and efﬁciencies
+as p is increased and n is held ﬁxed? What happens when p is ﬁxed and
+n is increased?
+b. (Needs calculus.) Suppose that for a given program
+Tparallel = Tserial/p + Toverhead,
+and consider the case when p is held ﬁxed. In this setting suppose T ′ serial
+and T ′ overhead denote the derivatives of Tserial and Toverhead with respect to
+n for the ﬁxed value of p. Also suppose that for the ﬁxed value of p and
+for all n, the functions Tserial, Toverhead, T ′ serial, and T ′ overhead are positive.
+Show that if
+T ′ serial
+Tserial
+> T ′ overhead
+Toverhead
+,
+===== PRINTED PAGE 87 =====
+2.11 Exercises 87
+then for the ﬁxed value of p, both the speedup and the efﬁciency are in-
+creasing functions of n. Hint: Work backward. Apply the quotient rule for
+derivatives to the deﬁnition of speedup, assume it’s positive, and derive
+the formula above.
+2.16 A parallel program that obtains a speedup greater than p—the number of pro-
+cesses or threads—is sometimes said to have superlinear speedup. However,
+many authors don’t count programs that overcome “resource limitations” as
+having superlinear speedup. For example, a program that must use secondary
+storage for its data when it’s run on a single processor system might be able
+to ﬁt all its data into main memory when run on a large distributed-memory
+system. Give another example of how a program might overcome a resource
+limitation and obtain speedups greater than p.
+2.17 Look at three programs you wrote in your Introduction to Computer Science
+class. Which parts of these programs (if any) are inherently serial? Does the
+inherently serial part of the work done by the program decrease as the problem
+size increases? Or does it remain roughly the same?
+2.18 Suppose Tserial = n and Tparallel = n/p +log2(p), where times are in microsec-
+onds. If we increase p by a factor of k, ﬁnd a formula for how much we’ll need
+to increase n to maintain constant efﬁciency. How much should we increase n
+by if we double the number of processes from 8 to 16? Is the parallel program
+scalable?
+2.19 Is a program that obtains linear speedup strongly scalable? Explain your an-
+swer.
+2.20 Bob has a program that he wants to time with two sets of data, input_data1
+and input_data2. To get some idea of what to expect before adding timing
+functions to the code he’s interested in, he runs the program with two sets of
+data and the Unix shell command time:
+$ time ./ bobs_prog < input_data1
+real 0 m0 .001s
+user 0 m0 .001s
+sys 0 m0 .000s
+$ time ./ bobs_prog < input_data2
+real 1 m1 .234s
+user 1 m0 .001s
+sys 0 m0 .111s
+The timer function Bob is going to use in his program has millisecond reso-
+lution. Should Bob use it to time his program with the ﬁrst set of data? What
+about the second set of data? Why or why not?
+2.21 As we saw in the preceding problem, the Unix shell command time reports the
+user time, the system time, and the “real” time or total elapsed time. Suppose
+that Bob has deﬁned the following functions that can be called in a C program:
+===== PRINTED PAGE 88 =====
+88 CHAPTER 2 Parallel hardware and parallel software
+double utime ( void );
+double stime ( void );
+double rtime ( void );
+The ﬁrst returns the number of seconds of user time that have elapsed since the
+program started execution, the second returns the number of system seconds,
+and the third returns the total number of seconds. Roughly, user time is time
+spent in the user code, and library functions that don’t need to use the operating
+system—for example, sin and cos. System time is time spent in functions that
+do need to use the operating system—for example, printf and scanf.
+a. What is the mathematical relation among the three function values? That
+is, suppose the program contains the following code:
+u = double utime ( void );
+s = double stime ( void );
+r = double rtime ( void );
+Write a formula that expresses the relation between u, s, and r. (You can
+assume that the time it takes to call the functions is negligible.)
+b. On Bob’s system, any time that an MPI process spends waiting for mes-
+sages isn’t counted by either utime or stime, but the time is counted by
+rtime. Explain how Bob can use these facts to determine whether an MPI
+process is spending too much time waiting for messages.
+c. Bob has given Sally his timing functions. However, Sally has discovered
+that on her system, the time an MPI process spends waiting for mes-
+sages is counted as user time. Furthermore, sending messages doesn’t use
+any system time. Can Sally use Bob’s functions to determine whether an
+MPI process is spending too much time waiting for messages? Explain
+your answer.
+2.22 Apply Foster’s method to an embarrassingly parallel problem—e.g., vector
+addition. What are the tasks? What are the communications among the tasks?
+How will you aggregate the tasks? How will you map composite tasks to
+processes/threads?
+2.23 In our application of Foster’s methodology to the construction of a histogram,
+we essentially identiﬁed aggregate tasks with elements of data. An apparent al-
+ternative would be to identify aggregate tasks with the elements of bin_counts.
+So an aggregate task would consist of all increments of bin_counts[b]. Each
+process/thread would be assigned a collection of bins, and for each of its bins b
+and for each element of data it would determine whether the element of data
+belongs to bin b. If the data structures have already been distributed and initial-
+ized, design a parallel program that uses this design. Which of the two designs
+is more scalable?
+2.24 If you haven’t already done so in Chapter 1, try to write pseudocode for our
+tree-structured global sum, which sums the elements of loc_bin_cts.First
+consider how this might be done in a shared-memory MIMD setting. Then
+consider how this might be done in a distributed-memory MIMD setting. In
+the shared-memory setting, which variables are shared and which are private?
+===== PRINTED PAGE 89 =====
+3
+CHAPTER
+Distributed memory
+programming with MPI
+Recall that the world of parallel multiple instruction, multiple data, or MIMD, com-
+puters is, for the most part, divided into distributed-memory and shared-memory
+systems. From a programmer’s point of view, a distributed-memory system consists
+of a collection of core-memory pairs connected by a network, and the memory as-
+sociated with a core is directly accessible only to that core. (See Fig. 3.1.) On the
+other hand, from a programmer’s point of view, a shared-memory system consists
+of a collection of cores connected to a globally accessible memory, in which each
+core can have access to any memory location. (See Fig. 3.2.) In this chapter, we’re
+going to start looking at how to program distributed memory systems using message-
+passing.
+Recall that in message-passing programs, a program running on one core-memory
+pair is usually called a process, and two processes can communicate by calling func-
+tions: one process calls a send function and the other calls a receive function. The
+implementation of message-passing that we’ll be using is called MPI, which is an ab-
+breviation of Message-Passing Interface. MPI is not a new programming language.
+It deﬁnes a library of functions that can be called from C and Fortran programs.
+We’ll learn about some of MPI’s different send and receive functions. We’ll also
+FIGURE 3.1
+A distributed memory system.
+An Introduction to Parallel Programming. https://doi.org/10.1016/B978-0-12-804605-0.00010-5
+Copyright © 2022 Elsevier Inc. All rights reserved. 89
+===== PRINTED PAGE 148 =====
+148 CHAPTER 3 Distributed memory programming with MPI
+parallel overhead will come from communication. When p is large and n is small, it’s
+not unusual for parallel overhead to dominate the total run-time, and speedups and
+efﬁciencies can be quite low.
+If it’s possible to increase the problem size (n) so that the efﬁciency doesn’t de-
+crease as p is increased, a parallel program is said to be scalable.
+Recall that MPI_Send can either block or buffer its input. An MPI program is un-
+safe if its correct behavior depends on the fact that MPI_Send is buffering its input. This
+typically happens when multiple processes ﬁrst call MPI_Send and then call MPI_Recv.
+If the calls to MPI_Send don’t buffer the messages, then they’ll block until the matching
+calls to MPI_Recv have started. However, this will never happen. For example, if pro-
+cess 0 and process 1 are trying to exchange data, and both call MPI_Send before calling
+MPI_Recv, then each process will wait forever for the other process to call MPI_Recv,
+since both will block in their calls to MPI_Send. That is, the processes will hang or
+deadlock—they’ll block forever waiting for events that will never happen.
+An MPI program can be checked for safety by replacing each call to MPI_Send with
+a call to MPI_Ssend. MPI_Ssend takes the same arguments as MPI_Send, but it always
+blocks until the matching receive has started. The extra “s” stands for synchronous.
+If the program completes correctly with MPI_Ssend for the desired inputs and commu-
+nicator sizes, then the program is safe.
+An unsafe MPI program can be made safe in several ways. The programmer
+can schedule the calls to MPI_Send and MPI_Recv so that some processes (e.g., even-
+ranked processes) ﬁrst call MPI_Send, while others (e.g., odd-ranked processes) ﬁrst
+call MPI_Recv. Alternatively, we can use MPI_Sendrecv or MPI_Sendrecv_replace. These
+functions execute both a send and a receive, but they’re guaranteed to schedule them
+so that the program won’t hang or crash. MPI_Sendrecv uses different arguments for
+the send and the receive buffers, while MPI_Sendrecv_replace uses the same buffer for
+both.
+3.9 Exercises
+3.1 What happens in the greetings program if, instead of strlen(greeting)+1,
+we use strlen(greeting) for the length of the message being sent by pro-
+cesses 1, 2,..., comm_sz−1? What happens if we use MAX_STRING instead of
+strlen(greeting)+1? Can you explain these results?
+3.2 Modify the trapezoidal rule so that it will correctly estimate the integral, even
+if comm_sz doesn’t evenly divide n. (You can still assume that n ≥ comm_sz.)
+3.3 Determine which of the variables in the trapezoidal rule program are local and
+which are global.
+3.4 Modify the program that just prints a line of output from each process
+(mpi_output.c) so that the output is printed in process rank order: process 0’s
+output ﬁrst, then process 1’s, and so on.
+3.5 In a binary tree, there is a unique shortest path from each node to the root. The
+length of this path is often called the depth of the node. A binary tree, in which
+===== PRINTED PAGE 149 =====
+3.9 Exercises 149
+FIGURE 3.14
+A complete binary tree.
+every non-leaf has two children, is called a full binary tree; and a full binary
+tree, in which every leaf has the same depth, is sometimes called a complete
+binary tree. (See Fig. 3.14.) Use the principle of mathematical induction to
+prove that if T is a complete binary tree with n leaves, then the depth of the
+leaves is log2(n).
+3.6 Suppose comm_sz = 4, and suppose that x is a vector with n = 14 components.
+a. How would the components of x be distributed among the processes in a
+program that used a block distribution?
+b. How would the components of x be distributed among the processes in a
+program that used a cyclic distribution?
+c. How would the components of x be distributed among the processes in a
+program that used a block-cyclic distribution with blocksize b = 2?
+You should try to make your distributions general so that they could be used,
+regardless of what comm_sz and n are. You should also try to make your distri-
+butions “fair” so that if q and r are any two processes, the difference between
+the number of components assigned to q and the number of components as-
+signed to r is as small as possible.
+3.7 What do the various MPI collective functions do if the communicator contains
+a single process?
+3.8 Suppose comm_sz = 8 and n = 16.
+a. Draw a diagram that shows how MPI_Scatter can be implemented using
+tree-structured communication with comm_sz processes when process 0
+needs to distribute an array containing n elements.
+b. Draw a diagram that shows how MPI_Gather can be implemented using
+tree-structured communication when an n-element array that has been
+distributed among comm_sz processes needs to be gathered onto process 0.
+===== PRINTED PAGE 150 =====
+150 CHAPTER 3 Distributed memory programming with MPI
+3.9 Write an MPI program that implements multiplication of a vector by a scalar
+and dot product. The user should enter two vectors and a scalar, all of which
+are read in by process 0 and distributed among the processes. The results are
+calculated and collected onto process 0, which prints them. You can assume
+that n, the order of the vectors, is evenly divisible by comm_sz.
+3.10 In the Read_vector function shown in Program 3.9,weuselocal_n as the ac-
+tual argument for two of the formal arguments to MPI_Scatter: send_count and
+recv_count. Why is it OK to alias these arguments?
+3.11 Finding preﬁx sums is a generalization of global sum. Rather than simply
+ﬁnding the sum of n values,
+x0 + x1 +···+xn−1,
+the preﬁx sums are the n partial sums
+x0,x0 + x1,x0 + x1 + x2, ..., x0 + x1 +···+xn−1.
+a. Devise a serial algorithm for computing the n preﬁx sums of an array with
+n elements.
+b. Parallelize your serial algorithm for a system with n processes, each of
+which is storing one of the x_i’s.
+c. Suppose n = 2k for some positive integer k. Can you devise a serial al-
+gorithm and a parallelization of the serial algorithm so that the parallel
+algorithm requires only k communication phases? (You might want to
+look for this online.)
+d. MPI provides a collective communication function, MPI_Scan, that can be
+used to compute preﬁx sums:
+int MPI_Scan (
+void∗ sendbuf_p / ∗ in ∗ / ,
+void∗ recvbuf_p / ∗ out ∗ / ,
+int count / ∗ in ∗ / ,
+MPI_Datatype datatype / ∗ in ∗ / ,
+MPI_Op op / ∗ in ∗ / ,
+MPI_Comm comm / ∗ in ∗ / );
+It operates on arrays with count elements; both sendbuf_p and recvbuf_p
+should refer to blocks of count elements of type datatype.Theop argu-
+ment is the same as op for MPI_Reduce.
+Write an MPI program that generates a random array of count elements
+on each MPI process, ﬁnds the preﬁx sums, and prints the results.
+3.12 An alternative to a butterﬂy-structured allreduce is a “ring-pass” structure. In
+a ring-pass, if there are p processes, each process q sends data to process
+q + 1, except that process p − 1 sends data to process 0. This is repeated until
+each process has the desired result. Thus we can implement allreduce with the
+following code:
+===== PRINTED PAGE 151 =====
+3.9 Exercises 151
+sum = temp_val = my_val ;
+for ( i =1;i < p ; i ++) {
+MPI_Sendrecv_replace(&temp_val ,1,MPI_INT , dest ,
+sendtag , source , recvtag , comm ,&status );
+sum += temp_val ;
+}
+a. Write an MPI program that implements this algorithm for allreduce. How
+does its performance compare to the butterﬂy-structured allreduce?
+b. Modify the MPI program you wrote in the ﬁrst part so that it implements
+preﬁx sums.
+3.13 MPI_Scatter and MPI_Gather have the limitation that each process must send or
+receive the same number of data items. When this is not the case, we must use
+the MPI functions MPI_Gatherv and MPI_Scatterv. Look at the man pages for
+these functions, and modify your vector sum, dot product program so that it
+can correctly handle the case when n isn’t evenly divisible by comm_sz.
+3.14 a. Write a serial C program that deﬁnes a two-dimensional array in the main
+function. Just use numeric constants for the dimensions:
+int two_d [3][4];
+Initialize the array in the main function. After the array is initialized, call
+a function that attempts to print the array. The prototype for the function
+should look something like this.
+void Print_two_d ( int two_d [][] , int rows ,
+int cols );
+After writing the function, try to compile the program. Can you explain
+why it won’t compile?
+b. After consulting a C reference (e.g., Kernighan and Ritchie [32]), modify
+the program so that it will compile and run, but so that it still uses a two-
+dimensional C array.
+3.15 What is the relationship between the “row-major” storage for two-dimensional
+arrays that we discussed in Section 2.2.3 and the one-dimensional storage we
+use in Section 3.4.9?
+3.16 Suppose comm_sz = 8 and the vector x = (0, 1, 2,...,15) has been distributed
+among the processes using a block distribution. Draw a diagram illustrating
+the steps in a butterﬂy implementation of allgather of x.
+3.17 MPI_Type_contiguous can be used to build a derived datatype from a collection
+of contiguous elements in an array. Its syntax is
+int MPI_Type_contiguous (
+int count / ∗ in ∗ / ,
+MPI_Datatype old_mpi_t / ∗ in ∗ / ,
+MPI_Datatype∗ new_mpi_t_p / ∗ out ∗ );
+Modify the Read_vector and Print_vector functions so that they use an MPI
+datatype created by a call to MPI_Type_contiguous and a count argument of 1 in
+the calls to MPI_Scatter and MPI_Gather.
+===== PRINTED PAGE 152 =====
+152 CHAPTER 3 Distributed memory programming with MPI
+3.18 MPI_Type_vector can be used to build a derived datatype from a collection of
+blocks of elements in an array, as long as the blocks all have the same size and
+they’re equally spaced. Its syntax is
+int MPI_Type_vector (
+int count / ∗ in ∗ / ,
+int blocklength / ∗ in ∗ / ,
+int stride / ∗ in ∗ / ,
+MPI_Datatype old_mpi_t / ∗ in ∗ / ,
+MPI_Datatype∗ new_mpi_t_p / ∗ out ∗ / );
+For example, if we had an array x of 18 doubles and we wanted to build a type
+corresponding to the elements in positions 0, 1, 6, 7, 12, 13, we could call
+int MPI_Type_vector (3 , 2, 6, MPI_DOUBLE ,&vect_mpi_t );
+since the type consists of 3 blocks, each of which has 2 elements, and the
+spacing between the starts of the blocks is 6 doubles.
+Write Read_vector and Print_vector functions that will allow process 0 to read
+and print, respectively, a vector with a block-cyclic distribution. But beware!
+Do not use MPI_Scatter or MPI_Gather. There is a technical issue involved in
+using these functions with types created with MPI_Type_vector. (See, for ex-
+ample, [23].) Just use a loop of sends on process 0 in Read_vector and a loop
+of receives on process 0 in Print_vector. The other processes should be able
+to complete their calls to Read_vector and Print_vector with a single call to
+MPI_Recv and MPI_Send, respectively. The communication on process 0 should
+use a derived datatype created by MPI_Type_vector. The calls on the other pro-
+cesses should just use the count argument to the communication function, since
+they’re receiving/sending elements that they will store in contiguous array lo-
+cations.
+3.19 MPI_Type_indexed can be used to build a derived datatype from arbitrary array
+elements. Its syntax is
+int MPI_Type_indexed (
+int count / ∗ in ∗ / ,
+int array_of_blocklengths [] / ∗ in ∗ / ,
+int array_of_displacements [] / ∗ in ∗ / ,
+MPI_Datatype old_mpi_t / ∗ in ∗ / ,
+MPI_Datatype∗ new_mpi_t_p / ∗ out ∗ / );
+Unlike MPI_Type_create_struct, the displacements are measured in units of
+old_mpi_t—not bytes. Use MPI_Type_indexed to create a derived datatype that
+corresponds to the upper triangular part of a square matrix. For example, in
+the 4 × 4matrix
+⎛
+⎜⎜⎝
+0123
+4567
+8 9 10 11
+12 13 14 15
+⎞
+⎟⎟⎠
+===== PRINTED PAGE 153 =====
+3.9 Exercises 153
+the upper triangular part is the elements 0, 1, 2, 3, 5, 6, 7, 10, 11, 15. Process 0
+should read in an n × n matrix as a one-dimensional array, create the derived
+datatype, and send the upper triangular part with a single call to MPI_Send.
+Process 1 should receive the upper triangular part with a single call to MPI_Recv,
+and then print the data it received.
+3.20 The functions MPI_Pack and MPI_Unpack provide an alternative to derived
+datatypes for grouping data. MPI_Pack copies the data to be sent, one block at
+a time, into a user-provided buffer. The buffer can then be sent and received.
+After the data is received, MPI_Unpack can be used to unpack it from the receive
+buffer. The syntax of MPI_Pack is
+int MPI_Pack (
+void∗ in_buf / ∗ in ∗ / ,
+int in_buf_count / ∗ in ∗ / ,
+MPI_Datatype datatype / ∗ in ∗ / ,
+void∗ pack_buf / ∗ out ∗ / ,
+int pack_buf_sz / ∗ in ∗ / ,
+int∗ position_p / ∗ in / out ∗ / ,
+MPI_Comm comm / ∗ in ∗ / );
+We could therefore pack the input data to the trapezoidal rule program with
+the following code:
+char pack_buf [100];
+int position =0;
+MPI_Pack(&a ,1,MPI_DOUBLE , pack_buf , 100, &position ,
+comm );
+MPI_Pack(&b ,1,MPI_DOUBLE , pack_buf , 100, &position ,
+comm );
+MPI_Pack(&n ,1,MPI_INT , pack_buf , 100, &position ,
+comm );
+The key is the position argument. When MPI_Pack is called, position should
+refer to the ﬁrst available slot in pack_buf. When MPI_Pack returns, it refers to
+the ﬁrst available slot after the data that was just packed, so after process 0
+executes this code, all the processes can call MPI_Bcast:
+MPI_Bcast ( pack_buf , 100, MPI_PACKED ,0,comm );
+Note that the MPI datatype for a packed buffer is MPI_PACKED. Now the other
+processes can unpack the data using MPI_Unpack:
+int MPI_Unpack (
+void∗ pack_buf / ∗ in ∗ / ,
+int pack_buf_sz / ∗ in ∗ / ,
+int∗ position_p / ∗ in / out ∗ / ,
+void∗ out_buf / ∗ out ∗ / ,
+int out_buf_count / ∗ in ∗ / ,
+MPI_Datatype datatype / ∗ in ∗ / ,
+MPI_Comm comm / ∗ in ∗ / );
+===== PRINTED PAGE 154 =====
+154 CHAPTER 3 Distributed memory programming with MPI
+This can be used by “reversing” the steps in MPI_Pack. That is, the data is
+unpacked one block at a time starting with position =0.
+Write another Get_input function for the trapezoidal rule program. This one
+should use MPI_Pack on process 0, and MPI_Unpack on the other processes.
+3.21 How does your system compare to ours? What run-times does your system
+get for matrix-vector multiplication? What kind of variability do you see in
+the times for a given value of comm_sz and n? Do the results tend to cluster
+around the minimum, the mean, or the median?
+3.22 Time our implementation of the trapezoidal rule that uses MPI_Reduce.How
+will you choose n, the number of trapezoids? How do the minimum times
+compare to the mean and median times? What are the speedups? What are the
+efﬁciencies? On the basis of the data you collected, would you say that the
+trapezoidal rule is scalable?
+3.23 Although we don’t know the internals of the implementation of MPI_Reduce,
+we might guess that it uses a structure similar to the binary tree we discussed.
+If this is the case, we would expect that its run-time would grow roughly at
+the rate of log2(p), since there are roughly log2(p) levels in the tree. (Here
+p = comm_sz.) Since the run-time of the serial trapezoidal rule is roughly
+proportional to n, the number of trapezoids, and the parallel trapezoidal rule
+simply applies the serial rule to n/p trapezoids on each process, with our as-
+sumption about MPI_Reduce, we get a formula for the overall run-time of the
+parallel trapezoidal rule that looks like
+Tparallel(n,p) ≈ a × n p + b log2(p)
+for some constants a and b.
+a. Use the formula, the times you’ve taken in Exercise 3.22, and your fa-
+vorite program for doing mathematical calculations (e.g., MATLAB®)to
+get a least-squares estimate of the values of a and b.
+b. Comment on the quality of the predicted run-times using the formula and
+the values for a and b computed in part (a).
+3.24 Take a look at Programming Assignment 3.7. The code that we outlined for
+timing the cost of sending messages should work, even if the count argument
+is zero. What happens on your system when the count argument is 0? Can
+you explain why you get a nonzero elapsed time when you send a zero-byte
+message?
+3.25 If comm_sz = p, we mentioned that the “ideal” speedup is p. Is it possible to
+do better?
+a. Consider a parallel program that computes a vector sum. If we only time
+the vector sum—that is, we ignore input and output of the vectors—how
+might this program achieve speedup greater than p?
+b. A program that achieves speedup greater than p is said to have superlin-
+ear speedup. Our vector sum example only achieved superlinear speedup
+===== PRINTED PAGE 155 =====
+3.10 Programming assignments 155
+by overcoming certain “resource limitations.” What were these resource
+limitations? Is it possible for a program to obtain superlinear speedup
+without overcoming resource limitations?
+3.26 Serial odd-even transposition sort of an n-element list can sort the list in con-
+siderably fewer than n phases. As an extreme example, if the input list is
+already sorted, the algorithm requires 0 phases.
+a. Write a serial Is_sorted function that determines whether a list is sorted.
+b. Modify the serial odd-even transposition sort program so that it checks
+whether the list is sorted after each phase.
+c. If this program is tested on a random collection of n-element lists, roughly
+what fraction gets improved performance by checking whether the list is
+sorted?
+3.27 Find the speedups and efﬁciencies of the parallel odd-even sort. Does the pro-
+gram obtain linear speedups? Is it scalable? Is it strongly scalable? Is it weakly
+scalable?
+3.28 Modify the parallel odd-even transposition sort so that the Merge functions
+simply swap array pointers after ﬁnding the smallest or largest elements. What
+effect does this change have on the overall run-time?
+3.10 Programming assignments
+3.1 Use MPI to implement the histogram program discussed in Section 2.7.1.Have
+process 0 read in the input data and distribute it among the processes. Also have
+process 0 print out the histogram.
+3.2 Suppose we toss darts randomly at a square dartboard, whose bullseye is at the
+origin, and whose sides are 2 feet in length. Suppose also that there’s a circle
+inscribed in the square dartboard. The radius of the circle is 1 foot, and it’s area
+is π square feet. If the points that are hit by the darts are uniformly distributed
+(and we always hit the square), then the number of darts that hit inside the circle
+should approximately satisfy the equation
+number in circle
+total number of tosses = π 4 ,
+since the ratio of the area of the circle to the area of the square is π/4.
+We can use this formula to estimate the value of π with a random number gen-
+erator:
+number_in_circle =0;
+for ( toss =0;toss < number_of_tosses ; toss ++) {
+x = random double between −1 and 1;
+y = random double between −1 and 1;
+distance_squared = x ∗x + y ∗y ;
+if ( distance_squared <= 1) number_in_circle ++;
+}
+===== PRINTED PAGE 156 =====
+156 CHAPTER 3 Distributed memory programming with MPI
+pi_estimate =
+4∗ number_in_circle /(( double ) number_of_tosses );
+This is called a “Monte Carlo” method, since it uses randomness (the dart
+tosses).
+Write an MPI program that uses a Monte Carlo method to estimate π. Process 0
+should read in the total number of tosses and broadcast it to the other processes.
+Use MPI_Reduce to ﬁnd the global sum of the local variable number_in_circle,
+and have process 0 print the result. You may want to use long long intsforthe
+number of hits in the circle and the number of tosses, since both may have to be
+very large to get a reasonable estimate of π.
+3.3 Write an MPI program that computes a tree-structured global sum. First write
+your program for the special case in which comm_sz is a power of two. Then,
+after you’ve gotten this version working, modify your program so that it can
+handle any comm_sz.
+3.4 Write an MPI program that computes a global sum using a butterﬂy. First write
+your program for the special case in which comm_sz is a power of two. Can you
+modify your program so that it will handle any number of processes?
+3.5 Implement matrix-vector multiplication using a block-column distribution of
+the matrix. You can have process 0 read in the matrix and simply use a loop of
+sends to distribute it among the processes. Assume the matrix is square of order
+n and that n is evenly divisible by comm_sz. You may want to look at the MPI
+function MPI_Reduce_scatter.
+3.6 Implement matrix-vector multiplication using a block-submatrix distribution of
+the matrix. Assume that the vectors are distributed among the diagonal pro-
+cesses. Once again, you can have process 0 read in the matrix and aggregate the
+submatrices before sending them to the processes. Assume comm_sz is a perfect
+square and that √ comm_sz evenly divides the order of the matrix.
+3.7 A ping-pong is a communication in which two messages are sent, ﬁrst from
+process A to process B (ping), and then from process B back to process A
+(pong). Timing blocks of repeated ping-pongs is a common way to estimate
+the cost of sending messages. Time a ping-pong program using the C clock
+function on your system. How long does the code have to run before clock
+gives a nonzero run-time? How do the times you got with the clock function
+compare to times taken with MPI_Wtime?
+3.8 Parallel merge sort starts with n/comm_sz keys assigned to each process. It ends
+with all the keys stored on process 0 in sorted order. To achieve this, it uses the
+same tree-structured communication that we used to implement a global sum.
+However, when a process receives another process’s keys, it merges the new
+keys into its already sorted list of keys. Write a program that implements parallel
+mergesort. Process 0 should read in n and broadcast it to the other processes.
+Each process should use a random number generator to create a local list of
+n/comm_sz ints. Each process should then sort its local list, and process 0 should
+gather and print the local lists. Then the processes should use tree-structured
+communication to merge the global list onto process 0, which prints the result.

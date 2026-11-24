@@ -1,0 +1,216 @@
+
+===== PAGE 1 =====
+2.6 Performance 61
+To partially address these issues, we’ll be making these assumptions and follow-
+ing these rules when our parallel programs need to do I/O:
+ In distributed-memory programs, only process 0 will access stdin. In shared-
+memory programs, only the master thread or thread 0 will access stdin.
+ In both distributed-memory and shared-memory programs, all the
+processes/threads can access stdout and stderr.
+ However, because of the nondeterministic order of output to stdout, in most cases
+only a single process/thread will be used for all output to stdout. The principal
+exception will be output for debugging a program. In this situation, we’ll often
+have multiple processes/threads writing to stdout.
+ Only a single process/thread will attempt to access any single ﬁle other than stdin,
+stdout,orstderr. So, for example, each process/thread can open its own, private
+ﬁle for reading or writing, but no two processes/threads will open the same ﬁle.
+ Debug output should always include the rank or ID of the process/thread that’s
+generating the output.
+2.5.2 GPUs
+In most cases, the host code in our GPU programs will carry out all I/O. Since we’ll
+only be running one process/thread on the host, the standard C I/O functions should
+behave as they do in ordinary serial C programs.
+The exception to the rule that we use the host for I/O is that when we are debug-
+ging our GPU code, we’ll want to be able to write to stdout and/or stderr.Inthe
+systems we use, each thread can write to stdout, and, as with MIMD programs, the
+order of the output is nondeterministic. Also in the systems we use, no GPU thread
+has access to stderr, stdin, or secondary storage.
+2.6 Performance
+Of course our main purpose in writing parallel programs is usually increased per-
+formance. So what can we expect? And how can we evaluate our programs? In this
+section, we’ll start by looking at the performance of homogeneous MIMD systems.
+So we’ll assume that all of the cores have the same architecture. Since this is not the
+case for GPUs, we’ll talk about the performance of GPUs in a separate subsection.
+2.6.1 Speedup and efﬁciency in MIMD systems
+Usually the best our parallel program can do is to divide the work equally among
+the cores while at the same time introducing no additional work for the cores. If we
+succeed in doing this, and we run our program with p cores, one thread or process on
+each core, then our parallel program will run p times faster than the serial program
+runs on a single core of the same design. If we call the serial run-time Tserial and
+our parallel run-time Tparallel, then it’s usually the case that the best possible run-time
+
+===== PAGE 2 =====
+62 CHAPTER 2 Parallel hardware and parallel software
+Table 2.4 Speedups and efﬁciencies
+of a parallel program.
+p 1 2 4 8 16
+S 1.0 1.9 3.6 6.5 10.8
+E = S/p 1.0 0.95 0.90 0.81 0.68
+of our parallel program is Tparallel = Tserial/p. When this happens, we say that our
+parallel program has linear speedup.
+In practice, we usually don’t get perfect linear speedup, because the use of mul-
+tiple processes/threads almost invariably introduces some overhead. For example,
+shared-memory programs will almost always have critical sections, which will re-
+quire that we use some mutual exclusion mechanism, such as a mutex. The calls to
+the mutex functions are the overhead that’s not present in the serial program, and
+the use of the mutex forces the parallel program to serialize execution of the criti-
+cal section. Distributed-memory programs will almost always need to transmit data
+across the network, which is usually much slower than local memory access. Serial
+programs, on the other hand, won’t have these overheads. Thus it will be unusual
+for us to ﬁnd that our parallel programs get linear speedup. Furthermore, it’s likely
+that the overheads will increase as we increase the number of processes or threads.
+For example, more threads will probably mean more threads need to access a critical
+section, and more processes will probably mean more data needs to be transmitted
+across the network.
+So if we deﬁne the speedup of a parallel program to be
+S = Tserial
+Tparallel
+,
+then linear speedup has S = p. Furthermore, since as p increases we expect the par-
+allel overhead to increase, we also expect S to become a smaller and smaller fraction
+of the ideal, linear speedup p. Another way of saying this is that S/p will probably
+get smaller and smaller as p increases. Table 2.4 shows an example of the changes in
+S and S/p as p increases.1 This value, S/p, is sometimes called the efﬁciency of the
+parallel program. If we substitute the formula for S, we see that the efﬁciency is
+E = S p =
+(
+Tserial
+Tparallel
+)
+p
+= Tserial
+p · Tparallel
+.
+If the serial run-time has been taken on the same type of core that the parallel
+system is using, we can think of efﬁciency as the average utilization of the parallel
+1 These data are taken from Chapter 3.SeeTables 3.6 and 3.7.
+
+===== PAGE 3 =====
+2.6 Performance 63
+Table 2.5 Speedups and efﬁciencies of paral-
+lel program on different problem sizes.
+p 1 2 4 8 16
+Half S 1.0 1.9 3.1 4.8 6.2
+E 1.0 0.95 0.78 0.60 0.39
+Original S 1.0 1.9 3.6 6.5 10.8
+E 1.0 0.95 0.90 0.81 0.68
+Double S 1.0 1.9 3.9 7.5 14.2
+E 1.0 0.95 0.98 0.94 0.89
+cores on solving the problem. That is, the efﬁciency can be thought of as the fraction
+of the parallel run-time that’s spent, on average, by each core working on solving
+the original problem. The remainder of the parallel run-time is the parallel overhead.
+This can be seen by simply multiplying the efﬁciency and the parallel run-time:
+E · Tparallel = Tserial p · Tparallel · Tparallel = Tserial p .
+For example, suppose we have Tserial = 24 ms, p = 8, and Tparallel = 4 ms. Then
+E = 24 8 · 4 = 3 4 ,
+and, on average, each process/thread spends 3/4 · 4 = 3 ms on solving the original
+problem, and 4 − 3 = 1 ms in parallel overhead.
+Many parallel programs are developed by explicitly dividing the work of the serial
+program among the processes/threads and adding in the necessary “parallel over-
+head,” such as mutual exclusion or communication. Therefore if Toverhead denotes
+this parallel overhead, it’s often the case that
+Tparallel = Tserial/p + Toverhead.
+When this formula applies, it’s clear that the parallel efﬁciency is just the fraction
+of the parallel run-time spent by the parallel program in the original problem, be-
+cause the formula divides the parallel run-time into the time on the original problem,
+Tserial/p, and the time spent in parallel overhead, Toverhead.
+We’ve already seen that Tparallel, S, and E depend on p, the number of processes or
+threads. We also need to keep in mind that Tparallel, S, E, and Tserial all depend on the
+problem size. For example, if we halve and double the problem size of the program,
+whose speedups are shown in Table 2.4, we get the speedups and efﬁciencies shown
+in Table 2.5. The speedups are plotted in Fig. 2.18, and the efﬁciencies are plotted in
+Fig. 2.19.
+We see that in this example, when we increase the problem size, the speedups and
+the efﬁciencies increase, while they decrease when we decrease the problem size.
+
+===== PAGE 4 =====
+64 CHAPTER 2 Parallel hardware and parallel software
+FIGURE 2.18
+Speedups of parallel program on different problem sizes.
+FIGURE 2.19
+Efﬁciencies of parallel program on different problem sizes.
+This behavior is quite common, because in many parallel programs, as the problem
+size is increased but the number of processes/threads is ﬁxed, the parallel overhead
+grows much more slowly than the time spent in solving the original problem. That is,
+
+===== PAGE 5 =====
+2.6 Performance 65
+if we think of Tserial and Toverhead as functions of the problem size, Tserial grows much
+faster as the problem size is increased. Exercise 2.15 goes into more detail.
+A ﬁnal issue to consider is what values of Tserial should be used when reporting
+speedups and efﬁciencies. Some authors say that Tserial should be the run-time of the
+fastest program on the fastest processor available. However, since it’s often the case
+that we think of efﬁciency as the utilization of the cores on the parallel system, in
+practice, most authors use a serial program, on which the parallel program was based
+and run it on a single processor of the parallel system. So if we were studying the
+performance of a parallel shell sort program, authors in the ﬁrst group might use a
+serial radix sort or quicksort on a single core of the fastest system available, while
+authors in the second group would use a serial shell sort on a single processor of the
+parallel system. We’ll generally use the second approach.
+2.6.2 Amdahl’s law
+Back in the 1960s, Gene Amdahl made an observation [3] that’s become known as
+Amdahl’s law. It says, roughly, that unless virtually all of a serial program is paral-
+lelized, the possible speedup is going to be very limited—regardless of the number of
+cores available. Suppose, for example, that we’re able to parallelize 90% of a serial
+program. Furthermore, suppose that the parallelization is “perfect,” that is, regardless
+of the number of cores p we use, the speedup of this part of the program will be p.
+If the serial run-time is Tserial = 20 seconds, then the run-time of the parallelized part
+will be 0.9 × Tserial/p = 18/p and the run-time of the “unparallelized” part will be
+0.1 × Tserial = 2. The overall parallel run-time will be
+Tparallel = 0.9 × Tserial/p + 0.1 × Tserial = 18/p + 2,
+and the speedup will be
+S = Tserial
+0.9 × Tserial/p + 0.1 × Tserial
+= 20 18/p + 2 .
+Now as p gets larger and larger, 0.9 × Tserial/p = 18/p gets closer and closer to 0,
+so the total parallel run-time can’t be smaller than 0.1 × Tserial = 2. That is, the de-
+nominator in S can’t be smaller than 0.1 × Tserial = 2. The fraction S must therefore
+satisfy the inequality
+S ≤ Tserial
+0.1 × Tserial
+= 20 2 = 10.
+That is, S ≤ 10. This is saying that even though we’ve done a perfect job in paral-
+lelizing 90% of the program, and even if we have, say, 1000 cores, we’ll never get a
+speedup better than 10.
+More generally, if a fraction r of our serial program remains unparallelized,
+then Amdahl’s law says we can’t get a speedup better than 1/r. In our example,
+r = 1 − 0.9 = 1/10, so we couldn’t get a speedup better than 10. Therefore if a
+
+===== PAGE 6 =====
+66 CHAPTER 2 Parallel hardware and parallel software
+fraction r of our serial program is “inherently serial,” that is, cannot possibly be par-
+allelized, then we can’t possibly get a speedup better than 1/r. Thus even if r is quite
+small—say, 1/100—and we have a system with thousands of cores, we can’t possibly
+get a speedup better than 100.
+This is pretty daunting. Should we give up and go home? Well, no. There are
+several reasons not to be too worried by Amdahl’s law. First, it doesn’t take into con-
+sideration the problem size. For many problems, as we increase the problem size,
+the “inherently serial” fraction of the program decreases in size; a more mathemat-
+ical version of this statement is known as Gustafson’s law [25]. Second, there are
+thousands of programs used by scientists and engineers that routinely obtain huge
+speedups on large distributed-memory systems. Finally, is a small speedup so awful?
+In many cases, obtaining a speedup of 5 or 10 is more than adequate, especially if the
+effort involved in developing the parallel program wasn’t very large.
+2.6.3 Scalability in MIMD systems
+The word “scalable” has a wide variety of informal uses. Indeed, we’ve used it several
+times already. Roughly speaking, a program is scalable if, by increasing the power of
+the system it’s run on (e.g., increasing the number of cores), we can obtain speedups
+over the program when it’s run on a less powerful system (e.g., a system with fewer
+cores). However, in discussions of MIMD parallel program performance, scalabil-
+ity has a somewhat more formal deﬁnition. Suppose we run a parallel program with
+a ﬁxed number of processes/threads and a ﬁxed input size, and we obtain an efﬁ-
+ciency E. Suppose we now increase the number of processes/threads that are used by
+the program. If we can ﬁnd a corresponding rate of increase in the problem size so
+that the program always has efﬁciency E, then the program is scalable.
+As an example, suppose that Tserial = n, where the units of Tserial are in microsec-
+onds, and n is also the problem size. Also suppose that Tparallel = n/p + 1. Then
+E = n p(n/p + 1) = n n + p .
+To see if the program is scalable, we increase the number of processes/threads by a
+factor of k, and we want to ﬁnd the factor x that we need to increase the problem size
+by, so that E is unchanged. The number of processes/threads will be kp; the problem
+size will be xn, and we want to solve the following equation for x:
+E = n n + p = xn xn + kp .
+Well, if x = k, there will be a common factor of k in the denominator xn + kp =
+kn + kp = k(n + p), and we can reduce the fraction to get
+xn
+xn + kp = kn k(n + p) = n n + p .

@@ -1,0 +1,124 @@
+
+===== PAGE 1 =====
+Assignment 3 
+Introduction to GPGPU with Nvidia Warp 
+Weight: 18% of the ﬁnal grade 
+Due date: Friday, December 4, 11:59pm. 
+ 
+Assignment overview 
+In this assignment you will get a chance to play with real-world applications of GPGPU 
+programming. You will need to implement two basic image-processing algorithms - one for 
+sharpening and one for noise removal - using the Nvidia Warp API. Each algorithm should be 
+implemented using one or more dedicated kernels. 
+Implementation 
+For sharpening, use unsharp masking described in class. For noise removal, you can pick one 
+of the Gaussian or median ﬁltering algorithms described in Lecture 17. 
+Your executable will run as follows:
+python3 a3.py algType kernSize param inFileName outFileName
+where:
+-algType is either -s (sharpen) or -n (noise removal)
+-kernSize is the kernel size - e.g. 3 for 3x3, 5 for 5x5, etc. It must always be positive and 
+odd.
+-param is the additional numerical parameter that the algorithm needs - e.g. the scaling value 
+k for unsharp masking or sigma for the Gaussian. If your algorithm doesn't need any 
+additional parameters once it knows the kernel size, just pass some dummy value here (e.g. 
+0)
+-inFileName is the name of the input image ﬁle
+-outFileName is the name of the output image ﬁle 
+Your algorithm must work with greyscale (PIL mode “L”) and colour (PIL modes “RGB” and 
+“RGBA”) images. We will only test your code with these three modes. For RGBA images, leave 
+the alpha channel unchanged. The output image must have the same mode as the input image. 
+You will use the PIL image library. A stub that shows you how to open an image using PIL, 
+check its mode, pass it to a Warp kernel and save the result has been provided for you.
+Report 
+In addition to the implementation, provide a report document in which you:
+-Provide any information that we might need when running your code
+-Describe which algorithms you have implemented
+-Describe the test cases you have used to validate algorithm correctness - i.e. that it aﬀects 
+an image the way it is supposed to. Include examples in the report and explain why you 
+used them.
+-Explain how you have implemented the kernel(s) for this algorithm using the Warp API. You 
+can paste the code into the document so you can more clearly explain it.
+1
+
+===== PAGE 2 =====
+-Make sure your explanation includes a description of how you handle the borders. Note that 
+you cannot leave them unprocessed. You must implement an approach that computes new 
+values for the entire image, including the border - i.e. kernel truncation or Option 3 (reﬂected 
+or circular indexing) from Lecture 16.
+We will assume that you develop and test your GPGPU code on Docker, where it will run on a 
+single CPU thread. As a result, you will not see any performance improvements, unless you 
+have access to an Nvidia GPU.
+Therefore the A3 report does not need to include any timings or performance analysis. If you 
+have access to Nvidia hardware - e.g. your own machine or a GPU runtime on Google Colab - 
+you are welcome to run your algorithm with device="cuda" and discuss algorithm 
+performance (e.g. CPU vs GPU execution). This is entirely optional and will not aﬀect your 
+grade. Also, please note that we cannot provide support for Colab or other GPU platforms. 
+Your submitted code must use device="cpu", since it will be graded on Docker.
+Bonus marks (up to 10 marks)
+1.Alternative sharpening: implement a sharpening algorithm other than unsharp masking. 
+This algorithm cannot be based on anything described in class (5 marks).
+2.Alternative denoising: implement a noise removal algorithm that is not based on what we 
+have discussed in class (5 marks).
+To get each of these bonus marks, you must do the following:
+-Clearly describe the algorithm in your report and state where you found its description
+-Clearly demonstrate, with multiple visual examples, that the algorithm you have implemented 
+produces better results than the algorithm it replaces. Speciﬁcally:
+-If you are implementing a denoising algorithm, demonstrate with sample images that it 
+does a better job of removing noise while retaining detail than the algorithms described in 
+class
+-If you are implementing a sharpening algorithm, demonstrate that it does a better job of 
+enhancing details in an image than unsharp masking.
+Both bonus components are meant for those of you who wish to take a deeper dive into image 
+processing. They also give you a chance to think about "algorithm performance" in a diﬀerent 
+context - not how fast it runs, but how well it does what it is supposed to do. As a result, the 
+bonus will take some work. 
+To do the required performance analysis ("bonus option works better than the class option"), 
+you will have to implement both the default algorithm and the bonus one. You will also have to 
+ﬁnd and process images that demonstrate the performance of the algorithm, and conduct an 
+analysis explaining why you think the alternative algorithm produces better results. 
+Please do not attempt the bonus unless you have already fully implemented the assignment - 
+see the grade breakdown for details. 
+ 
+Grading 
+The assignment will be marked using the standard CIS*3090 Docker image provided on the 
+course website and discussed in class. We will download and run a fresh image, create a 
+2
+
+===== PAGE 3 =====
+container, and use Docker to run and grade your code.  Make sure you test your code 
+accordingly.
+Please note that, since this assignment evaluates your knowledge of GPGPU and stream 
+programming, no marks at all will be given for a solution that is not parallelized using the Warp 
+API.
+The bonus marks will be graded only if your assignment received at least 95/100 before the 
+bonus.  Also, no partial marks will be given for each of the two bonus components.
+Late submissions: see course outline for late submission policies. 
+This assignment is individual work and is subject to the University Academic Misconduct 
+Policy.  See course outline for details.
+A3 Grade breakdown:
+•Implements the image processing algorithms:	 	 	 	 	 70 marks 
+•Noise removal: 	 	 	 	 	 	 	 	 35 marks
+•Sharpening: 	 	 	 	 	 	 	 	 35 marks
+•Report with all the analysis: 	 	 	 	 	 	 	 30 marks
+•Algorithm descriptions: 	 	 	 	 	 	 	 6 marks
+•Test cases and examples:	 	 	 	 	 	 8 marks
+•Explanation of the Warp kernel implementation: 	 	 	 10 marks
+•Explanation of border handling: 	 	 	 	 	 	 6 marks
+Deductions will include, but will not be limited to:
+•Incorrect run-time behaviour	 	 	 	 	 up to -70 marks
+•Incorrect sharpening / denoising
+•Border pixels left unprocessed
+•Errors in the Warp implementation or missing Warp implementation 
+•Deviations from the input/output speciﬁcations
+•etc.
+•Missing report components, including up to -30 marks 
+•Missing or incomplete algorithm descriptions
+•Missing or incomplete explanation of border handling
+•etc. 
+ 
+Submission 
+Submit the assignment using Moodle. Submit your source code and your report (PDF). Your 
+main program must be named a3.py. Bundle everything in a zip ﬁle. Do not include your test 
+images.
+3

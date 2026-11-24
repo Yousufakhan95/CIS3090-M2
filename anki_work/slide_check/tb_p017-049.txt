@@ -1,0 +1,1157 @@
+===== PRINTED PAGE 17 =====
+2
+CHAPTER
+Parallel hardware and
+parallel software
+It’s perfectly feasible for specialists in disciplines other than computer science and
+computer engineering to write parallel programs. However, to write efﬁcient parallel
+programs, we often need some knowledge of the underlying hardware and system
+software. It’s also very useful to have some knowledge of different types of paral-
+lel software, so in this chapter we’ll take a brief look at a few topics in hardware
+and software. We’ll also take a brief look at evaluating program performance and a
+method for developing parallel programs. We’ll close with a discussion of what kind
+of environment we might expect to be working in, and a few rules and assumptions
+we’ll make in the rest of the book.
+This is a long, broad chapter, so it may be a good idea to skim through some of the
+sections on a ﬁrst reading so that you have a good idea of what’s in the chapter. Then,
+when a concept or term in a later chapter isn’t quite clear, it may be helpful to refer
+back to this chapter. In particular, you may want to skim over most of the material in
+“Modiﬁcations to the von Neumann Model,” except “The Basics of Caching.” Also,
+in the “Parallel Hardware” section, you can safely skim the material on “Interconnec-
+tion Networks.” You can also skim the material on “SIMD Systems” unless you’re
+planning to read the chapter on CUDA programming.
+2.1 Some background
+Parallel hardware and software have grown out of conventional serial hardware and
+software: hardware and software that runs (more or less) a single job at a time. So to
+better understand the current state of parallel systems, let’s begin with a brief look at
+a few aspects of serial systems.
+2.1.1 The von Neumann architecture
+The “classical” von Neumann architecture consists of main memory,acentral-
+processing unit (CPU) or processor or core, and an interconnection between the
+memory and the CPU. Main memory consists of a collection of locations, each of
+which is capable of storing both instructions and data. Every location has an address
+and the location’s contents. The address is used to access the location, and the con-
+tents of the location is the instruction or data stored in the location.
+An Introduction to Parallel Programming. https://doi.org/10.1016/B978-0-12-804605-0.00009-9
+Copyright © 2022 Elsevier Inc. All rights reserved. 17
+===== PRINTED PAGE 18 =====
+18 CHAPTER 2 Parallel hardware and parallel software
+The central processing unit is logically divided into a control unit and a data-
+path. The control unit is responsible for deciding which instructions in a program
+should be executed, and the datapath is responsible for executing the actual instruc-
+tions. Data in the CPU and information about the state of an executing program are
+stored in special, very fast storage, called registers. The control unit has a special
+register called the program counter. It stores the address of the next instruction to
+be executed.
+Instructions and data are transferred between the CPU and memory via the inter-
+connect. This has traditionally been a bus, which consists of a collection of parallel
+wires and some hardware controlling access to the wires. More recent systems use
+more complex interconnects. (See Section 2.3.4.) A von Neumann machine executes
+a single instruction at a time, and each instruction operates on only a few pieces of
+data. See Fig. 2.1.
+When data or instructions are transferred from memory to the CPU, we some-
+times say the data or instructions are fetched or read from memory. When data are
+transferred from the CPU to memory, we sometimes say the data are writtentomem-
+FIGURE 2.1
+The von Neumann architecture.
+===== PRINTED PAGE 19 =====
+2.1 Some background 19
+ory or stored. The separation of memory and CPU is often called the von Neumann
+bottleneck, since the interconnect determines the rate at which instructions and data
+can be accessed. The potentially vast quantity of data and instructions needed to run
+a program is effectively isolated from the CPU. In 2021, CPUs are capable of execut-
+ing instructions more than one hundred times faster than they can fetch items from
+main memory.
+To better understand this problem, imagine that a large company has a single
+factory (the CPU) in one town and a single warehouse (main memory) in another.
+Furthermore, imagine that there is a single two-lane road joining the warehouse and
+the factory. All the raw materials used in manufacturing the products are stored in the
+warehouse. Also, all the ﬁnished products are stored in the warehouse before being
+shipped to customers. If the rate at which products can be manufactured is much
+larger than the rate at which raw materials and ﬁnished products can be transported,
+then it’s likely that there will be a huge trafﬁc jam on the road, and the employees
+and machinery in the factory will either be idle for extended periods or will have to
+reduce the rate at which they produce ﬁnished products.
+To address the von Neumann bottleneck and, more generally, improve computer
+performance, computer engineers and computer scientists have experimented with
+many modiﬁcations to the basic von Neumann architecture. Before discussing some
+of these modiﬁcations, let’s ﬁrst take a moment to discuss some aspects of the soft-
+ware that is used in both von Neumann systems and more modern systems.
+2.1.2 Processes, multitasking, and threads
+Recall that the operating system, or OS, is a major piece of software, whose purpose
+is to manage hardware and software resources on a computer. It determines which
+programs can run and when they can run. It also controls the allocation of memory to
+running programs and access to peripheral devices, such as hard disks and network
+interface cards.
+When a user runs a program, the operating system creates a process—an instance
+of a computer program that is being executed. A process consists of several entities:
+ The executable machine language program.
+ A block of memory, which will include the executable code, a call stack that keeps
+track of active functions, a heap that can be used for memory explicitly allocated
+by the user program, and some other memory locations.
+ Descriptors of resources that the operating system has allocated to the process, for
+example, ﬁle descriptors.
+ Security information—for example, information specifying which hardware and
+software resources the process can access.
+ Information about the state of the process, such as whether the process is ready to
+run or is waiting on some resource, the content of the registers, and information
+about the process’s memory.
+===== PRINTED PAGE 20 =====
+20 CHAPTER 2 Parallel hardware and parallel software
+FIGURE 2.2
+A process with three threads.
+Most modern operating systems are multitasking. This means that the operating
+system provides support for the apparent simultaneous execution of multiple pro-
+grams. This is possible even on a system with a single core, since each process runs
+for a small interval of time (typically a few milliseconds), often called a time slice.
+After one running program has executed for a time slice, the operating system can
+run a different program. A multitasking OS may change the running process many
+times a minute, even though changing the running process can take a long time.
+In a multitasking OS, if a process needs to wait for a resource—for example,
+it needs to read data from external storage—it will block. This means that it will
+stop executing and the operating system can run another process. However, many
+programs can continue to do useful work even though the part of the program that
+is currently executing must wait on a resource. For example, an airline reservation
+system that is blocked waiting for a seat map for one user could provide a list of
+available ﬂights to another user. Threading provides a mechanism for programmers
+to divide their programs into more or less independent tasks, with the property that
+when one thread is blocked, another thread can be run. Furthermore, in most systems
+it’s possible to switch between threads much faster than it’s possible to switch be-
+tween processes. This is because threads are “lighter weight” than processes. Threads
+are contained within processes, so they can use the same executable, and they usually
+share the same memory and the same I/O devices. In fact, two threads belonging to
+one process can share most of the process’s resources. The two most important ex-
+ceptions are that they’ll need a record of their own program counters and they’ll need
+their own call stacks, so that they can execute independently of each other.
+If a process is the “master” thread of execution and threads are started and stopped
+by the process, then we can envision the process and its subsidiary threads as lines:
+when a thread is started, it forks off the process; when a thread terminates, it joins
+the process. See Fig. 2.2.
+2.2 Modiﬁcations to the von Neumann model
+As we noted earlier, since the ﬁrst electronic digital computers were developed back
+in the 1940s, computer scientists and computer engineers have made many improve-
+ments to the basic von Neumann architecture. Many are targeted at reducing the
+problem of the von Neumann bottleneck, but many are also targeted at simply mak-
+===== PRINTED PAGE 21 =====
+2.2 Modiﬁcations to the von Neumann model 21
+ing CPUs faster. In this section, we’ll look at three of these improvements: caching,
+virtual memory, and low-level parallelism.
+2.2.1 The basics of caching
+Caching is one of the most widely used methods of addressing the von Neumann bot-
+tleneck. To understand the ideas behind caching, recall our example. A company has
+a factory (CPU) in one town and a warehouse (main memory) in another, and there
+is a single, two-lane road joining the factory and the warehouse. There are a number
+of possible solutions to the problem of transporting raw materials and ﬁnished prod-
+ucts between the warehouse and the factory. One is to widen the road. Another is to
+move the factory and/or the warehouse, or to build a uniﬁed factory and warehouse.
+Caching exploits both of these ideas. Rather than transporting a single instruction or
+data item, we can use an effectively wider interconnection that can transport more
+data or more instructions in a single memory access. Also, rather than storing all
+data and instructions exclusively in main memory, we can store blocks of data and
+instructions in special memory that is effectively closer to the registers in the CPU.
+In general, a cache is a collection of memory locations that can be accessed in less
+time than some other memory locations. In our setting, when we talk about caches
+we’ll usually mean a CPU cache, which is a collection of memory locations that the
+CPU can access more quickly than it can access main memory. A CPU cache can
+either be located on the same chip as the CPU or it can be located on a separate chip
+that can be accessed much faster than an ordinary memory chip. Memory that can be
+accessed faster than main memory is more expensive. So caches are much smaller
+than main memory.
+Once we have a cache, an obvious problem is deciding which data and instructions
+should be stored in the cache. The universally used principle is based on the idea that
+programs tend to use data and instructions that are physically close to recently used
+data and instructions. After executing an instruction, programs typically execute the
+next instruction; branching tends to be relatively rare. Similarly, after a program has
+accessed data in one memory location, it often accesses data in a memory location
+that is physically nearby. An extreme example of this is in the use of arrays. Consider
+the loop
+float z [1000];
+...
+sum =0.0;
+for ( i =0;i < 1000; i ++)
+sum += z [ i ];
+Arrays are allocated as blocks of contiguous memory locations. So, for example, the
+location storing z[1] immediately follows the location z[0]. Thus as long as i < 999,
+the read of z[i] is immediately followed by a read of z[i+1].
+The principle that an access of one location is followed by an access of a nearby
+location is often called locality. After accessing one memory location (instruction or
+===== PRINTED PAGE 22 =====
+22 CHAPTER 2 Parallel hardware and parallel software
+data), a program will typically access a nearby location (spatial locality) in the near
+future (temporal locality).
+To exploit the principle of locality, the system uses an effectively wider intercon-
+nect to access data and instructions. That is, a memory access will effectively operate
+on blocks of data and instructions instead of individual instructions and individual
+data items. These blocks are called cache blocks or cache lines. A typical cache line
+stores 8 to 16 times as much information as a single memory location. In our ex-
+ample, if a cache line stores 16 ﬂoats, then when we ﬁrst go to add sum += z[0],the
+system might read the ﬁrst 16 elements of z, z[0], z[1], ..., z[15] from memory into
+cache. So the next 15 additions will use elements of z that are already in the cache.
+Conceptually, it’s often convenient to think of a CPU cache as a single monolithic
+structure. In practice, though, the cache is usually divided into levels: the ﬁrst level
+(L1)isthesmallestandthefastest,andotherlevels(L2,L3,...)arelargerandslower.
+In 2021, most systems have at least two levels, and having three levels is quite com-
+mon. Caches often store copies of information in slower memory, and, if we think of
+a lower-numbered (faster, smaller) cache as a cache that’s closer to the registers, this
+often applies. So, for example, a variable stored in a level 1 cache will often also be
+stored in level 2. However, some multilevel caches don’t duplicate information that’s
+available in another level. For these caches, a variable in a level 1 cache might not be
+stored in any other level of the cache, but it would be stored in main memory.
+When the CPU needs to access an instruction or data, it works its way down the
+cache hierarchy: First it checks the level 1 cache, then the level 2, and so on. Finally,
+if the information needed isn’t in any of the caches, it accesses main memory. When a
+cache is checked for information and the information is available, it’s called a cache
+hit or just a hit. If the information isn’t available, it’s called a cache miss or a miss.
+Hit or miss is often modiﬁed by the level. For example, when the CPU attempts to
+access a variable, it might have an L1 miss and an L2 hit.
+Note that the memory access terms read and write are also used for caches. For
+example, we might read an instruction from an L2 cache, and we might write data to
+an L1 cache.
+When the CPU attempts to read data or instructions and there’s a cache read-
+miss, it will read from memory the cache line that contains the needed information
+and store it in the cache. This may stall the processor while it waits for the slower
+memory: the processor may stop executing statements from the current program until
+the required data or instructions have been fetched from memory. So in our example,
+when we read z[0], the processor may stall while the cache line containing z[0] is
+transferred from memory into the cache.
+When the CPU writes data to a cache, the value in the cache and the value in main
+memory are different or inconsistent. There are two basic approaches to dealing with
+the inconsistency. In write-through caches, the line is written to main memory when
+it is written to the cache. In write-back caches, the data isn’t written immediately.
+Rather, the updated data in the cache is marked dirty, and when the cache line is
+replaced by a new cache line from memory, the dirty line is written to memory.
+===== PRINTED PAGE 23 =====
+2.2 Modiﬁcations to the von Neumann model 23
+Table 2.1 Assignments of a 16-line main memory to a 4-line cache.
+Cache Location
+Memory Index Fully Assoc Direct Mapped 2-way
+0 0, 1, 2, or 3 0 0or1
+1 0, 1, 2, or 3 1 2or3
+2 0, 1, 2, or 3 2 0or1
+3 0, 1, 2, or 3 3 2or3
+4 0, 1, 2, or 3 0 0or1
+5 0, 1, 2, or 3 1 2or3
+6 0, 1, 2, or 3 2 0or1
+7 0, 1, 2, or 3 3 2or3
+8 0, 1, 2, or 3 0 0or1
+9 0, 1, 2, or 3 1 2or3
+10 0, 1, 2, or 3 2 0or1
+11 0, 1, 2, or 3 3 2or3
+12 0, 1, 2, or 3 0 0or1
+13 0, 1, 2, or 3 1 2or3
+14 0, 1, 2, or 3 2 0or1
+15 0, 1, 2, or 3 3 2or3
+2.2.2 Cache mappings
+Another issue in cache design is deciding where lines should be stored. That is, if
+we fetch a cache line from main memory, where in the cache should it be placed?
+The answer to this question varies from system to system. At one extreme is a fully
+associative cache, in which a new line can be placed at any location in the cache. At
+the other extreme is a direct mapped cache, in which each cache line has a unique
+location in the cache to which it will be assigned. Intermediate schemes are called
+n-way set associative. In these schemes, each cache line can be placed in one of n
+different locations in the cache. For example, in a two-way set associative cache, each
+line can be mapped to one of two locations.
+As an example, suppose our main memory consists of 16 lines with indexes 0–15,
+and our cache consists of 4 lines with indexes 0–3. In a fully associative cache, line 0
+can be assigned to cache location 0, 1, 2, or 3. In a direct mapped cache, we might
+assign lines by looking at their remainder after division by 4. So lines 0, 4, 8, and 12
+would be mapped to cache index 0, lines 1, 5, 9, and 13 would be mapped to cache
+index 1, and so on. In a two-way set associative cache, we might group the cache into
+two sets: indexes 0 and 1 form one set—set 0—and indexes 2 and 3 form another—
+set 1. So we could use the remainder of the main memory index modulo 2, and cache
+line 0 would be mapped to either cache index 0 or cache index 1. See Table 2.1.
+When more than one line in memory can be mapped to several different locations
+in a cache (fully associative and n-way set associative), we also need to be able to
+decide which line should be replaced or evicted. In our preceding example, if, for
+example, line 0 is in location 0 and line 2 is in location 1, where would we store
+===== PRINTED PAGE 24 =====
+24 CHAPTER 2 Parallel hardware and parallel software
+line 4? The idea behind most commonly used approaches is called least recently
+used. As the name suggests, the cache has a record of the relative order in which the
+blocks have been used, and if line 0 were used more recently than line 2, then line 2
+would be evicted and replaced by line 4.
+2.2.3 Caches and programs: an example
+It’s important to remember that the workings of the CPU cache are controlled by
+the system hardware, and we, the programmers, don’t directly determine which data
+and which instructions are in the cache. However, knowing the principle of spatial
+and temporal locality allows us to have some indirect control over caching. As an
+example, C stores two-dimensional arrays in “row-major” order. That is, although
+we think of a two-dimensional array as a rectangular block, memory is effectively
+a huge one-dimensional array. So in row-major storage, we store row 0 ﬁrst, then
+row 1, and so on. In the following two-code segments, we would expect the ﬁrst pair
+of nested loops to have much better performance than the second, since it’s accessing
+the data in the two-dimensional array in contiguous blocks:
+double A [ MAX ][MAX ], x [ MAX ], y [ MAX ];
+...
+/ ∗ Initialize A and x, assign y = 0 ∗ /
+...
+/ ∗ First pair of loops ∗ /
+for ( i =0;i < MAX ; i ++)
+for ( j =0;j < MAX ; j ++)
+y [ i ]+=A [ i ][j ]∗ x [ j ];
+...
+/ ∗ Assign y = 0 ∗ /
+...
+/ ∗ Second pair of loops ∗ /
+for ( j =0;j < MAX ; j ++)
+for ( i =0;i < MAX ; i ++)
+y [ i ]+=A [ i ][j ]∗ x [ j ];
+To better understand this, suppose MAX is four, a cache line stores four doubles, and
+the elements of A are stored in memory as follows:
+Cache Line Elements of A
+0 A[0][0] A[0][1] A[0][2] A[0][3]
+1 A[1][0] A[1][1] A[1][2] A[1][3]
+2 A[2][0] A[2][1] A[2][2] A[2][3]
+3 A[3][0] A[3][1] A[3][2] A[3][3]
+So, for example, A [0][1] is stored immediately after A [0][0] , and A [1][0] is stored
+immediately after A [0][3] .
+Let’s suppose that none of the elements of A are in the cache when each pair of
+loops starts executing. Let’s also suppose that the cache is direct mapped, and it can
+only store eight elements of A, or two cache lines. (We won’t worry about x and y.)
+===== PRINTED PAGE 25 =====
+2.2 Modiﬁcations to the von Neumann model 25
+Both pairs of loops attempt to ﬁrst access A [0][0] . Since it’s not in the cache, this
+will result in a cache miss, and the system will read the line consisting of the ﬁrst
+row of A, A [0][0] , A [0][1] , A [0][2] , A [0][3] into the cache. The ﬁrst pair of loops then
+accesses A [0][1] , A [0][2] , A [0][3] , all of which are in the cache, and the next miss in
+the ﬁrst pair of loops will occur when the code accesses A [1][0] . Continuing in this
+fashion, we see that the ﬁrst pair of loops will result in a total of four misses when
+it accesses elements of A, one for each row. Note that since our hypothetical cache
+can only store two lines or eight elements of A, when we read the ﬁrst element of row
+two and the ﬁrst element of row three, one of the lines that’s already in the cache will
+have to be evicted from the cache, but once a line is evicted, the ﬁrst pair of loops
+won’t need to access the elements of that line again.
+After reading the ﬁrst row into the cache, the second pair of loops needs to then
+access A [1][0] , A [2][0] , A [3][0] , none of which are in the cache. So the next three
+accesses of A will also result in misses. Furthermore, because the cache is small, the
+reads of A [2][0] and A [3][0] will require that lines already in the cache be evicted.
+Since A [2][0] is stored in cache line 2, reading its line will evict line 0, and reading
+A [3][0] will evict line 1. After ﬁnishing the ﬁrst pass through the outer loop, we’ll
+next need to access A [0][1] , which was evicted with the rest of the ﬁrst row. So we
+see that every time we read an element of A, we’ll have a miss, and the second pair of
+loops results in 16 misses.
+Thus we’d expect the ﬁrst pair of nested loops to be much faster than the second.
+In fact, if we run the code on one of our systems with MAX = 1000, the ﬁrst pair of
+nested loops is approximately three times faster than the second pair.
+2.2.4 Virtual memory
+Caches make it possible for the CPU to quickly access instructions and data that are
+in main memory. However, if we run a very large program or a program that accesses
+very large data sets, all of the instructions and data may not ﬁt into main memory.
+This is especially true with multitasking operating systems; to switch between pro-
+grams and create the illusion that multiple programs are running simultaneously, the
+instructions and data that will be used during the next time slice should be in main
+memory. Thus in a multitasking system, even if the main memory is very large, many
+running programs must share the available main memory. Furthermore, this sharing
+must be done in such a way that each program’s data and instructions are protected
+from corruption by other programs.
+Virtual memory was developed so that main memory can function as a cache for
+secondary storage. It exploits the principle of spatial and temporal locality by keeping
+in main memory only the active parts of the many running programs; those parts that
+are idle can be kept in a block of secondary storage, called swap space.LikeCPU
+caches, virtual memory operates on blocks of data and instructions. These blocks
+are commonly called pages, and since secondary storage access can be hundreds of
+thousands of times slower than main memory access, pages are relatively large—most
+systems have a ﬁxed page size that currently ranges from 4 to 16 kilobytes.
+===== PRINTED PAGE 26 =====
+26 CHAPTER 2 Parallel hardware and parallel software
+Table 2.2 Virtual address divided into virtual page
+number and byte offset.
+Virtual Address
+Virtual Page Number Byte Offset
+31 30 ··· 13 12 11 10 ··· 1 0
+1 0 ··· 1 1 0 0 ··· 1 1
+We may run into trouble if we try to assign physical memory addresses to pages
+when we compile a program. If we do this, then each page of the program can only
+be assigned to one block of memory, and with a multitasking operating system, we’re
+likely to have many programs wanting to use the same block of memory. To avoid this
+problem, when a program is compiled, its pages are assigned virtual page numbers.
+Then, when the program is run, a table is created that maps the virtual page numbers
+to physical addresses. When the program is run and it refers to a virtual address,
+this page table is used to translate the virtual address into a physical address. If the
+creation of the page table is managed by the operating system, it can ensure that the
+memory used by one program doesn’t overlap the memory used by another.
+A drawback to the use of a page table is that it can double the time needed to
+access a location in main memory. Suppose, for example, that we want to execute
+an instruction in main memory. Then our executing program will have the virtual
+address of this instruction, but before we can ﬁnd the instruction in memory, we’ll
+need to translate the virtual address into a physical address. To do this, we’ll need to
+ﬁnd the page in memory that contains the instruction. Now the virtual page number
+is stored as a part of the virtual address. As an example, suppose our addresses are
+32 bits and our pages are 4 kilobytes = 4096 bytes. Then each byte in the page can
+be identiﬁed with 12 bits, since 212 = 4096. Thus we can use the low-order 12 bits
+of the virtual address to locate a byte within a page, and the remaining bits of the
+virtual address can be used to locate an individual page. See Table 2.2. Observe that
+the virtual page number can be computed from the virtual address without going to
+memory. However, once we’ve found the virtual page number, we’ll need to access
+the page table to translate it into a physical page address. If the required part of the
+page table isn’t in cache, we’ll need to load it from memory. After it’s loaded, we can
+translate our virtual address to a physical address, and get the required instruction.
+This is clearly a problem. Although multiple programs can use main memory
+at more or less the same time, using a page table has the potential to signiﬁcantly
+increase each program’s overall run-time. To address this issue, processors have a
+special address translation cache, called a translation-lookaside buffer, or TLB. It
+caches a small number of entries (typically 16–512) from the page table in very fast
+memory. Using the principle of spatial and temporal locality, we would expect that
+most of our memory references will be to pages whose physical address is stored
+in the TLB, and the number of memory references that require accesses to the page
+table in main memory will be substantially reduced.
+===== PRINTED PAGE 27 =====
+2.2 Modiﬁcations to the von Neumann model 27
+The terminology for the TLB is the same as the terminology for caches. When we
+look for an address and the virtual page number is in the TLB, it’s called a TLB hit.
+If it’s not in the TLB, it’s called a miss. The terminology for the page table, however,
+has an important difference from the terminology for caches. If we attempt to access
+a page that’s not in memory—that is, the page table doesn’t have a valid physical
+address for the page and the page is only stored on disk—then the attempted access
+is called a page fault.
+The relative slowness of disk accesses has a couple of additional consequences for
+virtual memory. First, with CPU caches, we could handle write-misses with either a
+write-through or write-back scheme. With virtual memory, however, disk accesses
+are so expensive that they should be avoided whenever possible, so virtual memory
+always uses a write-back scheme. This can be handled by keeping a bit on each page
+in memory that indicates whether the page has been updated. If it has been updated,
+when it is evicted from main memory, it will be written to disk. Second, since disk
+accesses are so slow, management of the page table and the handling of disk accesses
+can be done by the operating system. Thus, even though we as programmers don’t
+directly control virtual memory, unlike CPU caches, which are handled by system
+hardware, virtual memory is usually controlled by a combination of system hardware
+and operating system software.
+2.2.5 Instruction-level parallelism
+Instruction-level parallelism, or ILP, attempts to improve processor performance by
+having multiple processor components or functional units simultaneously executing
+instructions. There are two main approaches to ILP: pipelining, in which functional
+units are arranged in stages; and multiple issue, in which multiple instructions can
+be simultaneously initiated. Both approaches are used in virtually all modern CPUs.
+Pipelining
+The principle of pipelining is similar to a factory assembly line: while one team is
+bolting a car’s engine to the chassis, another team can connect the transmission to the
+engine and the driveshaft of a car that’s already been processed by the ﬁrst team, and
+a third team can bolt the body to the chassis in a car that’s been processed by the ﬁrst
+two teams. As an example involving computation, suppose we want to add the ﬂoat-
+ing point numbers 9.87 × 104 and 6.54 × 103. Then we can use the following steps:
+Time Operation Operand 1 Operand 2 Result
+1 Fetch operands 9.87 × 104 6.54 × 103
+2 Compare exponents 9.87 × 104 6.54 × 103
+3 Shift one operand 9.87 × 104 0.654 × 104
+4 Add 9.87 × 104 0.654 × 104 10.524 × 104
+5 Normalize result 9.87 × 104 0.654 × 104 1.0524 × 105
+6 Round result 9.87 × 104 0.654 × 104 1.05 × 105
+7 Store result 9.87 × 104 0.654 × 104 1.05 × 105
+===== PRINTED PAGE 28 =====
+28 CHAPTER 2 Parallel hardware and parallel software
+Table 2.3 Pipelined addition. Numbers in the table are sub-
+scripts of operands/results.
+Time Fetch Compare Shift Add Normalize Round Store
+0 0
+1 1 0
+2 2 1 0
+3 3 2 1 0
+4 4 3 2 1 0
+5 5 4 3 2 1 0
+6 6 5 4 3 2 1 0
+... ... ... ... ... ... ... ...
+999 999 998 997 996 995 994 993
+1000 999 998 997 996 995 994
+1001 999 998 997 996 995
+1003 999 998 997
+1004 999 998
+1005 999
+Here we’re using base 10 and a three-digit mantissa or signiﬁcand with one digit to
+the left of the decimal point. Thus, in the example, normalizing shifts the decimal
+point one unit to the left, and rounding rounds to three digits.
+Now if each of the operations takes one nanosecond (10−9 seconds), the addition
+operation will take seven nanoseconds. So if we execute the code
+float x [1000] , y [1000] , z [1000];
+...
+for ( i =0;i < 1000; i ++)
+z [ i ]=x [ i ]+y [ i ];
+the for loop will take something like 7000 nanoseconds.
+As an alternative, suppose we divide our ﬂoating point adder into seven sepa-
+rate pieces of hardware or functional units. The ﬁrst unit will fetch two operands,
+the second will compare exponents, and so on. Also, suppose that the output of one
+functional unit is the input to the next. So, for example, the output of the functional
+unit that adds the two values is the input to the unit that normalizes the result. Then
+a single ﬂoating point addition will still take 7 nanoseconds. However, when we ex-
+ecute the for loop, we can fetch x[1] and y[1] while we’re comparing the exponents
+of x[0] and y[0]. More generally, it’s possible for us to simultaneously execute seven
+different stages in seven different additions. See Table 2.3. From the table, we see
+that after time 5, the pipelined loop produces a result every nanosecond, instead of
+every seven nanoseconds, so the total time to execute the for loop has been reduced
+from 7000 nanoseconds to 1006 nanoseconds—an improvement of almost a factor of
+seven.
+===== PRINTED PAGE 29 =====
+2.2 Modiﬁcations to the von Neumann model 29
+In general, a pipeline with k stages won’t get a k-fold improvement in perfor-
+mance. For example, if the times required by the various functional units are different,
+then the stages will effectively run at the speed of the slowest functional unit. Fur-
+thermore, delays—such as waiting for an operand to become available—can cause the
+pipeline to stall. See Exercise 2.1 for more details on the performance of pipelines.
+Multiple issue
+Pipelines improve performance by taking individual pieces of hardware or functional
+units and connecting them in sequence. Multiple issue processors replicate functional
+units and try to simultaneously execute different instructions in a program. For exam-
+ple, if we have two complete ﬂoating point adders, we can approximately halve the
+time it takes to execute the loop
+for ( i =0;i < 1000; i ++)
+z [ i ]=x [ i ]+y [ i ];
+While the ﬁrst adder is computing z[0], the second can compute z[1]; while the ﬁrst
+is computing z[2], the second can compute z[3]; and so on.
+If the functional units are scheduled at compile time, the multiple issue system is
+said to use static multiple issue. If they’re scheduled at run-time, the system is said
+to use dynamic multiple issue. A processor that supports dynamic multiple issue is
+sometimes said to be superscalar.
+Of course, to make use of multiple issue, the system must ﬁnd instructions that can
+be executed simultaneously. One of the most important techniques is speculation.In
+speculation, the compiler or the processor makes a guess about an instruction, and
+then executes the instruction on the basis of the guess. As a simple example, in the
+following code, the system might predict that the outcome of z = x + y will give z a
+positive value, and, as a consequence, it will assign w = x:
+z = x + y ;
+if ( z >0)
+w = x ;
+else
+w = y ;
+As another example, in the code
+z = x + y ;
+w = ∗ a_p ; / ∗ a_p is a pointer ∗ /
+the system might predict that a_p does not refer to z, and hence it can simultaneously
+execute the two assignments.
+As both examples make clear, speculative execution must allow for the possibility
+that the predicted behavior is incorrect. In the ﬁrst example, we will need to go back
+and execute the assignment w = y if the assignment z = x + y results in a value that’s
+not positive. In the second example, if a_p does point to z, we’ll need to re-execute
+the assignment w = ∗a_p.
+===== PRINTED PAGE 30 =====
+30 CHAPTER 2 Parallel hardware and parallel software
+If the compiler does the speculation, it will usually insert code that tests whether
+the speculation was correct, and, if not, takes corrective action. If the hardware does
+the speculation, the processor usually stores the result(s) of the speculative execution
+in a buffer. When it’s known that the speculation was correct, the contents of the
+buffer are transferred to registers or memory. If the speculation was incorrect, the
+contents of the buffer are discarded, and the instruction is re-executed.
+While dynamic multiple issue systems can execute instructions out of order, in
+current generation systems the instructions are still loaded in order, and the results
+of the instructions are also committed in order. That is, the results of instructions are
+written to registers and memory in the program-speciﬁed order.
+Optimizing compilers, on the other hand, can reorder instructions. This, as we’ll
+see later, can have important consequences for shared-memory programming.
+2.2.6 Hardware multithreading
+ILP can be very difﬁcult to exploit: a program with a long sequence of dependent
+statements offers few opportunities. For example, in a direct calculation of the Fi-
+bonacci numbers
+f [0] = f [1] = 1;
+for ( i =2;i <= n ; i ++)
+f [ i ]=f [ i −1] + f [ i −2];
+there’s essentially no opportunity for simultaneous execution of instructions.
+Thread-level parallelism, or TLP, attempts to provide parallelism through the
+simultaneous execution of different threads, so it provides a coarser-grained paral-
+lelism than ILP, that is, the program units that are being simultaneously executed—
+threads—are larger or coarser than the ﬁner-grained units—individual instructions.
+Hardware multithreading provides a means for systems to continue doing use-
+ful work when the task being currently executed has stalled—for example, if the
+current task has to wait for data to be loaded from memory. Instead of looking for
+parallelism in the currently executing thread, it may make sense to simply run an-
+other thread. Of course, for this to be useful, the system must support very rapid
+switching between threads. For example, in some older systems, threads were sim-
+ply implemented as processes, and in the time it took to switch between processes,
+thousands of instructions could be executed.
+In ﬁne-grained multithreading, the processor switches between threads after each
+instruction, skipping threads that are stalled. While this approach has the potential to
+avoid wasted machine time due to stalls, it has the drawback that a thread that’s
+ready to execute a long sequence of instructions may have to wait to execute every
+instruction. Coarse-grained multithreading attempts to avoid this problem by only
+switching threads that are stalled waiting for a time-consuming operation to complete
+(e.g., a load from main memory). This has the virtue that switching threads doesn’t
+need to be nearly instantaneous. However, the processor can be idled on shorter stalls,
+and thread switching will also cause delays.
+===== PRINTED PAGE 31 =====
+2.3 Parallel hardware 31
+Simultaneous multithreading, or SMT, is a variation on ﬁne-grained multi-
+threading. It attempts to exploit superscalar processors by allowing multiple threads
+to make use of the multiple functional units. If we designate “preferred” threads—
+threads that have many instructions ready to execute—we can somewhat reduce the
+problem of thread slowdown.
+2.3 Parallel hardware
+Multiple issue and pipelining can clearly be considered to be parallel hardware, since
+different functional units can be executed simultaneously. However, since this form
+of parallelism isn’t usually visible to the programmer, we’re treating both of them as
+extensions to the basic von Neumann model, and for our purposes, parallel hardware
+will be limited to hardware that’s visible to the programmer. In other words, if she
+can readily modify her source code to exploit it, or if she must modify her source
+code to exploit it, then we’ll consider the hardware to be parallel.
+2.3.1 Classiﬁcations of parallel computers
+We’ll make use of two, independent classiﬁcations of parallel computers. The ﬁrst,
+Flynn’s taxonomy [20], classiﬁes a parallel computer according to the number of in-
+struction streams and the number of data streams (or datapaths) it can simultaneously
+manage. A classical von Neumann system is therefore a single instruction stream,
+single data stream, or SISD system, since it executes a single instruction at a time
+and, in most cases, computes a single data value at a time. The parallel systems in
+the classiﬁcation can always manage multiple data streams, and we differentiate be-
+tween systems that support only a single instruction stream (SIMD) and systems that
+support multiple instruction streams (MIMD).
+We already encountered the alternative classiﬁcation in Chapter 1: it has to do
+with how the cores access memory. In shared memory systems, the cores can share
+access to memory locations, and the cores coordinate their work by modifying shared
+memory locations. In distributed memory systems, each core has its own, private
+memory, and the cores coordinate their work by communicating across a network.
+2.3.2 SIMD systems
+Single instruction, multiple data, or SIMD, systems are parallel systems. As the
+name suggests, SIMD systems operate on multiple data streams by applying the same
+instruction to multiple data items, so an abstract SIMD system can be thought of as
+having a single control unit and multiple datapaths. An instruction is broadcast from
+the control unit to the datapaths, and each datapath either applies the instruction to
+the current data item, or it is idle. As an example, suppose we want to carry out a
+“vector addition.” That is, suppose we have two arrays x and y, each with n elements,
+and we want to add the elements of y to the elements of x:
+===== PRINTED PAGE 32 =====
+32 CHAPTER 2 Parallel hardware and parallel software
+for ( i =0;i < n ; i ++)
+x [ i ]+=y [ i ];
+Suppose further that our SIMD system has n datapaths. Then we could load x[i] and
+y[i] into the ith datapath, have the ith datapath add y[i] to x[i], and store the result in
+x[i]. If the system has m datapaths and m<n, we can simply execute the additions
+in blocks of m elements at a time. For example, if m = 4 and n = 15, we can ﬁrst
+add elements 0 to 3, then elements 4 to 7, then elements 8 to 11, and ﬁnally elements
+12 to 14. Note that in the last group of elements in our example—elements 12 to
+14—we’re only operating on three elements of x and y, so one of the four datapaths
+will be idle.
+The requirement that all the datapaths execute the same instruction or are idle can
+seriously degrade the overall performance of a SIMD system. For example, suppose
+we only want to carry out the addition if y[i] is positive:
+for ( i =0;i < n ; i ++)
+if ( y [ i ] > 0.0) x [ i ]+=y [ i ];
+In this setting, we must load each element of y into a datapath and determine whether
+it’s positive. If y[i] is positive, we can proceed to carry out the addition. Otherwise,
+the datapath storing y[i] will be idle while the other datapaths carry out the addition.
+Note also that in a “classical” SIMD system, the datapaths must operate syn-
+chronously, that is, each datapath must wait for the next instruction to be broadcast
+before proceeding. Furthermore, the datapaths have no instruction storage, so a data-
+path can’t delay execution of an instruction by storing it for later execution.
+Finally, as our ﬁrst example shows, SIMD systems are ideal for parallelizing sim-
+ple loops that operate on large arrays of data. Parallelism that’s obtained by dividing
+data among the processors and having the processors all apply (more or less) the same
+instructions to their subsets of the data is called data-parallelism. SIMD parallelism
+can be very efﬁcient on large data parallel problems, but SIMD systems often don’t
+do very well on other types of parallel problems.
+SIMD systems have had a somewhat checkered history. In the early 1990s,
+a maker of SIMD systems (Thinking Machines) was one of the largest manufacturers
+of parallel supercomputers. However, by the late 1990s, the only widely produced
+SIMD systems were vector processors. More recently, graphics processing units, or
+GPUs, and desktop CPUs are making use of aspects of SIMD computing.
+Vector processors
+Although what constitutes a vector processor has changed over the years, their key
+characteristic is that they can operate on arrays or vectors of data, while conventional
+CPUs operate on individual data elements or scalars. Typical recent systems have the
+following characteristics:
+ Vector registers. These are registers capable of storing a vector of operands and
+operating simultaneously on their contents. The vector length is ﬁxed by the sys-
+tem, and can range from 4 to 256 64-bit elements.
+===== PRINTED PAGE 33 =====
+2.3 Parallel hardware 33
+ Vectorized and pipelined functional units. Note that the same operation is applied
+to each element in the vector, or, in the case of operations like addition, the same
+operation is applied to each pair of corresponding elements in the two vectors.
+Thus vector operations are SIMD.
+ Vector instructions. These are instructions that operate on vectors rather than
+scalars. If the vector length is vector_length, these instructions have the great
+virtue that a simple loop such as
+for ( i =0;i < n ; i ++)
+x [ i ]+=y [ i ];
+requires only a single load, add, and store for each block of vector_length el-
+ements, while a conventional system requires a load, add, and store for each
+element.
+ Interleaved memory. The memory system consists of multiple “banks” that can
+be accessed more or less independently. After accessing one bank, there will be
+a delay before it can be reaccessed, but a different bank can be accessed much
+sooner. So if the elements of a vector are distributed across multiple banks, there
+can be little to no delay in loading/storing successive elements.
+ Strided memory access and hardware scatter/gather. In strided memory access,
+the program accesses elements of a vector located at ﬁxed intervals. For example,
+accessing the ﬁrst element, the ﬁfth element, the ninth element, and so on would
+be strided access with a stride of four. Scatter/gather (in this context) is writing
+(scatter) or reading (gather) elements of a vector located at irregular intervals—
+for example, accessing the ﬁrst element, the second element, the fourth element,
+the eighth element, and so on. Typical vector systems provide special hardware to
+accelerate strided access and scatter/gather.
+Vector processors have the virtue that for many applications, they are very fast and
+very easy to use. Vectorizing compilers are quite good at identifying code that can
+be vectorized. Furthermore, they identify loops that cannot be vectorized, and they
+often provide information about why a loop couldn’t be vectorized. The user can
+thereby make informed decisions about whether it’s possible to rewrite the loop so
+that it will vectorize. Vector systems have very high memory bandwidth, and every
+data item that’s loaded is actually used, unlike cache-based systems that may not
+make use of every item in a cache line. On the other hand, they don’t handle irregular
+data structures as well as other parallel architectures, and there seems to be a very
+ﬁnite limit to their scalability, that is, their ability to handle ever larger problems.
+It’s difﬁcult to see how systems could be created that would operate on ever longer
+vectors. Current generation systems usually scale by increasing the number of vector
+processors, not the vector length. Current commodity systems provide limited support
+for operations on very short vectors, while processors that operate on long vectors are
+custom manufactured, and, consequently, very expensive.
+===== PRINTED PAGE 34 =====
+34 CHAPTER 2 Parallel hardware and parallel software
+Graphics processing units
+Real-time graphics application programming interfaces, or APIs, use points, lines,
+and triangles to internally represent the surface of an object. They use a graphics
+processing pipeline to convert the internal representation into an array of pixels
+that can be sent to a computer screen. Several of the stages of this pipeline are pro-
+grammable. The behavior of the programmable stages is speciﬁed by functions called
+shader functions. The shader functions are typically quite short—often just a few
+lines of C code. They’re also implicitly parallel, since they can be applied to multiple
+elements (e.g., vertices) in the graphics stream. Since the application of a shader func-
+tion to nearby elements often results in the same ﬂow of control, GPUs can optimize
+performance by using SIMD parallelism, and in the current generation all GPUs use
+SIMD parallelism. This is obtained by including a large number of datapaths (e.g.,
+128) on each GPU processing core.
+Processing a single image can require very large amounts of data—hundreds of
+megabytes of data for a single image is not unusual. GPUs therefore need to maintain
+very high rates of data movement, and to avoid stalls on memory accesses, they rely
+heavily on hardware multithreading; some systems are capable of storing the state of
+more than a hundred suspended threads for each executing thread. The actual number
+of threads depends on the amount of resources (e.g., registers) needed by the shader
+function. A drawback here is that many threads processing a lot of data are needed to
+keep the datapaths busy, and GPUs may have relatively poor performance on small
+problems.
+It should be stressed that GPUs are not pure SIMD systems. Although the data-
+paths on a given core can use SIMD parallelism, current generation GPUs can run
+more than one instruction stream on a single core. Furthermore, typical GPUs can
+have dozens of cores, and these cores are also capable of executing independent in-
+struction streams. So GPUs are neither purely SIMD nor purely MIMD.
+Also note that GPUs can use shared or distributed memory. The largest systems
+often use both: several cores may have access to a common block of memory, but
+other SIMD cores may have access to a different block of shared memory, and two
+cores with access to different blocks of shared memory may communicate over a
+network. However, in the remainder of this text, we’ll limit our discussion to GPUs
+that use shared memory.
+GPUs are becoming increasingly popular for general, high-performance com-
+puting, and several languages have been developed that allow users to exploit their
+power. We’ll go into more detail on the architecture of Nvidia processors and how to
+program them in Chapter 6.Alsosee[33].
+2.3.3 MIMD systems
+Multiple instruction, multiple data, or MIMD, systems support multiple simulta-
+neous instruction streams operating on multiple data streams. Thus MIMD systems
+typically consist of a collection of fully independent processing units or cores, each
+of which has its own control unit and its own datapath. Furthermore, unlike SIMD
+===== PRINTED PAGE 35 =====
+2.3 Parallel hardware 35
+systems, MIMD systems are usually asynchronous, that is, the processors can oper-
+ate at their own pace. In many MIMD systems, there is no global clock, and there may
+be no relation between the system times on two different processors. In fact, unless
+the programmer imposes some synchronization, even if the processors are executing
+exactly the same sequence of instructions, at any given instant they may be executing
+different statements.
+As we noted in Chapter 1, there are two principal types of MIMD systems: shared-
+memory systems and distributed-memory systems. In a shared-memory system a
+collection of autonomous processors is connected to a memory system via an in-
+terconnection network, and each processor can access each memory location. In a
+shared-memory system, the processors usually communicate implicitly by accessing
+shared data structures. In a distributed-memory system, each processor is paired
+with its own private memory, and the processor-memory pairs communicate over
+an interconnection network. So in distributed-memory systems, the processors usu-
+ally communicate explicitly by sending messages or by using special functions that
+provide access to the memory of another processor. See Figs. 2.3 and 2.4.
+FIGURE 2.3
+A shared-memory system.
+FIGURE 2.4
+A distributed-memory system.
+===== PRINTED PAGE 36 =====
+36 CHAPTER 2 Parallel hardware and parallel software
+Shared-memory systems
+The most widely available shared-memory systems use one or more multicore pro-
+cessors. As we discussed in Chapter 1, a multicore processor has multiple CPUs or
+cores on a single chip. Typically, the cores have private level 1 caches, while other
+caches may or may not be shared between the cores.
+In shared-memory systems with multiple multicore processors, the interconnect
+can either connect all the processors directly to main memory, or each processor can
+have a direct connection to a block of main memory, and the processors can access
+each other’s blocks of main memory through special hardware built into the proces-
+sors. (See Figs. 2.5 and 2.6.) In the ﬁrst type of system, the time to access all the
+memory locations will be the same for all the cores, while in the second type, a mem-
+ory location to which a core is directly connected, can be accessed more quickly than
+a memory location that must be accessed through another chip. Thus the ﬁrst type
+of system is called a uniform memory access, or UMA, system, while the second
+type is called a nonuniform memory access, or NUMA, system. UMA systems are
+FIGURE 2.5
+A UMA multicore system.
+FIGURE 2.6
+A NUMA multicore system.
+===== PRINTED PAGE 37 =====
+2.3 Parallel hardware 37
+usually easier to program, since the programmer doesn’t need to worry about dif-
+ferent access times for different memory locations. This advantage can be offset by
+the faster access to the directly connected memory in NUMA systems. Furthermore,
+NUMA systems have the potential to use larger amounts of memory than UMA sys-
+tems.
+Distributed-memory systems
+The most widely available distributed-memory systems are called clusters.Theyare
+composed of a collection of commodity systems—for example, PCs—connected by
+a commodity interconnection network—for example, Ethernet. In fact, the nodes of
+these systems, the individual computational units joined together by the commu-
+nication network, are usually shared-memory systems with one or more multicore
+processors. To distinguish such systems from pure distributed-memory systems, they
+are sometimes called hybrid systems. Nowadays, it’s usually understood that a clus-
+ter has shared-memory nodes.
+The grid provides the infrastructure necessary to turn large networks of geograph-
+ically distributed computers into a uniﬁed distributed-memory system. In general,
+such a system is heterogeneous, that is, the individual nodes are built from different
+types of hardware.
+2.3.4 Interconnection networks
+The interconnect plays a decisive role in the performance of both distributed- and
+shared-memory systems: even if the processors and memory have virtually unlimited
+performance, a slow interconnect will seriously degrade the overall performance of
+all but the simplest parallel program. See, for example, Exercise 2.11.
+Although some of the interconnects have a great deal in common, there are
+enough differences to make it worthwhile to treat interconnects for shared-memory
+and distributed-memory separately.
+Shared-memory interconnects
+In the past, it was common for shared memory systems to use a bus to connect pro-
+cessors and memory. Originally, a bus was a collection of parallel communication
+wires together with some hardware that controls access to the bus. The key charac-
+teristic of a bus is that the communication wires are shared by the devices that are
+connected to it. Buses have the virtue of low cost and ﬂexibility; multiple devices
+can be connected to a bus with little additional cost. However, since the communi-
+cation wires are shared, as the number of devices connected to the bus increases, the
+likelihood that there will be contention for use of the bus increases, and the expected
+performance of the bus decreases. Therefore if we connect a large number of pro-
+cessors to a bus, we would expect that the processors would frequently have to wait
+for access to main memory. So, as the size of shared-memory systems has increased,
+buses are being replaced by switched interconnects.
+===== PRINTED PAGE 38 =====
+38 CHAPTER 2 Parallel hardware and parallel software
+As the name suggests, switched interconnects use switches to control the routing
+of data among the connected devices. A crossbar is a relatively simple and powerful
+switched interconnect. The diagram in Fig. 2.7(a) shows a simple crossbar. The lines
+are bidirectional communication links, the squares are cores or memory modules, and
+the circles are switches.
+The individual switches can assume one of the two conﬁgurations shown in
+Fig. 2.7(b). With these switches and at least as many memory modules as proces-
+sors, there will only be a conﬂict between two cores attempting to access memory if
+the two cores attempt to simultaneously access the same memory module. For exam-
+ple, Fig. 2.7(c) shows the conﬁguration of the switches if P1 writes to M4, P2 reads
+from M3, P3 reads from M1, and P4 writes to M2.
+Crossbars allow simultaneous communication among different devices, so they
+are much faster than buses. However, the cost of the switches and links is relatively
+high. A small bus-based system will be much less expensive than a crossbar-based
+system of the same size.
+Distributed-memory interconnects
+Distributed-memory interconnects are often divided into two groups: direct inter-
+connects and indirect interconnects. In a direct interconnect each switch is directly
+connected to a processor-memory pair, and the switches are connected to each other.
+Fig. 2.8 shows a ring and a two-dimensional toroidal mesh. As before, the circles
+are switches, the squares are processors, and the lines are bidirectional links.
+One of the simplest measures of the power of a direct interconnect is the number
+of links. When counting links in a direct interconnect, it’s customary to count only
+switch-to-switch links. This is because the speed of the processor-to-switch links
+may be very different from the speed of the switch-to-switch links. Furthermore, to
+get the total number of links, we can usually just add the number of processors to
+the number of switch-to-switch links. So in the diagram for a ring (Fig. 2.8a), we
+would ordinarily count 3 links instead of 6, and in the diagram for the toroidal mesh
+(Fig. 2.8b), we would count 18 links instead of 27.
+A ring is superior to a simple bus, since it allows multiple simultaneous commu-
+nications. However, it’s easy to devise communication schemes, in which some of
+the processors must wait for other processors to complete their communications. The
+toroidal mesh will be more expensive than the ring, because the switches are more
+complex—they must support ﬁve links instead of three—and if there are p proces-
+sors, the number of links is 2p in a toroidal mesh, while it’s only p in a ring. However,
+it’s not difﬁcult to convince yourself that the number of possible simultaneous com-
+munications patterns is greater with a mesh than with a ring.
+One measure of “number of simultaneous communications” or “connectivity” is
+bisection width. To understand this measure, imagine that the parallel system is di-
+vided into two halves, and each half contains half of the processors or nodes. How
+many simultaneous communications can take place “across the divide” between the
+halves? In Fig. 2.9(a) we’ve divided a ring with eight nodes into two groups of four
+nodes, and we can see that only two communications can take place between the
+===== PRINTED PAGE 39 =====
+2.3 Parallel hardware 39
+FIGURE 2.7
+(a) A crossbar switch connecting four processors (Pi ) and four memory modules (Mj );
+(b) conﬁguration of internal switches in a crossbar; (c) simultaneous memory accesses by
+the processors.
+halves. (To make the diagrams easier to read, we’ve grouped each node with its switch
+in this and subsequent diagrams of direct interconnects.) However, in Fig. 2.9(b)
+we’ve divided the nodes into two parts so that four simultaneous communications
+===== PRINTED PAGE 40 =====
+40 CHAPTER 2 Parallel hardware and parallel software
+FIGURE 2.8
+(a) A ring and (b) a toroidal mesh.
+FIGURE 2.9
+Two bisections of a ring: (a) only two communications can take place between the halves
+and (b) four simultaneous connections can take place.
+can take place, so what’s the bisection width? The bisection width is supposed to
+give a “worst-case” estimate, so the bisection width is two—not four.
+An alternative way of computing the bisection width is to remove the minimum
+number of links needed to split the set of nodes into two equal halves. The number
+of links removed is the bisection width. If we have a square two-dimensional toroidal
+mesh with p = q2 nodes (where q is even), then we can split the nodes into two
+halves by removing the “middle” horizontal links and the “wraparound” horizontal
+links. (See Fig. 2.10.) This suggests that the bisection width is at most 2q = 2√p.In
+===== PRINTED PAGE 41 =====
+2.3 Parallel hardware 41
+FIGURE 2.10
+A bisection of a toroidal mesh.
+fact, this is the smallest possible number of links, and the bisection width of a square
+two-dimensional toroidal mesh is 2√p.
+The bandwidth of a link is the rate at which it can transmit data. It’s usually
+given in megabits or megabytes per second. Bisection bandwidth is often used as
+a measure of network quality. It’s similar to bisection width. However, instead of
+counting the number of links joining the halves, it sums the bandwidth of the links.
+For example, if the links in a ring have a bandwidth of one billion bits per second,
+then the bisection bandwidth of the ring will be two billion bits per second or 2000
+megabits per second.
+The ideal direct interconnect is a fully connected network, in which each switch
+is directly connected to every other switch. See Fig. 2.11. Its bisection width is p2/4.
+However, it’s impractical to construct such an interconnect for systems with more
+than a few nodes, since it requires a total of p2/2 − p/2 links, and each switch
+must be capable of connecting to p links. It is therefore more a “theoretical best
+possible” interconnect than a practical one, and it is used as a basis for evaluating
+other interconnects.
+The hypercube is a highly connected direct interconnect that has been used in
+actual systems. Hypercubes are built inductively: A one-dimensional hypercube is a
+fully connected system with two processors. A two-dimensional hypercube is built
+from two one-dimensional hypercubes by joining “corresponding” switches. Simi-
+larly, a three-dimensional hypercube is built from two two-dimensional hypercubes.
+(See Fig. 2.12.) Thus a hypercube of dimension d has p = 2d nodes, and a switch
+in a d-dimensional hypercube is directly connected to a processor and d switches.
+The bisection width of a hypercube is p/2, so it has more connectivity than a ring
+or toroidal mesh, but the switches must be more powerful, since they must support
+1 + d = 1 + log2(p) wires, while the mesh switches only require ﬁve wires. So a
+hypercube with p nodes is more expensive to construct than a toroidal mesh.
+===== PRINTED PAGE 42 =====
+42 CHAPTER 2 Parallel hardware and parallel software
+FIGURE 2.11
+A fully connected network.
+FIGURE 2.12
+(a) One-, (b) two-, and (c) three-dimensional hypercubes.
+Indirect interconnects provide an alternative to direct interconnects. In an indi-
+rect interconnect, the switches may not be directly connected to a processor. They’re
+often shown with unidirectional links and a collection of processors, each of which
+has an outgoing and an incoming link, and a switching network. (See Fig. 2.13.)
+The crossbar and the omega network are relatively simple examples of indi-
+rect networks. We saw a shared-memory crossbar with bidirectional links earlier
+(Fig. 2.7). The diagram of a distributed-memory crossbar in Fig. 2.14 has unidirec-
+tional links. Notice that as long as two processors don’t attempt to communicate with
+the same processor, all the processors can simultaneously communicate with another
+processor.
+An omega network is shown in Fig. 2.15. The switches are two-by-two crossbars
+(see Fig. 2.16). Observe that unlike the crossbar, there are communications that can-
+not occur simultaneously. For example, in Fig. 2.15, if processor 0 sends a message
+to processor 6, then processor 1 cannot simultaneously send a message to proces-
+sor 7. On the other hand, the omega network is less expensive than the crossbar. The
+omega network uses 1 2 p log2(p) of the 2 × 2 crossbar switches, so it uses a total of
+2p log2(p) switches, while the crossbar uses p2.
+===== PRINTED PAGE 43 =====
+2.3 Parallel hardware 43
+FIGURE 2.13
+A generic indirect network.
+FIGURE 2.14
+A crossbar interconnect for distributed-memory.
+It’s a little bit more complicated to deﬁne bisection width for indirect networks.
+However, the principle is the same: we want to divide the nodes into two groups of
+equal size and determine how much communication can take place between the two
+halves, or alternatively, the minimum number of links that need to be removed so that
+the two groups can’t communicate. The bisection width of a p × p crossbar is p, and
+the bisection width of an omega network is p/2.
+Latency and bandwidth
+Any time data is transmitted, we’re interested in how long it will take for the data
+to reach its destination. This is true whether we’re talking about transmitting data
+between main memory and cache, cache and register, hard disk and memory, or be-
+tween two nodes in a distributed-memory or hybrid system. There are two ﬁgures
+===== PRINTED PAGE 44 =====
+44 CHAPTER 2 Parallel hardware and parallel software
+FIGURE 2.15
+An omega network.
+FIGURE 2.16
+A switch in an omega network.
+that are often used to describe the performance of an interconnect (regardless of what
+it’s connecting): the latency and the bandwidth. The latency is the time that elapses
+between the source’s beginning to transmit the data and the destination’s starting to
+receive the ﬁrst byte. The bandwidth is the rate at which the destination receives data
+after it has started to receive the ﬁrst byte. So if the latency of an interconnect is l
+seconds and the bandwidth is b bytes per second, then the time it takes to transmit a
+===== PRINTED PAGE 45 =====
+2.3 Parallel hardware 45
+message of n bytes is
+message transmission time = l + n/b.
+Beware, however, that these terms are often used in different ways. For example,
+latency is sometimes used to describe total message transmission time. It’s also often
+used to describe the time required for any ﬁxed overhead involved in transmitting
+data. For example, if we’re sending a message between two nodes in a distributed-
+memory system, a message is not just raw data. It might include the data to be
+transmitted, a destination address, some information specifying the size of the mes-
+sage, some information for error correction, and so on. So in this setting, latency
+might be the time it takes to assemble the message on the sending side—the time
+needed to combine the various parts—and the time to disassemble the message on
+the receiving side (the time needed to extract the raw data from the message and
+store it in its destination).
+2.3.5 Cache coherence
+Recall that CPU caches are managed by system hardware: programmers don’t have
+direct control over them. This has several important consequences for shared-memory
+systems. To understand these issues, suppose we have a shared-memory system with
+two cores, each of which has its own private data cache. (See Fig. 2.17.) As long as
+the two cores only read shared data, there is no problem. For example, suppose that
+FIGURE 2.17
+A shared-memory system with two cores and two caches.
+===== PRINTED PAGE 46 =====
+46 CHAPTER 2 Parallel hardware and parallel software
+x is a shared variable that has been initialized to 2, y0 is private and owned by core 0,
+and y1 and z1 are private and owned by core 1. Now suppose the following statements
+are executed at the indicated times:
+Time Core 0 Core 1
+0 y0=x; y1=3*x;
+1 x=7; Statement(s) not involving x
+2 Statement(s) not involving x z1=4*x;
+Then the memory location for y0 will eventually get the value 2, and the memory
+location for y1 will eventually get the value 6. However, it’s not so clear what value z1
+will get. It might at ﬁrst appear that since core 0 updates x to 7 before the assignment
+to z1, z1 will get the value 4 × 7 = 28. However, at time 0, x is in the cache of core 1.
+So unless for some reason x is evicted from core 0’s cache and then reloaded into
+core 1’s cache, it actually appears that the original value x =2may be used, and
+z1 will get the value 4 × 2 = 8.
+Note that this unpredictable behavior will occur regardless of whether the system
+is using a write-through or a write-back policy. If it’s using a write-through policy, the
+main memory will be updated by the assignment x =7. However, this will have no
+effect on the value in the cache of core 1. If the system is using a write-back policy,
+the new value of x in the cache of core 0 probably won’t even be available to core 1
+when it updates z1.
+Clearly, this is a problem. The programmer doesn’t have direct control over when
+the caches are updated, so her program cannot execute these apparently innocuous
+statements and know what will be stored in z1. There are several problems here, but
+the one we want to look at right now is that the caches we described for single pro-
+cessor systems provide no mechanism for ensuring that when the caches of multiple
+processors store the same variable, an update by one processor to the cached variable
+is “seen” by the other processors. That is, that the cached value stored by the other
+processors is also updated. This is called the cache coherence problem.
+Snooping cache coherence
+There are two main approaches to ensuring cache coherence: snooping cache coher-
+ence and directory-based cache coherence. The idea behind snooping comes from
+bus-based systems: When the cores share a bus, any signal transmitted on the bus can
+be “seen” by all the cores connected to the bus. Thus when core 0 updates the copy
+of x stored in its cache, if it also broadcasts this information across the bus, and if
+core 1 is “snooping” the bus, it will see that x has been updated, and it can mark its
+copy of x as invalid. This is more or less how snooping cache coherence works. The
+principal difference between our description and the actual snooping protocol is that
+the broadcast only informs the other cores that the cache line containing x has been
+updated, not that x has been updated.
+A couple of points should be made regarding snooping. First, it’s not essential that
+the interconnect be a bus, only that it support broadcasts from each processor to all
+===== PRINTED PAGE 47 =====
+2.3 Parallel hardware 47
+the other processors. Second, snooping works with both write-through and write-back
+caches. In principle, if the interconnect is shared—as with a bus—with write-through
+caches, there’s no need for additional trafﬁc on the interconnect, since each core
+can simply “watch” for writes. With write-back caches, on the other hand, an extra
+communication is necessary, since updates to the cache don’t get immediately sent to
+memory.
+Directory-based cache coherence
+Unfortunately, in large networks, broadcasts are expensive, and snooping cache co-
+herence requires a broadcast every time a variable is updated. So snooping cache
+coherence isn’t scalable, because for larger systems it will cause performance to de-
+grade. For example, suppose we have a system with the basic distributed-memory
+architecture (Fig. 2.4). However, the system provides a single address space for all
+the memories. So, for example, core 0 can access the variable x stored in core 1’s
+memory, by simply executing a statement such as y = x. (Of course, accessing the
+memory attached to another core will be slower than accessing “local” memory, but
+that’s another story.) Such a system can, in principle, scale to very large numbers
+of cores. However, snooping cache coherence is clearly a problem, since a broad-
+cast across the interconnect will be very slow relative to the speed of accessing local
+memory.
+Directory-based cache coherence protocols attempt to solve this problem
+through the use of a data structure called a directory. The directory stores the status
+of each cache line. Typically, this data structure is distributed; in our example, each
+core/memory pair might be responsible for storing the part of the structure that spec-
+iﬁes the status of the cache lines in its local memory. Thus when a line is read into,
+say, core 0’s cache, the directory entry corresponding to that line would be updated,
+indicating that core 0 has a copy of the line. When a variable is updated, the directory
+is consulted, and the cache controllers of the cores that have that variable’s cache line
+in their caches will invalidate those lines.
+Clearly, there will be substantial additional storage required for the directory, but
+when a cache variable is updated, only the cores storing that variable need to be
+contacted.
+False sharing
+It’s important to remember that CPU caches are implemented in hardware, so they op-
+erate on cache lines, not individual variables. This can have disastrous consequences
+for performance. As an example, suppose we want to repeatedly call a function f(i ,j)
+and add the computed values into a vector:
+int i , j , m , n ;
+double y [ m ];
+/ ∗ Assign y = 0 ∗ /
+...
+===== PRINTED PAGE 48 =====
+48 CHAPTER 2 Parallel hardware and parallel software
+for ( i =0;i < m ; i ++)
+for ( j =0;j < n ; j ++)
+y [ i ]+=f ( i , j );
+We can parallelize this by dividing the iterations in the outer loop among the cores.
+If we have core_count cores, we might assign the ﬁrst m/core_count iterations to the
+ﬁrst core, the next m/core_count iterations to the second core, and so on.
+/ ∗ Private variables ∗ /
+int i , j , iter_count ;
+/ ∗ Shared variables i n i t i a l i z e d by one core ∗ /
+int m , n , core_count
+double y [ m ];
+iter_count = m / core_count
+/ ∗ Core 0 does this ∗ /
+for ( i =0;i < iter_count ; i ++)
+for ( j =0;j < n ; j ++)
+y [ i ]+=f ( i , j );
+/ ∗ Core 1 does this ∗ /
+for ( i = iter_count ; i <2∗ iter_count ; i ++)
+for ( j =0;j < n ; j ++)
+y [ i ]+=f ( i , j );
+...
+Now suppose our shared-memory system has two cores, m =8, doubles are eight
+bytes, cache lines are 64 bytes, and y[0] is stored at the beginning of a cache line.
+A cache line can store eight doubles, and y takes one full cache line. What happens
+when core 0 and core 1 simultaneously execute their codes? Since all of y is stored in
+a single cache line, each time one of the cores executes the statement y[i]+=f(i ,j),
+the line will be invalidated, and the next time the other core tries to execute this
+statement, it will have to fetch the updated line from memory! So if n is large, we
+would expect that a large percentage of the assignments y[i]+=f(i ,j) will access
+main memory—in spite of the fact that core 0 and core 1 never access each other’s
+elements of y. This is called false sharing, because the system is behaving as if the
+elements of y were being shared by the cores.
+Note that false sharing does not cause incorrect results. However, it can ruin the
+performance of a program by causing many more accesses to main memory than
+necessary. We can reduce its effect by using temporary storage that is local to the
+thread or process, and then copying the temporary storage to the shared storage. We’ll
+return to the subject of false sharing in Chapters 4 and 5.
+===== PRINTED PAGE 49 =====
+2.4 Parallel software 49
+2.3.6 Shared-memory vs. distributed-memory
+Newcomers to parallel computing sometimes wonder why all MIMD systems aren’t
+shared-memory, since most programmers ﬁnd the concept of implicitly coordinat-
+ing the work of the processors through shared data structures more appealing than
+explicitly sending messages. There are several issues, some of which we’ll discuss
+when we talk about software for distributed- and shared-memory. However, the prin-
+cipal hardware issue is the cost of scaling the interconnect. As we add processors to
+a bus, the chance that there will be conﬂicts over access to the bus increase dramat-
+ically, so buses are suitable for systems with only a few processors. Large crossbars
+are very expensive, so it’s also unusual to ﬁnd systems with large crossbar intercon-
+nects. On the other hand, distributed-memory interconnects, such as the hypercube
+and the toroidal mesh, are relatively inexpensive, and distributed-memory systems
+with thousands of processors that use these and other interconnects have been built.
+Thus distributed-memory systems are often better suited for problems requiring vast
+amounts of data or computation.
+2.4 Parallel software
+Parallel hardware has arrived. Virtually all desktop and server systems use mul-
+ticore processors. Nowadays even mobile phones and tablets make use of mul-
+ticore processors. The ﬁrst edition (2011) asserted, “The same cannot be said
+for parallel software.” Currently (2021) the situation for parallel software is in
+ﬂux. Most system software makes some use of parallelism, and many widely
+used application programs (e.g., Excel, Photoshop, Chrome) can also use mul-
+tiple cores. However, there are still many programs that can only make use of
+a single core, and there are many programmers with no experience writing par-
+allel programs. This is a problem, because we can no longer rely on hardware
+and compilers to provide a steady increase in application performance. If we’re
+to continue to have routine increases in application performance and application
+power, software developers must learn to write applications that exploit shared- and
+distributed-memory architectures and MIMD and SIMD systems. In this section,
+we’ll take a look at some of the issues involved in writing software for parallel sys-
+tems.
+First, some terminology. Typically when we run our shared-memory programs,
+we’ll start a single process and fork multiple threads. So when we discuss shared-
+memory programs, we’ll talk about threads carrying out tasks. On the other hand,
+when we run distributed-memory programs, we’ll start multiple processes, and we’ll
+talk about processes carrying out tasks. When the discussion applies equally well to
+shared-memory and distributed-memory systems, we’ll talk about processes/threads
+carrying out tasks.

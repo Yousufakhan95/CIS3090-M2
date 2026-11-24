@@ -1,0 +1,21 @@
+Batch 1. Hardware, locality, Flynn, memory layouts.
+Matches Lecture 7 (data layout part only) and Lecture 14 part 1.
+
+1. Textbook pages 21 to 23
+   Section 2.2.1, the basics of caching. Read for spatial and temporal locality.
+   Stop at 2.2.2 "Cache mappings" on page 23.
+
+2. Textbook pages 31 to 38
+   Section 2.3.1 Flynn's taxonomy, 2.3.2 SIMD and vector processors,
+   2.3.3 MIMD, UMA vs NUMA, clusters and grids,
+   2.3.4 shared-memory interconnects: bus and crossbar.
+   Stop on page 38 at the heading "Distributed-memory interconnects".
+
+3. Lecture 7 slides 11 to 16 (L07_slides_11-16_data_layout.pdf)
+   Contiguous data, structs without pointers, moving data in one block.
+   The textbook has no version of these slides.
+
+Skip
+- Pages 17 to 20: von Neumann and processes. These are Lecture 7 topics, but the M2 guide only tests data layout from Lecture 7.
+- Pages 23 to 31: cache mappings, row-major loop example, virtual memory, ILP, hardware multithreading.
+- Page 38 from "Distributed-memory interconnects" to page 49: ring, mesh, hypercube, bisection width, cache coherence, 2.3.6. No slide covers these.

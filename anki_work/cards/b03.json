@@ -1,0 +1,162 @@
+[
+  {
+    "text": "Before any other MPI call, call {{c1::\\(\\mathrm{MPI\\_Init}\\) }}. When you are done with MPI, call {{c2::\\(\\mathrm{MPI\\_Finalize}\\) }}.",
+    "extra": "No MPI functions before Init or after Finalize. You can pass NULL,NULL to Init if you skip argc and argv.",
+    "tags": [
+      "b03_mpi_basics",
+      "mpi_init_finalize"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.4",
+    "yield": "high"
+  },
+  {
+    "text": "In {{c1::\\(\\mathrm{MPI\\_COMM\\_WORLD}\\) }}, {{c2::\\(\\mathrm{MPI\\_Comm\\_size}\\) }} tells you how many processes started, and {{c3::\\(\\mathrm{MPI\\_Comm\\_rank}\\) }} gives this process its ID in \\(0..p-1\\).",
+    "extra": "A communicator is the set of processes that can message each other. Init builds that default world communicator for you.",
+    "tags": [
+      "b03_mpi_basics",
+      "comm_size_rank"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.5",
+    "yield": "high"
+  },
+  {
+    "text": "A receive only wakes up when the message hits the same communicator, the same {{c1::tag}}, and the expected {{c2::source}} rank.",
+    "extra": "The send dest must also be this receiver. Buffers need a matching type and a recv count at least as large as the send.",
+    "tags": [
+      "b03_mpi_basics",
+      "message_matching"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.8",
+    "yield": "high"
+  },
+  {
+    "text": "Only the {{c1::receiver}} may use wildcards like \\(\\mathrm{MPI\\_ANY\\_SOURCE}\\). Senders name a real rank and a nonnegative tag, and there is {{c2::no}} communicator wildcard.",
+    "extra": "\\(\\mathrm{MPI\\_ANY\\_TAG}\\) is also recv-only. MPI pushes messages; a sender cannot pull from a wildcard dest.",
+    "tags": [
+      "b03_mpi_basics",
+      "wildcards"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.9",
+    "yield": "high"
+  },
+  {
+    "text": "After \\(\\mathrm{MPI\\_Recv}\\) with \\(\\mathrm{MPI\\_ANY\\_SOURCE}\\), read {{c1::\\(\\mathrm{status.MPI\\_SOURCE}\\) }} for who sent it and {{c2::\\(\\mathrm{status.MPI\\_TAG}\\) }} for the actual tag.",
+    "extra": "Pass a real \\(\\mathrm{MPI\\_Status}\\), not \\(\\mathrm{MPI\\_STATUS\\_IGNORE}\\), if you need those fields. Study-guide managers use this after any-source recv.",
+    "tags": [
+      "b03_mpi_basics",
+      "any_source_status"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.10",
+    "yield": "high"
+  },
+  {
+    "text": "To learn how many elements arrived, call {{c1::\\(\\mathrm{MPI\\_Get\\_count}\\) }} with the status and datatype. That count is {{c2::not}} a direct member of \\(\\mathrm{MPI\\_Status}\\).",
+    "extra": "Count depends on the datatype, so MPI computes it on demand as bytes received over bytes per object.",
+    "tags": [
+      "b03_mpi_basics",
+      "mpi_get_count"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.10",
+    "yield": "high"
+  },
+  {
+    "text": "Messages from one sender to one receiver are {{c1::non-overtaking}}: the first send is available before the second. Messages from {{c2::different}} senders have no required arrival order.",
+    "extra": "A recv loop in rank order can stall if a high-rank worker finishes first. Prefer \\(\\mathrm{MPI\\_ANY\\_SOURCE}\\) when finish order is unknown.",
+    "tags": [
+      "b03_mpi_basics",
+      "message_ordering"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.11",
+    "yield": "high"
+  },
+  {
+    "text": "\\(\\mathrm{MPI\\_Recv}\\) {{c1::always blocks}} until a matching message arrives. A missing or mismatched send can make the process {{c2::hang}} forever.",
+    "extra": "\\(\\mathrm{MPI\\_Send}\\) may also block if the implementation does not buffer. A buffered send with no matching recv can lose the message.",
+    "tags": [
+      "b03_mpi_basics",
+      "blocking_pitfalls"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.11",
+    "yield": "high"
+  },
+  {
+    "text": "In typical MPI setups, only rank {{c1::0}} may read stdin. Every rank can write stdout, but multi-rank printf order is {{c2::nondeterministic}}.",
+    "extra": "For ordered output, send strings to rank 0 and print there, as in the greetings program.",
+    "tags": [
+      "b03_mpi_basics",
+      "mpi_io"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.16",
+    "yield": "high"
+  },
+  {
+    "text": "A tag on \\(\\mathrm{MPI\\_Send}\\) and \\(\\mathrm{MPI\\_Recv}\\) lets you {{c1::distinguish otherwise identical messages}}, like print floats versus compute floats.",
+    "extra": "Matching needs equal tags unless the receiver uses \\(\\mathrm{MPI\\_ANY\\_TAG}\\). The study guide flags tags the way A2 uses them.",
+    "tags": [
+      "b03_mpi_basics",
+      "message_tags"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.7",
+    "yield": "high"
+  },
+  {
+    "text": "For a collective, {{c1::all}} processes in the communicator must call the same function. Collectives match by communicator and {{c2::call order}}, not by tags.",
+    "extra": "Arguments must be compatible, such as the same root. Matching Reduce with Recv is erroneous and can hang or crash.",
+    "tags": [
+      "b03_mpi_basics",
+      "collective_rules"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.23",
+    "yield": "high"
+  },
+  {
+    "text": "\\(\\mathrm{MPI\\_Bcast}\\) sends the data from {{c1::the root}} to {{c2::every process}} in the communicator.",
+    "extra": "Typical pattern: rank 0 reads parameters, then Bcast so every rank has them. The buffer is in on root and out on the others.",
+    "tags": [
+      "b03_mpi_basics",
+      "mpi_bcast"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.25",
+    "yield": "high"
+  },
+  {
+    "text": "\\(\\mathrm{MPI\\_Reduce}\\) combines each process input with an operator such as \\(\\mathrm{MPI\\_SUM}\\) and stores the result {{c1::only on the destination rank}}.",
+    "extra": "Every rank still passes an output buffer. With count greater than 1, arrays reduce elementwise. Study-guide Q1: local sums, then one Reduce.",
+    "tags": [
+      "b03_mpi_basics",
+      "mpi_reduce"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.22",
+    "yield": "high"
+  },
+  {
+    "text": "\\(\\mathrm{MPI\\_Allreduce}\\) is like Reduce, but the combined result lands on {{c1::every process}} in the communicator.",
+    "extra": "Use it when all ranks need the global value for further work. Same operator, datatype, and count rules as Reduce, with no dest argument.",
+    "tags": [
+      "b03_mpi_basics",
+      "mpi_allreduce"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.24",
+    "yield": "high"
+  },
+  {
+    "text": "On a slow network, summing \\(g(a[i])\\) over a large distributed array: each rank should {{c1::sum its local block}}, then combine with {{c2::one \\(\\mathrm{MPI\\_Reduce}\\) }}.",
+    "extra": "Study-guide practice Q1 answer D. Allreduce after every element, or one message per element, is too chatty on a slow link.",
+    "tags": [
+      "b03_mpi_basics",
+      "reduce_pattern"
+    ],
+    "source": "08_m2_study_guide.pdf p.4",
+    "yield": "high"
+  },
+  {
+    "text": "When \\(\\mathrm{MPI\\_Send}\\) returns, the send buffer is {{c1::safe to reuse}}. You still do {{c2::not}} know whether the message has already been delivered.",
+    "extra": "Small messages are often buffered. Large ones may block until transmission can start. The cutoff is implementation-dependent.",
+    "tags": [
+      "b03_mpi_basics",
+      "send_semantics"
+    ],
+    "source": "03_ch03_mpi_basics_collectives.pdf p.10",
+    "yield": "high"
+  }
+]

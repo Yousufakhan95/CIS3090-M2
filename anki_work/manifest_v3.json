@@ -1,0 +1,15 @@
+{
+    "deck_name": "CIS*3090 Parallel Programming (Midterm 2 - cram)",
+    "out": "C:/github/CIS3090-M2/study_plan/CIS3090_Midterm2_cram.apkg",
+    "include_yield": ["high"],
+    "source_dir": "C:/github/CIS3090-M2/anki_work/sources",
+    "subdecks": [
+        {"cards": "C:/github/CIS3090-M2/anki_work/cards_v3/b01.json", "title": "01 Hardware locality Flynn memory"},
+        {"cards": "C:/github/CIS3090-M2/anki_work/cards_v3/b02.json", "title": "02 Speedup efficiency Amdahl"},
+        {"cards": "C:/github/CIS3090-M2/anki_work/cards_v3/b03.json", "title": "03 MPI basics and collectives"},
+        {"cards": "C:/github/CIS3090-M2/anki_work/cards_v3/b04.json", "title": "04 Lecture 15 GPGPU Warp"},
+        {"cards": "C:/github/CIS3090-M2/anki_work/cards_v3/b05.json", "title": "05 Lectures 16-17 Image processing"},
+        {"cards": "C:/github/CIS3090-M2/anki_work/cards_v3/b06.json", "title": "06 Lecture 18 Warp images"},
+        {"cards": "C:/github/CIS3090-M2/anki_work/cards_v3/b07.json", "title": "07 Pthreads vs MPI vs Warp"}
+    ]
+}

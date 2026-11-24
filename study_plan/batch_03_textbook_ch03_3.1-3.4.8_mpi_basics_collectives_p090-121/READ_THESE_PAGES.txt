@@ -1,0 +1,14 @@
+Batch 3. MPI basics and collectives.
+Matches Lectures 9, 10, and 11.
+
+Read pages 90 to 121
+- 3.1 Getting started: Init, size, rank, Send, Recv, matching, status, semantics, pitfalls
+- 3.2 Trapezoidal rule in MPI (Lecture 11)
+- 3.3 I/O: rank 0 reads stdin, output order is unpredictable
+- 3.4.1 to 3.4.5: tree-structured communication, Reduce, collective vs point-to-point, Allreduce, Bcast
+- 3.4.7 Scatter and 3.4.8 Gather
+
+Skip inside this range
+- 3.4.6 Data distributions, from the bottom of page 116 to the 3.4.7 heading on page 117. Block, cyclic, and block-cyclic partitions are not on the slides.
+
+Stop on page 121 at the heading "3.4.9 Allgather". Allgather and matrix-vector multiplication are not on the slides.

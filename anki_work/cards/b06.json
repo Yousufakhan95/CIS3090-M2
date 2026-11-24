@@ -1,0 +1,142 @@
+[
+ {
+  "text": "In discrete convolution, the new pixel is a {{c1::weighted sum}} of intensities in a neighbourhood. The weights come from a {{c2::kernel}} (also called a mask or filter).",
+  "extra": "If the neighbourhood is centred on the pixel, its size must be odd, like \\(3\\times 3\\) or \\(5\\times 5\\).",
+  "tags": [
+   "b06_image_processing",
+   "discrete_convolution"
+  ],
+  "source": "06a_lecture_16_image_basics.pdf p.6",
+  "yield": "high"
+ },
+ {
+  "text": "Convolution at pixel \\(P\\): centre the kernel on \\(P\\), multiply each neighbour by its weight, {{c1::sum}} the products, then write that value into the {{c2::output}} image at \\(P\\).",
+  "extra": "Keep a separate output buffer so you do not overwrite input pixels mid-pass.",
+  "tags": [
+   "b06_image_processing",
+   "discrete_convolution"
+  ],
+  "source": "06a_lecture_16_image_basics.pdf p.18",
+  "yield": "high"
+ },
+ {
+  "text": "Smoothing kernels are normalized so the coefficients sum to {{c1::1}}. That keeps the mean intensity steady in flat regions and avoids a brightness {{c2::bias}}.",
+  "extra": "Study guide: sum of kernel weights equals 1. The scale factor is often written outside the matrix.",
+  "tags": [
+   "b06_image_processing",
+   "kernel_normalization"
+  ],
+  "source": "06a_lecture_16_image_basics.pdf p.12",
+  "yield": "high"
+ },
+ {
+  "text": "Practice: a \\(3\\times 3\\) mean filter uses weights of 1 instead of \\(1/9\\) on an 8-bit image clipped to 0-255. The image gets about {{c1::nine times brighter}}, so most pixels slam into {{c2::255}}.",
+  "extra": "Study-guide mini practice Q4 answer B. Relative weights alone do not save you when the sum is wrong.",
+  "tags": [
+   "b06_image_processing",
+   "kernel_normalization"
+  ],
+  "source": "06a_lecture_16_image_basics.pdf p.12",
+  "yield": "high"
+ },
+ {
+  "text": "Border strategy copy-of-input: where the kernel hangs off the edge, you {{c1::copy}} the input pixel into the output. Size stays the same, but you get an {{c2::unprocessed}} rim.",
+  "extra": "Know size and border behaviour for each strategy on the midterm.",
+  "tags": [
+   "b06_image_processing",
+   "border_strategies"
+  ],
+  "source": "06a_lecture_16_image_basics.pdf p.22",
+  "yield": "high"
+ },
+ {
+  "text": "Border strategy truncation-of-image: drop every pixel where convolution cannot run. The output is {{c1::smaller}} than the input, and it is offset relative to it.",
+  "extra": "Copy keeps the size and leaves a raw border. Truncation throws that border away.",
+  "tags": [
+   "b06_image_processing",
+   "border_strategies"
+  ],
+  "source": "06a_lecture_16_image_basics.pdf p.22",
+  "yield": "high"
+ },
+ {
+  "text": "Border strategy truncation-of-kernel: treat the edges as a special case and run a {{c1::modified}} kernel that only covers the pixels still inside the image.",
+  "extra": "Corners and edges need different truncated kernels, so the code gets messy fast.",
+  "tags": [
+   "b06_image_processing",
+   "border_strategies"
+  ],
+  "source": "06a_lecture_16_image_basics.pdf p.23",
+  "yield": "high"
+ },
+ {
+  "text": "Reflected indexing maps an out-of-range coordinate by {{c1::mirroring}} it back into the image. The lecture calls this the most useful border option.",
+  "extra": "Circular wrap pretends the image tiles forever, and it is rarely used for image processing.",
+  "tags": [
+   "b06_image_processing",
+   "border_strategies"
+  ],
+  "source": "06a_lecture_16_image_basics.pdf p.24",
+  "yield": "high"
+ },
+ {
+  "text": "Unsharp masking builds an edge image \\(g(x,y)={{c1::f(x,y)-S(f(x,y)) }}\\), where \\(S(f)\\) is a {{c2::blurred}} copy of \\(f\\).",
+  "extra": "Subtracting the blur strips the low frequencies and leaves high-frequency detail.",
+  "tags": [
+   "b06_image_processing",
+   "unsharp_masking"
+  ],
+  "source": "06b_lecture_17_image_filters.pdf p.10",
+  "yield": "high"
+ },
+ {
+  "text": "Unsharp masking puts the edges back with \\(f_{UM}(x,y)={{c1::f(x,y)+kg(x,y) }}\\). Here \\(g\\) is the edge image and \\(k\\) scales how hard you sharpen.",
+  "extra": "Study guide form: \\(f_{UM}=f+k\\cdot g\\). Typical \\(k\\) is about 0.2 to 0.7.",
+  "tags": [
+   "b06_image_processing",
+   "unsharp_masking"
+  ],
+  "source": "06b_lecture_17_image_filters.pdf p.11",
+  "yield": "high"
+ },
+ {
+  "text": "In unsharp masking, cranking up \\(k\\) gives {{c1::more}} sharpening. When \\(k>{{c2::1}}\\), people sometimes call the method high-boost.",
+  "extra": "Reasonable \\(k\\) values sit roughly between 0.2 and 0.7.",
+  "tags": [
+   "b06_image_processing",
+   "unsharp_masking"
+  ],
+  "source": "06b_lecture_17_image_filters.pdf p.11",
+  "yield": "high"
+ },
+ {
+  "text": "Gaussian smoothing uses the nonuniform weights \\(w(i,j)={{c1::e^{-(i^2+j^2)/(2\\sigma^2)} }}\\). Larger \\(\\sigma\\) means {{c2::more}} blur, because the hump spreads farther from the centre.",
+  "extra": "Support is typically \\(\\pm 3\\sigma\\). The kernel is isotropic, so it has no directional bias.",
+  "tags": [
+   "b06_image_processing",
+   "gaussian_filtering"
+  ],
+  "source": "06b_lecture_17_image_filters.pdf p.28",
+  "yield": "high"
+ },
+ {
+  "text": "A median filter replaces the pixel with the {{c1::middle-ranked}} value in its neighbourhood. It knocks out {{c2::impulse}} noise when the bad pixels are less than half the neighbourhood.",
+  "extra": "It is a nonlinear order-statistic filter, not a weighted sum.",
+  "tags": [
+   "b06_image_processing",
+   "median_filtering"
+  ],
+  "source": "06b_lecture_17_image_filters.pdf p.35",
+  "yield": "high"
+ },
+ {
+  "text": "Unlike averaging, a median filter better preserves {{c1::sharp edges}}. Mean and Gaussian (larger \\(\\sigma\\)) filters {{c2::blur}} edges while they quiet the noise.",
+  "extra": "Median also wipes out real thin features that occupy less than half the neighbourhood.",
+  "tags": [
+   "b06_image_processing",
+   "median_filtering"
+  ],
+  "source": "06b_lecture_17_image_filters.pdf p.38",
+  "yield": "high"
+ }
+]

@@ -1,0 +1,149 @@
+[
+ {
+  "text": "Every MPI program starts with {{c1::\\(\\mathrm{MPI\\_Init}\\) }} before any other MPI call, and ends with {{c2::\\(\\mathrm{MPI\\_Finalize}\\) }}, which frees everything MPI was using.",
+  "extra": "No MPI calls before Init or after Finalize. Passing NULL, NULL to Init is fine.",
+  "tags": ["b03_mpi", "init_finalize"],
+  "source": "Lecture 9 slides 14 and 21; Textbook p.93",
+  "yield": "high"
+ },
+ {
+  "text": "You start 4 processes. Each one calls {{c1::\\(\\mathrm{MPI\\_Comm\\_size}\\) }} and learns there are 4, then calls {{c2::\\(\\mathrm{MPI\\_Comm\\_rank}\\) }} and learns its own ID, from 0 to 3.",
+  "extra": "Both calls take the communicator \\(\\mathrm{MPI\\_COMM\\_WORLD}\\), the group of every process you started. The rank works like a process ID.",
+  "tags": ["b03_mpi", "size_rank"],
+  "source": "Lecture 9 slide 14; Textbook p.94",
+  "yield": "high"
+ },
+ {
+  "text": "Every MPI process runs the {{c1::same program}}. An if statement on {{c2::rank}} decides what each one actually does.",
+  "extra": "In hello world, rank 0 receives and prints while every other rank sends a greeting. The textbook calls this style SPMD.",
+  "tags": ["b03_mpi", "spmd"],
+  "source": "Lecture 9 slide 23; Textbook p.94",
+  "yield": "high"
+ },
+ {
+  "text": "Shipping data over a network is slow, so MPI pays off when each process spends much more time {{c1::computing}} than {{c2::communicating}}.",
+  "extra": "A render farm is the lecture's example. Each machine renders whole frames, which take a long time compared to sending the scene data.",
+  "tags": ["b03_mpi", "compute_vs_communicate"],
+  "source": "Lecture 9 slides 5 and 6",
+  "yield": "high"
+ },
+ {
+  "text": "A receive only matches a message sent on the same {{c1::communicator}}, with the same {{c2::tag}}, from the expected {{c3::source}} rank.",
+  "extra": "If any one of those is off, the receive never completes.",
+  "tags": ["b03_mpi", "matching"],
+  "source": "M2 guide p.2; Textbook p.97",
+  "yield": "high"
+ },
+ {
+  "text": "Two messages from the same sender carry the same type of data, but one is for printing and one is for computing. You tell them apart with a different {{c1::tag}}.",
+  "extra": "The tag is a nonnegative int. Assignment 2 uses tags the same way to separate message types.",
+  "tags": ["b03_mpi", "tags"],
+  "source": "Lecture 9 slide 29; Textbook p.96",
+  "yield": "high"
+ },
+ {
+  "text": "Only the {{c1::receiver}} can use wildcards like \\(\\mathrm{MPI\\_ANY\\_SOURCE}\\) and \\(\\mathrm{MPI\\_ANY\\_TAG}\\). There is {{c2::no}} wildcard for the communicator.",
+  "extra": "A sender always names a real destination rank and a real tag.",
+  "tags": ["b03_mpi", "wildcards"],
+  "source": "Textbook p.98",
+  "yield": "high"
+ },
+ {
+  "text": "A manager receives with \\(\\mathrm{MPI\\_ANY\\_SOURCE}\\). To find out who sent the message, it reads {{c1::\\(\\mathrm{status.MPI\\_SOURCE}\\) }}. To find the actual tag, it reads {{c2::\\(\\mathrm{status.MPI\\_TAG}\\) }}.",
+  "extra": "You need a real \\(\\mathrm{MPI\\_Status}\\) variable for this. Passing \\(\\mathrm{MPI\\_STATUS\\_IGNORE}\\) throws the information away.",
+  "tags": ["b03_mpi", "any_source_status"],
+  "source": "M2 guide p.2; Textbook p.98",
+  "yield": "high"
+ },
+ {
+  "text": "The manager asked for up to 256 chars, but the message may be shorter. It calls {{c1::\\(\\mathrm{MPI\\_Get\\_count}\\) }} with the status and the datatype to learn how many actually arrived.",
+  "extra": "The count is not a field in the status. This is study guide practice question 2, answer A.",
+  "tags": ["b03_mpi", "get_count"],
+  "source": "M2 guide p.4; Textbook p.99",
+  "yield": "high"
+ },
+ {
+  "text": "If rank 1 sends you two messages, the first one arrives first, because MPI messages are {{c1::nonovertaking}}. Messages from {{c2::different}} senders can arrive in any order.",
+  "extra": "So a receive loop that waits for rank 1, then 2, then 3 may sit waiting even though rank 3 already finished.",
+  "tags": ["b03_mpi", "ordering"],
+  "source": "Lecture 9 slide 35; Textbook p.99",
+  "yield": "high"
+ },
+ {
+  "text": "\\(\\mathrm{MPI\\_Recv}\\) {{c1::always blocks}} until a matching message arrives. If the send is missing, or its tag or rank does not match, the process {{c2::hangs}} forever.",
+  "extra": "A mismatch can also make the receive match the wrong send. A send that blocks while waiting for a receive can hang too.",
+  "tags": ["b03_mpi", "blocking_pitfalls"],
+  "source": "Lecture 9 slides 35 and 36; Textbook p.100",
+  "yield": "high"
+ },
+ {
+  "text": "When \\(\\mathrm{MPI\\_Send}\\) returns, you can reuse the buffer, but you {{c1::do not know}} whether the message was delivered yet. MPI may have {{c2::buffered}} it and moved on.",
+  "extra": "Whether a send buffers or blocks depends on the MPI implementation. Small messages usually get buffered.",
+  "tags": ["b03_mpi", "send_semantics"],
+  "source": "Lecture 9 slide 34; Textbook p.99",
+  "yield": "high"
+ },
+ {
+  "text": "Only rank {{c1::0}} can read stdin, so it reads the input and passes it to the other ranks. Every rank can print, but the order of their output is {{c2::unpredictable}}.",
+  "extra": "Lines from different ranks can come out in any order or even cut into each other.",
+  "tags": ["b03_mpi", "io"],
+  "source": "Lecture 9 slides 37 and 38; Textbook p.105",
+  "yield": "high"
+ },
+ {
+  "text": "A collective like Reduce or Bcast must be called by {{c1::every}} process in the communicator. Collectives match by communicator and {{c2::call order}}, not by tags.",
+  "extra": "Point-to-point calls like Send and Recv involve just two processes and match by tag and rank. Matching a Reduce on one rank with a Recv on another is an error.",
+  "tags": ["b03_mpi", "collective_rules"],
+  "source": "Lecture 10 slide 10; Textbook p.112",
+  "yield": "high"
+ },
+ {
+  "text": "Rank 0 reads a, b, and n. Instead of a loop of sends, it calls {{c1::\\(\\mathrm{MPI\\_Bcast}\\) }}, and every process in the communicator ends up with the {{c2::same}} values.",
+  "extra": "All ranks make the same Bcast call. The buffer is the input on the root and the output everywhere else.",
+  "tags": ["b03_mpi", "bcast"],
+  "source": "Lecture 10 slides 16 to 18; Textbook p.113",
+  "yield": "high"
+ },
+ {
+  "text": "\\(\\mathrm{MPI\\_Reduce}\\) combines one value from every process with an operator like \\(\\mathrm{MPI\\_SUM}\\), and the result lands {{c1::only on the destination}} process.",
+  "extra": "Other operators include \\(\\mathrm{MPI\\_PROD}\\), \\(\\mathrm{MPI\\_MIN}\\), and \\(\\mathrm{MPI\\_MAX}\\). With a count above 1, arrays get combined element by element.",
+  "tags": ["b03_mpi", "reduce"],
+  "source": "Lecture 10 slides 5 to 9; Textbook p.110",
+  "yield": "high"
+ },
+ {
+  "text": "\\(\\mathrm{MPI\\_Reduce}\\) does not have every process send straight to the root. It combines partial results in a {{c1::tree}}, so the work of adding is spread over many processes.",
+  "extra": "The MPI implementation picks the exact pattern for you. You just make the one call.",
+  "tags": ["b03_mpi", "tree_reduce"],
+  "source": "Lecture 10 slides 11 and 12; Textbook p.108",
+  "yield": "high"
+ },
+ {
+  "text": "\\(\\mathrm{MPI\\_Allreduce}\\) works like Reduce, but the combined result goes to {{c1::every process}}. That is why its call has {{c2::no destination}} argument.",
+  "extra": "Lecture 10 also calls it a butterfly reduction. Use it when every rank needs the total for its next step.",
+  "tags": ["b03_mpi", "allreduce"],
+  "source": "Lecture 10 slides 13 to 15; Textbook p.113",
+  "yield": "high"
+ },
+ {
+  "text": "Rank 0 has the whole vector, and each process only needs its own slice. {{c1::\\(\\mathrm{MPI\\_Scatter}\\) }} splits the array and sends each process {{c2::one chunk}}, rank 0 included.",
+  "extra": "Bcast sends everyone the same full data. Scatter sends everyone a different piece. The send count is the amount going to each process, not the total.",
+  "tags": ["b03_mpi", "scatter"],
+  "source": "Lecture 10 slides 21 and 22; Textbook p.118",
+  "yield": "high"
+ },
+ {
+  "text": "{{c1::\\(\\mathrm{MPI\\_Gather}\\) }} is the reverse of Scatter. Every process sends its chunk, and only the {{c2::destination}} process ends up with the assembled array.",
+  "extra": "A typical use is gathering results on rank 0 so it can print them. The receive count is the amount from each process, not the total.",
+  "tags": ["b03_mpi", "gather"],
+  "source": "Lecture 10 slides 23 and 24; Textbook p.120",
+  "yield": "high"
+ },
+ {
+  "text": "Your ranks sit on different machines over a slow network, and you need the sum of \\(g(a[i])\\). Each rank should {{c1::sum its own block}} locally, then combine with {{c2::one \\(\\mathrm{MPI\\_Reduce}\\) }}.",
+  "extra": "This is study guide practice question 1, answer D. The trapezoid program in Lecture 11 does the same thing with its local integrals.",
+  "tags": ["b03_mpi", "reduce_pattern"],
+  "source": "M2 guide p.4; Lecture 11 slides 23 and 24",
+  "yield": "high"
+ }
+]

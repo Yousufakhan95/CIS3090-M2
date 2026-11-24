@@ -1,0 +1,13 @@
+{
+  "name": "cc-card-gen",
+  "version": "1.0.0",
+  "description": "Turn a folder of lecture slides or notes into an Anki cloze deck (.apkg) with parallel Claude Code subagents. Includes an exam-focused depth setting that predicts what will be tested.",
+  "author": {
+    "name": "AshtonLong",
+    "url": "https://github.com/AshtonLong"
+  },
+  "homepage": "https://github.com/AshtonLong/CC-Card-Gen",
+  "repository": "https://github.com/AshtonLong/CC-Card-Gen",
+  "license": "MIT",
+  "keywords": ["anki", "flashcards", "cloze", "spaced-repetition", "study", "exam-prep", "lectures"]
+}
