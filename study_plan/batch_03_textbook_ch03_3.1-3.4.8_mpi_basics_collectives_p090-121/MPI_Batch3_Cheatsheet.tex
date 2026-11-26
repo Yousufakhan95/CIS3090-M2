@@ -1,0 +1,177 @@
+\documentclass[9pt,letterpaper]{extarticle}
+\usepackage[margin=0.48in]{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+\usepackage{parskip}
+
+\definecolor{hdr}{RGB}{20,40,80}
+\definecolor{muted}{RGB}{90,90,90}
+\definecolor{codebg}{RGB}{244,246,249}
+
+\setlength{\parskip}{2.5pt}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\footnotesize\color{muted}CIS*3090 Midterm 2 \textbullet\ Batch 3 MPI \textbullet\ page \thepage}
+
+\titleformat{\section}{\normalsize\bfseries\color{hdr}}{}{0em}{}
+\titleformat{\subsection}{\small\bfseries\color{hdr}}{}{0em}{}
+\titlespacing*{\section}{0pt}{6pt}{2pt}
+\titlespacing*{\subsection}{0pt}{4pt}{1pt}
+
+\setlist[itemize]{leftmargin=1.05em,itemsep=0.5pt,parsep=0pt,topsep=1pt}
+\newcommand{\sig}[1]{%
+  \par\vspace{1pt}%
+  \noindent\colorbox{codebg}{\parbox{\dimexpr\linewidth-2\fboxsep\relax}{%
+    \raggedright\ttfamily\footnotesize #1}}%
+  \par\vspace{1pt}%
+}
+
+\begin{document}
+\thispagestyle{fancy}
+
+\begin{center}
+{\Large\bfseries\color{hdr} Batch 3 MPI cheat sheet}\\[1pt]
+{\footnotesize\color{muted} Lectures 9 to 11 \textbullet\ Pacheco 3.1 to 3.4.8 \textbullet\ headers plus how each call works}\\[0.5pt]
+{\scriptsize\color{muted} Skip Lectures 12 and 13, odd-even sort and heat. Not on Midterm 2.}
+\end{center}
+
+\section{Setup}
+\sig{MPI\_Init(int* argc, char*** argv);\\
+MPI\_Comm\_size(MPI\_Comm comm, int* size);\\
+MPI\_Comm\_rank(MPI\_Comm comm, int* rank);\\
+MPI\_Finalize();}
+
+\texttt{MPI\_Init} starts MPI and creates \texttt{MPI\_COMM\_WORLD}. Call it before any other MPI function. Pass \texttt{NULL, NULL} if you ignore argv.
+
+\texttt{MPI\_Comm\_size} writes $p$, the process count, into \texttt{*size}. \texttt{MPI\_Comm\_rank} writes this process's id into \texttt{*rank}. Ranks run from $0$ to $p-1$.
+
+\texttt{MPI\_Finalize} shuts MPI down. Do not call MPI after it. Compile with \texttt{mpicc}. Run with \texttt{mpiexec -n p ./prog}.
+
+\section{Point-to-point}
+\sig{MPI\_Send(const void* buf, int count, MPI\_Datatype datatype,\\
+\hspace*{1em}int dest, int tag, MPI\_Comm comm);}
+
+\texttt{buf} is the data. \texttt{count} is the number of elements, not bytes. \texttt{datatype} is a macro such as \texttt{MPI\_INT}, \texttt{MPI\_DOUBLE}, or \texttt{MPI\_CHAR}. \texttt{dest} is the receiver's rank. \texttt{tag} is a nonnegative int that labels the message. \texttt{comm} is usually \texttt{MPI\_COMM\_WORLD}.
+
+When send returns, you may reuse \texttt{buf}. That does not mean the receiver has the message. The library may buffer a small message and return early, or block until a matching receive can take the data.
+
+\sig{MPI\_Recv(void* buf, int count, MPI\_Datatype datatype,\\
+\hspace*{1em}int source, int tag, MPI\_Comm comm, MPI\_Status* status);}
+
+Here \texttt{count} is buffer capacity, the most elements you will accept. \texttt{source} is the sender's rank, or \texttt{MPI\_ANY\_SOURCE}. \texttt{tag} is the expected tag, or \texttt{MPI\_ANY\_TAG}. Pass \texttt{MPI\_STATUS\_IGNORE} if you do not need status, otherwise pass \texttt{\&status}.
+
+Receive always blocks until a matching message arrives. Its return value is an error code such as \texttt{MPI\_SUCCESS}. It is not the element count.
+
+\sig{MPI\_Get\_count(MPI\_Status* status, MPI\_Datatype datatype, int* count);}
+
+Call this after a receive to learn how many elements arrived. The count is not a field of \texttt{status} because it depends on the datatype.
+
+\subsection After a wildcard receive
+If you used \texttt{MPI\_ANY\_SOURCE}, read \texttt{status.MPI\_SOURCE} for the sender and \texttt{status.MPI\_TAG} for the tag, then call \texttt{MPI\_Get\_count}. The study guide practice question is that exact pattern. Assignment 2 uses it the same way.
+
+\section{Matching}
+A send matches a receive only when all of these hold:
+\begin{itemize}
+  \item same communicator
+  \item same tag
+  \item the send's \texttt{dest} equals the receiver's rank
+  \item the receive's \texttt{source} equals the sender's rank, or the receive used \texttt{MPI\_ANY\_SOURCE}
+\end{itemize}
+Buffers must also match. Same datatype, and receive \texttt{count} at least as large as send \texttt{count}.
+
+Only the receiver may use wildcards. Senders always name a concrete destination and a concrete nonnegative tag. There is no communicator wildcard. A message on one communicator cannot be received on another.
+
+Use tags to tell message kinds apart when payloads look alike. Assignment 2 does this with tags such as request, result, work, and stop.
+
+\section{Ordering and hangs}
+Messages from one sender to one receiver are non-overtaking. If rank $A$ sends message 1 then message 2 to rank $B$, rank $B$ cannot receive 2 before 1 when both match the same way. Messages from different senders have no guaranteed arrival order. That is why a manager often uses \texttt{MPI\_ANY\_SOURCE} and then reads \texttt{status.MPI\_SOURCE}.
+
+Blocking hangs are the main exam trap. Receive waits forever if no matching send exists. A blocking send waits if no matching receive exists and the library does not buffer the message. A wrong tag, rank, or communicator means the intended receive never completes.
+
+\section{Stdin and stdout}
+Assume only rank 0 of \texttt{MPI\_COMM\_WORLD} reads stdin. Rank 0 then sends or broadcasts those values to everyone else.
+
+Any rank may print. Output from many ranks is not ordered, and lines can interleave. To print in order, send the text to rank 0 and let rank 0 print by rank.
+
+\newpage
+
+\section{Collective rules}
+Every process in the communicator must call the same collective, including the root. Collectives do not use tags. They match by communicator and by call order. If ranks call two reduces in different orders, the first calls match each other and the second calls match each other, even when the buffer names differ.
+
+Arguments must be compatible across ranks. Same root, same counts, same types, same operator.
+
+Typical exam pattern: broadcast the parameters once, compute a local result on each rank, then combine with one \texttt{MPI\_Reduce} or \texttt{MPI\_Allreduce}. Do not reduce after every array element on a slow network. That floods the network with tiny messages.
+
+Do not pass the same buffer as both the input and the output of \texttt{MPI\_Reduce}. That aliases an output argument and the result is undefined.
+
+\section{Collective headers}
+\sig{MPI\_Bcast(void* data, int count, MPI\_Datatype datatype,\\
+\hspace*{1em}int root, MPI\_Comm comm);}
+
+Broadcast copies the same data from \texttt{root} to every process. On the root, \texttt{data} is input. On every other rank, \texttt{data} is output. Only rank 0 should \texttt{scanf}. Every rank, including rank 0, must still call broadcast. Put that call outside the \texttt{if (my\_rank == 0)} block.
+
+\sig{MPI\_Reduce(const void* sendbuf, void* recvbuf, int count,\\
+\hspace*{1em}MPI\_Datatype datatype, MPI\_Op op, int root, MPI\_Comm comm);}
+
+Each rank contributes \texttt{sendbuf}. The combined result lands only in \texttt{recvbuf} on \texttt{root}. Other ranks still pass a receive buffer. Common operators are \texttt{MPI\_SUM}, \texttt{MPI\_MAX}, \texttt{MPI\_MIN}, and \texttt{MPI\_PROD}.
+
+\sig{MPI\_Allreduce(const void* sendbuf, void* recvbuf, int count,\\
+\hspace*{1em}MPI\_Datatype datatype, MPI\_Op op, MPI\_Comm comm);}
+
+Same idea as reduce, but every rank gets the result. There is no root argument.
+
+\sig{MPI\_Scatter(const void* sendbuf, int sendcount, MPI\_Datatype sendtype,\\
+\hspace*{1em}void* recvbuf, int recvcount, MPI\_Datatype recvtype,\\
+\hspace*{1em}int root, MPI\_Comm comm);}
+
+Scatter splits an array on \texttt{root} and gives each process a different chunk, including the root. \texttt{sendcount} and \texttt{recvcount} are per-process counts, not the full array length. Broadcast sends the same data. Scatter sends different slices.
+
+\sig{MPI\_Gather(const void* sendbuf, int sendcount, MPI\_Datatype sendtype,\\
+\hspace*{1em}void* recvbuf, int recvcount, MPI\_Datatype recvtype,\\
+\hspace*{1em}int root, MPI\_Comm comm);}
+
+Gather is the reverse of scatter. Every rank sends its chunk. Only \texttt{root} ends up with the assembled array. Assignment 2 gathers per-rank statistics this way.
+
+\sig{MPI\_Barrier(MPI\_Comm comm);}
+
+Every rank waits until all ranks reach the barrier. Assignment 2 uses it as a timing fence before a max-reduce of elapsed times.
+
+\subsection Who gets the result
+\begin{itemize}
+  \item \textbf{Bcast.} Same data on every rank.
+  \item \textbf{Reduce.} Combined value only on root.
+  \item \textbf{Allreduce.} Combined value on every rank.
+  \item \textbf{Scatter.} Different chunk on each rank.
+  \item \textbf{Gather.} Full assembled array only on root.
+\end{itemize}
+
+With one process, broadcast does nothing visible, reduce and allreduce copy the input into the output, and scatter or gather copies the one chunk into the receive buffer.
+
+A tree-structured reduce needs about $\log_2 p$ steps. Rank 0 receiving from everyone needs $p-1$ receives. MPI provides reduce so the implementer can tune the pairing for the machine.
+
+\section{Study guide practice cues}
+Slow network, sum $g(a[i])$ over a large array. Best design: each rank computes a local sum over its own block, then one \texttt{MPI\_Reduce} combines those local sums on rank 0. Do not have every rank read stdin. Do not call allreduce after every element.
+
+After
+\begin{verbatim}
+MPI_Recv(buf, 256, MPI_CHAR, MPI_ANY_SOURCE, TAG_RESULT,
+         MPI_COMM_WORLD, &status);
+\end{verbatim}
+learn the sender from \texttt{status.MPI\_SOURCE}. Learn the length with \texttt{MPI\_Get\_count(\&status, MPI\_CHAR, \&n)}. The \texttt{256} is only capacity.
+
+\section{Tiny working patterns}
+\begin{verbatim}
+if (my_rank == 0) scanf("%lf %lf %d", a, b, n);
+MPI_Bcast(a, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+MPI_Bcast(b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+MPI_Bcast(n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+MPI_Reduce(&local, &global, 1, MPI_DOUBLE, MPI_SUM,
+           0, MPI_COMM_WORLD);
+\end{verbatim}
+
+\end{document}
